@@ -98,6 +98,12 @@
 *   [6. Feasibility and Rationale Summary (Including Stability Theory & Validation Scope)](#6-feasibility-and-rationale-summary-including-stability-theory--validation-scope)
     *   [A. Why is FUM considered feasible despite its ambitious goals? (Including Primitive Emergence & Validation Roadmap)](#a-why-is-fum-considered-feasible-despite-its-ambitious-goals-including-primitive-emergence--validation-roadmap)
     *   [B. Strategic Foundation: Balancing Initialization and Learning](#b-strategic-foundation-balancing-initialization-and-learning)
+*   [9. Broader Context and Ethical Considerations](./9_Broader_Context_and_Ethical_Considerations.md)
+    *   [A. Philosophical Considerations: Consciousness, Subjectivity, and Qualia](#9a-philosophical-considerations-consciousness-subjectivity-and-qualia)
+    *   [B. Motivations and Values](#9b-motivations-and-values)
+    *   [C. Existential Implications](#9c-existential-implications)
+    *   [D. Ethical Framework and Integration](#9d-ethical-framework-and-integration)
+    *   [E. Path Towards Brilliance](#9e-path-towards-brilliance)
 
 ---
 

@@ -8,6 +8,7 @@ This list provides citations for the concepts, algorithms, and frameworks mentio
 *   Åström, K. J., & Murray, R. M. (2008). *Feedback systems: An introduction for scientists and engineers*. Princeton University Press.
 *   Bak, P., Tang, C., & Wiesenfeld, K. (1987). Self-organized criticality: An explanation of the 1/f noise. *Physical Review Letters*, *59*(4), 381-384.
 *   Baldwin, C. Y., & Clark, K. B. (2000). *Design rules: The power of modularity* (Vol. 1). MIT press.
+*   Baars, B. J. (1988). *A cognitive theory of consciousness*. Cambridge University Press.
 *   Barto, A. G., & Mahadevan, S. (2003). Recent advances in hierarchical reinforcement learning. *Discrete Event Dynamic Systems*, *13*(4), 341-379.
 *   Beggs, J. M., & Plenz, D. (2003). Neuronal avalanches in neocortical circuits. *Journal of Neuroscience*, *23*(35), 11167-11177.
 *   Bellamy, R. K., Dey, K., Hind, M., Hoffman, S. C., Houde, S., Kannan, K., ... & Zhang, Y. (2018). AI Fairness 360: An extensible toolkit for detecting, understanding, and mitigating unwanted algorithmic bias. *arXiv preprint arXiv:1810.01943*.
@@ -21,6 +22,7 @@ This list provides citations for the concepts, algorithms, and frameworks mentio
 *   Buzsáki, G. (2006). *Rhythms of the brain*. Oxford University Press.
 *   Buzsáki, G. (2010). Neural syntax: cell assemblies, synapsembles, and readers. *Neuron*, *68*(3), 362-385.
 *   Camacho, E. F., & Bordons, C. (2007). *Model predictive control*. Springer Science & Business Media.
+*   Chalmers, D. J. (1996). *The conscious mind: In search of a fundamental theory*. Oxford University Press.
 *   Chandola, V., Banerjee, A., & Kumar, V. (2009). Anomaly detection: A survey. *ACM Computing Surveys (CSUR)*, *41*(3), 1-58.
 *   Chklovskii, D. B., Mel, B. W., & Svoboda, K. (2004). Cortical rewiring and information storage. *Nature*, *431*(7010), 782-788.
 *   Chung, F. R. (1997). *Spectral graph theory*. American Mathematical Society.
@@ -32,6 +34,7 @@ This list provides citations for the concepts, algorithms, and frameworks mentio
 *   Dayan, P., & Niv, Y. (2008). Reinforcement learning: the good, the bad and the ugly. *Current Opinion in Neurobiology*, *18*(2), 185-196. https://doi.org/10.1016/j.conb.2008.08.003
 *   Dean, J., & Ghemawat, S. (2008). MapReduce: simplified data processing on large clusters. *Communications of the ACM*, *51*(1), 107-113.
 *   Deb, K. (2001). *Multi-objective optimization using evolutionary algorithms*. John Wiley & Sons.
+*   Dehaene, S. (2014). *Consciousness and the brain: Deciphering how the brain codes our thoughts*. Viking.
 *   Dehaene, S., & Changeux, J. P. (1997). A hierarchical neuronal network for planning behavior. *Proceedings of the National Academy of Sciences*, *94*(24), 13293-13298.
 *   Destexhe, A., & Marder, E. (2004). Plasticity in single neuron and circuit computations. *Nature*, *431*(7010), 789-795.
 *   Devlin, J., Chang, M. W., Lee, K., & Toutanova, K. (2019). BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding. In *Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, Volume 1 (Long and Short Papers)* (pp. 4171-4186).
@@ -122,6 +125,7 @@ This list provides citations for the concepts, algorithms, and frameworks mentio
 *   Reynolds, D. A. (2009). Gaussian Mixture Models. In *Encyclopedia of Biometrics*. Springer US.
 *   Rice, J. A. (2007). *Mathematical Statistics and Data Analysis*. Duxbury Press.
 *   Roelfsema, P. R., & Holtmaat, A. (2018). Control of synaptic plasticity in deep cortical networks. *Nature Reviews Neuroscience*, *19*(3), 166-180.
+*   Rosenthal, D. M. (2005). *Consciousness and mind*. Oxford University Press.
 *   Rousseeuw, P. J. (1987). Silhouettes: a graphical aid to the interpretation and validation of cluster analysis. *Journal of Computational and Applied Mathematics*, *20*, 53-65.
 *   Rubino, G., & Tuffin, B. (Eds.). (2009). *Rare event simulation using Monte Carlo methods*. John Wiley & Sons.
 *   Saltelli, A., Ratto, M., Andres, T., Campolongo, F., Cariboni, J., Gatelli, D., Saisana, M., & Tarantola, S. (2008). *Global sensitivity analysis: The primer*. John Wiley & Sons.
@@ -142,6 +146,7 @@ This list provides citations for the concepts, algorithms, and frameworks mentio
 *   Sutton, R. S., & Barto, A. G. (2018). *Reinforcement learning: An introduction*. MIT press.
 *   Tanenbaum, A. S., & Van Steen, M. (2007). *Distributed systems: Principles and paradigms*. Prentice Hall.
 *   Thorpe, S., Delorme, A., & Van Rullen, R. (2001). Spike-based strategies for rapid processing. *Neural Networks*, *14*(6-7), 715-725.
+*   Tononi, G. (2008). Consciousness as integrated information: a provisional manifesto. *Biological Bulletin*, *215*(3), 216-242.
 *   Torrey, L., & Shavlik, J. (2010). Transfer learning. In *Handbook of research on machine learning applications and trends: algorithms, methods, and techniques* (pp. 242-264). IGI global.
 *   Triesch, J. (2007). Synergies between intrinsic and synaptic plasticity mechanisms. *Neural Computation*, *19*(4), 885-909.
 *   Turrigiano, G. G., & Nelson, S. B. (2004). Homeostatic plasticity in the developing nervous system. *Nature Reviews Neuroscience*, *5*(2), 97-107.
