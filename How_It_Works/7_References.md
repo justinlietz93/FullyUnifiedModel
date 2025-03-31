@@ -28,6 +28,7 @@ This list provides citations for the concepts, algorithms, and frameworks mentio
 *   Cover, T. M., & Thomas, J. A. (2006). *Elements of information theory*. John Wiley & Sons.
 *   Dean, J., & Ghemawat, S. (2008). MapReduce: simplified data processing on large clusters. *Communications of the ACM*, *51*(1), 107-113.
 *   Deb, K. (2001). *Multi-objective optimization using evolutionary algorithms*. John Wiley & Sons.
+*   Dehaene, S., & Changeux, J. P. (1997). A hierarchical neuronal network for planning behavior. *Proceedings of the National Academy of Sciences*, *94*(24), 13293-13298.
 *   Destexhe, A., & Marder, E. (2004). Plasticity in single neuron and circuit computations. *Nature*, *431*(7010), 789-795.
 *   Devlin, J., Chang, M. W., Lee, K., & Toutanova, K. (2019). BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding. In *Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, Volume 1 (Long and Short Papers)* (pp. 4171-4186).
 *   Diestel, R. (2017). *Graph theory* (5th ed.). Springer.
@@ -75,6 +76,7 @@ This list provides citations for the concepts, algorithms, and frameworks mentio
 *   MacQueen, J. (1967). Some methods for classification and analysis of multivariate observations. In *Proceedings of the fifth Berkeley symposium on mathematical statistics and probability* (Vol. 1, pp. 281-297). University of California Press.
 *   Marder, E., & Goaillard, J. M. (2006). Variability, compensation, and homeostasis in neuron and network function. *Nature Reviews Neuroscience*, *7*(7), 563-574.
 *   Markram, H., Lübke, J., Frotscher, M., & Sakmann, B. (1997). Regulation of synaptic efficacy by coincidence of postsynaptic APs and EPSPs. *Science*, *275*(5297), 213-215.
+*   Mountcastle, V. B. (1997). The columnar organization of the neocortex. *Brain*, *120*(4), 701-722.
 *   Marsland, S. (2014). *Machine learning: an algorithmic perspective*. CRC press.
 *   McCloskey, M., & Cohen, N. J. (1989). Catastrophic interference in connectionist networks: The sequential learning problem. *Psychology of learning and motivation*, *24*, 109-165.
 *   Mehrabi, N., Morstatter, F., Saxena, N., Lerman, K., & Galstyan, A. (2021). A survey on bias and fairness in machine learning. *ACM Computing Surveys (CSUR)*, *54*(6), 1-35.
@@ -83,6 +85,8 @@ This list provides citations for the concepts, algorithms, and frameworks mentio
 *   Mikolov, T., Chen, K., Corrado, G., & Dean, J. (2013). Efficient estimation of word representations in vector space. *arXiv preprint arXiv:1301.3781*.
 *   Mitchell, M. (2009). *Complexity: A guided tour*. Oxford University Press.
 *   Murphy, K. P. (2002). *Dynamic Bayesian networks: representation, inference and learning*. University of California, Berkeley.
+*   Näätänen, R., Paavilainen, P., Rinne, T., & Alho, K. (2007). The mismatch negativity (MMN) in basic research of central auditory processing: A review. *Clinical Neurophysiology*, *118*(12), 2544-2590.
+*   Nakazawa, K., Quirk, M. C., Chitwood, R. A., Watanabe, M., Yeckel, M. F., Sun, L. D., ... & Tonegawa, S. (2002). Requirement for hippocampal CA3 NMDA receptors in associative memory recall. *Science*, *297*(5579), 211-218.
 *   Myers, G. J., Sandler, C., & Badgett, T. (2011). *The art of software testing*. John Wiley & Sons.
 *   Ng, A. Y., Harada, D., & Russell, S. (1999). Policy invariance under reward transformations: Theory and application to reward shaping. In *Proceedings of the Sixteenth International Conference on Machine Learning (ICML)* (pp. 278-287).
 *   Ongaro, D., & Ousterhout, J. (2014). In search of an understandable consensus algorithm. In *2014 USENIX Annual Technical Conference (USENIX ATC 14)* (pp. 305-319).
@@ -104,6 +108,7 @@ This list provides citations for the concepts, algorithms, and frameworks mentio
 *   Šiljak, D. D. (1991). *Decentralized control of complex systems*. Academic Press.
 *   Snoek, J., Larochelle, H., & Adams, R. P. (2012). Practical Bayesian optimization of machine learning algorithms. In *Advances in Neural Information Processing Systems 25* (pp. 2951-2959). Curran Associates, Inc.
 *   Song, S., Miller, K. D., & Abbott, L. F. (2000). Competitive Hebbian learning through spike-timing-dependent synaptic plasticity. *Nature Neuroscience*, *3*(9), 919-926.
+*   Squire, L. R. (1992). Memory and the hippocampus: a synthesis from findings with rats, monkeys, and humans. *Psychological review*, *99*(2), 195.
 *   Strogatz, S. H. (2015). *Nonlinear dynamics and chaos: With applications to physics, biology, chemistry, and engineering*. Westview Press.
 *   Sutton, R. S. (1988). Learning to predict by the methods of temporal differences. *Machine Learning*, *3*(1), 9-44.
 *   Sutton, R. S., & Barto, A. G. (2018). *Reinforcement learning: An introduction*. MIT press.
