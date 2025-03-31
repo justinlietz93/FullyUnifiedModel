@@ -6,27 +6,96 @@
     *   [B. Core Philosophy](#b-core-philosophy)
     *   [C. Key Differentiators vs. Broader Machine Learning Landscape](#c-key-differentiators-vs-broader-machine-learning-landscape)
 *   [2. Core Architecture Components](#2-core-architecture-components)
-    *   [A. Spiking Neurons: Leaky Integrate-and-Fire (LIF)](#a-spiking-neurons-leaky-integrate-and-fire-lif)
-    *   [B. Neural Plasticity: Spike Timing-Dependent Plasticity (STDP)](#b-neural-plasticity-spike-timing-dependent-plasticity-stdp)
-    *   [C. Continuous Reinforcement Learning: Self-Improvement Engine (SIE)](#c-continuous-reinforcement-learning-self-improvement-engine-sie)
+    *   [A. Spiking Neurons: Leaky Integrate-and-Fire (LIF) with Heterogeneity and Intrinsic Plasticity](#a-spiking-neurons-leaky-integrate-and-fire-lif-with-heterogeneity-and-intrinsic-plasticity)
+        *   [A.1. Model & Rationale](#a1-model--rationale)
+        *   [A.2. Contrast with ANNs](#a2-contrast-with-anns)
+        *   [A.3. Equation & Simulation Timestep](#a3-equation--simulation-timestep)
+        *   [A.4. Firing Mechanism & Reset](#a4-firing-mechanism--reset)
+        *   [A.5. Heterogeneity](#a5-heterogeneity)
+        *   [A.6. Intrinsic Plasticity (Adaptivity)](#a6-intrinsic-plasticity-adaptivity)
+        *   [A.7. Implementation (Kernel Scope & Responsibility)](#a7-implementation-kernel-scope--responsibility)
+    *   [B. Neural Plasticity: Spike Timing-Dependent Plasticity (STDP) with Inhibition](#b-neural-plasticity-spike-timing-dependent-plasticity-stdp-with-inhibition)
+        *   [B.1. Purpose & Contrast with Backpropagation](#b1-purpose--contrast-with-backpropagation)
+        *   [B.2. Excitatory STDP Rule](#b2-excitatory-stdp-rule)
+        *   [B.3. Inhibitory STDP Rule & Neuron Types](#b3-inhibitory-stdp-rule--neuron-types)
+        *   [B.4. Parameters & Weight Range](#b4-parameters--weight-range)
+        *   [B.5. Eligibility Traces for Temporal Credit Assignment](#b5-eligibility-traces-for-temporal-credit-assignment)
+        *   [B.6. STDP Calculation Location & Final Weight Update](#b6-stdp-calculation-location--final-weight-update)
+        *   [B.7. Role & Stability Mechanisms (Incl. Synaptic Scaling)](#b7-role--stability-mechanisms-incl-synaptic-scaling)
+    *   [C. Continuous Reinforcement Learning: Self-Improvement Engine (SIE) with TD Learning](#c-continuous-reinforcement-learning-self-improvement-engine-sie-with-td-learning)
+        *   [C.1. Purpose & Contrast with Supervised Learning](#c1-purpose--contrast-with-supervised-learning)
+        *   [C.2. Reward Signal (`total_reward`) & Component Calculation](#c2-reward-signal-total_reward--component-calculation)
+        *   [C.3. TD Learning Specifics (TD(0), Value Function)](#c3-td-learning-specifics-td0-value-function)
+        *   [C.4. Novelty Calculation](#c4-novelty-calculation)
+        *   [C.5. Habituation Calculation](#c5-habituation-calculation)
+        *   [C.6. Self-Benefit Calculation (Complexity & Impact Metrics)](#c6-self-benefit-calculation-complexity--impact-metrics)
+        *   [C.7. Influence on Learning (Modulation)](#c7-influence-on-learning-modulation)
+        *   [C.8. Goal](#c8-goal)
     *   [D. Unified Knowledge Graph (Emergent)](#d-unified-knowledge-graph-emergent)
-    *   [E. Tensor-Based Computation](#e-tensor-based-computation)
+        *   [D.1. Concept & Contrast with ANNs/GNNs](#d1-concept--contrast-with-annsgnns)
+        *   [D.2. Structure](#d2-structure)
+        *   [D.3. Formation & Evolution](#d3-formation--evolution)
+        *   [D.4. Self-Coordination and Routing](#d4-self-coordination-and-routing)
+    *   [E. Tensor-Based Computation and Hybrid Interface](#e-tensor-based-computation-and-hybrid-interface)
+        *   [E.1. Hybrid Approach Rationale](#e1-hybrid-approach-rationale)
+        *   [E.2. Frameworks & Hardware Roles (Development Context)](#e2-frameworks--hardware-roles-development-context)
+        *   [E.3. Interface: Data Flow & Synchronization](#e3-interface-data-flow--synchronization)
 *   [3. Multimodal Input/Output Processing](#3-multimodal-inputoutput-processing)
-    *   [A. Encoder Mechanism](#a-encoder-mechanism)
-    *   [B. Decoder Mechanism](#b-decoder-mechanism)
+    *   [A. Encoder Mechanism: From Raw Data to Spike Trains](#a-encoder-mechanism-from-raw-data-to-spike-trains)
+        *   [A.1. Purpose & Contrast with LLM Input](#a1-purpose--contrast-with-llm-input)
+        *   [A.2. Encoding Methods (Rate & Temporal)](#a2-encoding-methods-rate--temporal)
+        *   [A.3. Poisson Spike Generation Details](#a3-poisson-spike-generation-details)
+        *   [A.4. Output & Extensibility](#a4-output--extensibility)
+    *   [B. Decoder Mechanism: From Spike Trains to Structured Output](#b-decoder-mechanism-from-spike-trains-to-structured-output)
+        *   [B.1. Purpose](#b1-purpose)
+        *   [B.2. Decoding Methods (Rate & Temporal)](#b2-decoding-methods-rate--temporal)
+        *   [B.3. Emergent Formation](#b3-emergent-formation)
+        *   [B.4. Implementation](#b4-implementation)
 *   [4. Emergent Behaviors and Self-Organization](#4-emergent-behaviors-and-self-organization)
     *   [A. Emergent Energy Landscape](#a-emergent-energy-landscape)
     *   [B. Knowledge Graph Evolution (Detailed)](#b-knowledge-graph-evolution-detailed)
-    *   [C. Self-Modification (Structural Plasticity)](#c-self-modification-structural-plasticity)
-    *   [D. Adaptive Domain Clustering](#d-adaptive-domain-clustering)
+    *   [C. Self-Modification (Structural Plasticity - Detailed Algorithms)](#c-self-modification-structural-plasticity---detailed-algorithms)
+        *   [C.1. Rationale & Triggers](#c1-rationale--triggers)
+        *   [C.2. Growth Algorithm](#c2-growth-algorithm)
+        *   [C.3. Pruning Algorithm](#c3-pruning-algorithm)
+        *   [C.4. Rewiring Algorithm & Limits](#c4-rewiring-algorithm--limits)
+    *   [D. Adaptive Domain Clustering (Dynamic k and Edge Cases)](#d-adaptive-domain-clustering-dynamic-k-and-edge-cases)
+        *   [D.1. Purpose & Mechanism](#d1-purpose--mechanism)
+        *   [D.2. Determining Number of Clusters (k)](#d2-determining-number-of-clusters-k)
+        *   [D.3. Cluster Assignment & Reward Attribution (Domain Identification)](#d3-cluster-assignment--reward-attribution-domain-identification)
+        *   [D.4. Edge Case Handling (Small k, Empty Clusters)](#d4-edge-case-handling-small-k-empty-clusters)
+        *   [D.5. Adaptation](#d5-adaptation)
 *   [5. Training and Scaling: Detailed Implementation Strategy](#5-training-and-scaling-detailed-implementation-strategy)
     *   [A. Phase 1: Random Seed Sprinkling (Foundation Building)](#a-phase-1-random-seed-sprinkling-foundation-building)
+        *   [A.1. Objective](#a1-objective)
+        *   [A.2. Cellular Components & Mechanisms (Incl. Initialization Strategy & Dynamic States)](#a2-cellular-components--mechanisms-incl-initialization-strategy--dynamic-states)
+        *   [A.3. Physics of Initial State Formation](#a3-physics-of-initial-state-formation)
+        *   [A.4. Expected Outcome](#a4-expected-outcome)
     *   [B. Phase 2: Tandem Complexity Scaling (Refinement and Competence)](#b-phase-2-tandem-complexity-scaling-refinement-and-competence)
+        *   [B.1. Objective](#b1-objective)
+        *   [B.2. Cellular Components & Mechanisms](#b2-cellular-components--mechanisms)
+        *   [B.3. Mathematical Formulations](#b3-mathematical-formulations)
+        *   [B.4. Expected Outcome](#b4-expected-outcome)
     *   [C. Phase 3: Continuous Self-Learning (Autonomy and Mastery)](#c-phase-3-continuous-self-learning-autonomy-and-mastery)
+        *   [C.1. Objective](#c1-objective)
+        *   [C.2. Cellular Components & Mechanisms](#c2-cellular-components--mechanisms)
+        *   [C.3. Emergent Physics Principles](#c3-emergent-physics-principles)
+        *   [C.4. Expected Outcome](#c4-expected-outcome)
     *   [D. Scaling Strategy: Implementation Details](#d-scaling-strategy-implementation-details)
+        *   [D.1. Distributed Computation (Graph Sharding)](#d1-distributed-computation-graph-sharding)
+        *   [D.2. Asynchronous Updates & Synchronization Details](#d2-asynchronous-updates--synchronization-details)
+        *   [D.3. Memory Management (Incl. Parameter Server & Caching)](#d3-memory-management-incl-parameter-server--caching)
+        *   [D.4. Hardware Optimization (Development Context)](#d4-hardware-optimization-development-context)
+    *   [E. Practical Considerations: Tuning, Debugging, Stability, and Robustness](#e-practical-considerations-tuning-debugging-stability-and-robustness)
+        *   [E.1. Hyperparameter Sensitivity & Tuning Strategy](#e1-hyperparameter-sensitivity--tuning-strategy)
+        *   [E.2. Debuggability and Interpretability](#e2-debuggability-and-interpretability)
+        *   [E.3. Computational Cost of Overhead Components](#e3-computational-cost-of-overhead-components)
+        *   [E.4. Long-Term Stability and Potential Drift](#e4-long-term-stability-and-potential-drift)
+        *   [E.5. Robustness to Input Noise/Anomalies](#e5-robustness-to-input-noiseanomalies)
+        *   [E.6. Justification for Specific Algorithmic Choices](#e6-justification-for-specific-algorithmic-choices)
 *   [6. Feasibility and Rationale Summary](#6-feasibility-and-rationale-summary)
     *   [A. Why is FUM considered feasible despite its ambitious goals?](#a-why-is-fum-considered-feasible-despite-its-ambitious-goals)
-    *   [B. Strategic Foundation:](#b-strategic-foundation)
+    *   [B. Strategic Foundation: Balancing Initialization and Learning](#b-strategic-foundation-balancing-initialization-and-learning)
 
 ---
 
@@ -36,29 +105,30 @@ This document explains the intended design, architecture, operational mechanics,
 
 ### A. Goal
 
-Achieve autonomous, expert-level mastery across diverse domains (e.g., Mathematics, Logic, Coding, Language, Visual Perception, Introspection) using **minimal training data** (target: 80-300 inputs). The aim is to outperform large-scale models (like 700B parameter LLMs) in accuracy and speed, while operating **efficiently on constrained hardware** (specifically, a Linux workstation with AMD Threadripper PRO 5955WX, MI100 32GB VRAM, 7900 XTX 24GB VRAM, 512GB RAM).
+Achieve autonomous, expert-level mastery across diverse domains (e.g., Mathematics, Logic, Coding, Language, Visual Perception, Introspection) using **minimal training data** (target: 80-300 inputs). The aim is to outperform large-scale models (like 700B parameter LLMs) in accuracy and speed, while operating **efficiently on constrained hardware**.
 
-*   **Why Minimal Data?** Unlike LLMs requiring terabytes of data and vast pre-training, FUM aims for human-like learning efficiency, inferring complex patterns from sparse examples. This reduces reliance on massive datasets and computational resources.
+*   **Hardware Context (Development & Validation):** The specific hardware configurations mentioned throughout this document (Linux workstation with AMD Threadripper PRO 5955WX, MI100 32GB VRAM, 7900 XTX 24GB VRAM, 512GB RAM, 6TB SSD) represent the author's (Justin Lietz) test environment. These are **not rigid requirements** for FUM deployment but serve as the platform where the model's theoretical foundations are validated. Notably, the predecessor model, AMN (Adaptive Modular Network), has already been successfully validated up to a 10-unit model size on this hardware, demonstrating the feasibility of the core concepts.
+*   **Why Minimal Data?** Unlike LLMs requiring terabytes of data and vast pre-training, FUM aims for human-like learning efficiency, inferring complex patterns from sparse examples. This reduces reliance on massive datasets and computational resources, making advanced AI potentially achievable within the constraints of the development hardware. The design philosophy balances a minimal seeded structure during initialization with knowledge purely learned from these minimal examples (see Section 6.B for details).
 
 ### B. Core Philosophy
 
 Mimic the efficiency (human brain ~20W) and adaptability of biological brains by employing a **hybrid architecture**. This contrasts with monolithic architectures like Transformers used in most LLMs.
 
 1.  **Sparse Spiking Neural Networks (SNNs):**
-    *   Chosen for inherent **temporal processing** (information encoded in spike timing, not just rate), potential for massive **energy efficiency** (neurons only compute when they spike, targeting >1M-fold savings vs. LLMs), and **biological plausibility**. High sparsity (target: 95%) drastically reduces the number of active connections, further saving computation and memory compared to dense ANNs/Transformers.
+    *   Chosen for inherent **temporal processing** (information encoded in spike timing, not just rate), potential for massive **energy efficiency** (neurons only compute when they spike, targeting >1M-fold savings vs. LLMs), and **biological plausibility**. High sparsity (target: 95%) drastically reduces the number of active connections, further saving computation and memory compared to dense ANNs/Transformers. Includes both excitatory and inhibitory neurons (typically 80:20 ratio) for stability and balanced dynamics.
 2.  **Emergent Knowledge Graph:**
     *   A dynamic graph structure replaces fixed layers or a predefined coordinator network. **Why?** This allows relationships between concepts and domains to emerge organically from neuron interactions and learning feedback, fostering adaptability and cross-domain knowledge transfer without manual design. This differs significantly from the fixed, layered structure of most deep learning models.
 3.  **Tensor-based Computation:**
-    *   Leverages frameworks like PyTorch for efficient batch processing of certain operations (e.g., graph analysis, SIE calculations) and seamless integration with GPU acceleration (ROCm), complementing the SNN's event-driven nature.
+    *   Leverages frameworks like PyTorch for efficient batch processing of certain operations (e.g., graph analysis, SIE calculations, clustering) and seamless integration with GPU acceleration (ROCm), complementing the SNN's event-driven nature via a carefully managed hybrid interface.
 
 ### C. Key Differentiators vs. Broader Machine Learning Landscape
 
 FUM's design choices distinguish it not only from LLMs but also from various other ML paradigms:
 
 *   **vs. Deep Learning (ANNs, CNNs, RNNs, Transformers):**
-    *   **Neuron Model:** Uses spiking (LIF) neurons processing information temporally, unlike rate-based ANUs (ReLU, sigmoid, etc.).
-    *   **Learning Rule:** Primarily uses local, biologically plausible STDP and reinforcement (SIE), not global backpropagation.
-    *   **Architecture:** Dynamic, emergent graph structure vs. fixed, layered architectures.
+    *   **Neuron Model:** Uses spiking (LIF) neurons processing information temporally, unlike rate-based ANUs (ReLU, sigmoid, etc.). Incorporates heterogeneity and intrinsic plasticity.
+    *   **Learning Rule:** Primarily uses local, biologically plausible STDP (for both excitatory and inhibitory synapses) modulated by reinforcement (SIE) via eligibility traces, not global backpropagation.
+    *   **Architecture:** Dynamic, emergent graph structure vs. fixed, layered architectures. Includes structural plasticity.
     *   **Data/Energy:** Aims for significantly higher data and energy efficiency.
     *   **Adaptability:** Built-in structural plasticity vs. generally static architectures requiring retraining.
 *   **vs. Traditional ML (SVMs, Decision Trees, k-NN, etc.):**
@@ -66,434 +136,632 @@ FUM's design choices distinguish it not only from LLMs but also from various oth
     *   **Learning:** Learns online and continuously via STDP/SIE, unlike batch training on fixed datasets typical for many traditional models.
     *   **Complexity Handling:** Designed to handle complex, high-dimensional, temporal data patterns where traditional models might struggle without extensive feature engineering.
 *   **vs. Symbolic AI / Expert Systems:**
-    *   **Knowledge Representation:** Knowledge emerges in the graph's connection weights, unlike the explicit, human-defined rules and symbols of symbolic AI.
+    *   **Knowledge Representation:** Knowledge emerges in the graph's connection weights (both positive and negative), unlike the explicit, human-defined rules and symbols of symbolic AI.
     *   **Learning:** Learns from data and feedback, unlike primarily relying on pre-programmed knowledge bases.
     *   **Robustness:** Aims for robustness to noisy data, whereas symbolic systems can be brittle. FUM integrates symbolic-like reasoning capabilities (Logic domain) within its neural framework.
 *   **vs. Standard Reinforcement Learning (Q-Learning, Policy Gradients):**
-    *   **Core Mechanism:** Uses STDP as the primary synaptic learning rule, modulated by the SIE's reinforcement signal. Standard RL typically learns value functions or policies directly via algorithms like Q-learning or policy gradients, often requiring many environment interactions.
-    *   **Representation:** Learns within the SNN/graph structure, not typically relying on explicit state-action tables or separate policy/value networks in the same way as standard RL.
+    *   **Core Mechanism:** Uses STDP as the primary synaptic learning rule, modulated by the SIE's reinforcement signal (incorporating TD(0) learning). Standard RL typically learns value functions or policies directly via algorithms like Q-learning or policy gradients, often requiring many environment interactions.
+    *   **Representation:** Learns within the SNN/graph structure, using cluster-based state representations for the TD value function, not typically relying on explicit state-action tables or separate policy/value networks in the same way as standard RL.
 *   **vs. Evolutionary Algorithms (Genetic Algorithms, Neuroevolution):**
     *   **Learning Timescale:** Learns within the "lifetime" of the model via STDP/SIE. Evolutionary approaches typically operate over generations, selecting or modifying entire networks based on fitness, which can be slower for online adaptation.
-    *   **Mechanism:** Relies on synaptic plasticity and reinforcement, not population-based selection and genetic operators (mutation, crossover), although FUM's self-modification has conceptual parallels to structural evolution.
+    *   **Mechanism:** Relies on synaptic plasticity (STDP, structural plasticity) and reinforcement (SIE), not population-based selection and genetic operators (mutation, crossover), although FUM's self-modification has conceptual parallels to structural evolution.
 
 ## 2. Core Architecture Components
 
-### A. Spiking Neurons: Leaky Integrate-and-Fire (LIF)
+### A. Spiking Neurons: Leaky Integrate-and-Fire (LIF) with Heterogeneity and Intrinsic Plasticity
 
-1.  **Model:**
-    *   Employs the standard LIF model. **Why LIF?** It offers a good balance between biological realism and computational tractability, capturing essential integrate-and-fire dynamics without the complexity of models like Hodgkin-Huxley. This efficiency is crucial for large-scale simulation.
-2.  **Contrast with ANNs:**
-    *   Unlike Artificial Neuron Units (ANUs) in standard ANNs (like ReLUs, Sigmoids) which compute a static output based on summed weighted inputs in one pass, LIF neurons integrate inputs *over time* and communicate via discrete *spikes* (events), enabling richer temporal coding.
-3.  **Equation:**
-    *   The membrane potential `V` of a neuron at time `t` is updated based on the previous potential `V(t-1)`, the input current `I(t)` (sum of weighted spikes from connected neurons), and a leak term determined by the membrane time constant `tau` (e.g., 20ms):
-        `V(t) = V(t-1) + I(t) - (V(t-1) / tau) * dt`
-        (where `dt` is the simulation timestep). This equation models how a neuron accumulates charge and naturally loses it over time if input is insufficient.
-4.  **Firing Mechanism:**
-    *   A neuron generates an output spike (a discrete event) when its membrane potential `V(t)` crosses a defined threshold `v_th` (e.g., -55mV). This event-driven nature is key to SNN efficiency.
-5.  **Reset:**
-    *   After firing, the neuron's potential is reset to a resting value `v_reset` (e.g., -70mV), preventing immediate re-firing and mimicking a biological refractory period.
-6.  **Implementation:**
-    *   Designed for GPU acceleration using custom ROCm HIP kernels (`neuron_kernel.hip`) operating with half-precision floating-point numbers (FP16). **Why Kernels/FP16?** Standard deep learning frameworks are often inefficient for sparse, event-driven SNNs. Custom kernels allow optimized computation, and FP16 reduces memory bandwidth and storage requirements, crucial for fitting large models onto the AMD Radeon 7900 XTX (designated for spiking dynamics).
+#### A.1. Model & Rationale
+*   Employs the standard Leaky Integrate-and-Fire (LIF) model. **Why LIF?** It offers a good balance between biological realism and computational tractability, capturing essential integrate-and-fire dynamics without the complexity of models like Hodgkin-Huxley. This efficiency is crucial for large-scale simulation.
 
-### B. Neural Plasticity: Spike Timing-Dependent Plasticity (STDP)
+#### A.2. Contrast with ANNs
+*   Unlike Artificial Neuron Units (ANUs) in standard ANNs (like ReLUs, Sigmoids) which compute a static output based on summed weighted inputs in one pass, LIF neurons integrate inputs *over time* and communicate via discrete *spikes* (events), enabling richer temporal coding.
 
-1.  **Purpose:**
-    *   Enables the network to learn by adjusting the strength (weight `w_ij`) of connections between neurons based on the *precise relative timing* of their spikes. It's a biologically plausible mechanism for Hebbian learning ("neurons that fire together, wire together") that leverages the temporal information inherent in SNNs.
-2.  **Contrast with Backpropagation:**
-    *   This is fundamentally different from backpropagation used in most ANNs/LLMs. STDP is a *local* learning rule – weight changes depend only on the activity of the pre- and post-synaptic neurons. Backpropagation requires a *global* error signal calculated at the output layer and propagated backward through all layers, demanding differentiability and often large amounts of labeled data. STDP allows unsupervised or reinforcement-based learning directly from spike patterns, making it more biologically plausible and potentially more efficient for certain learning tasks.
-3.  **Rule:**
-    *   The change in synaptic weight (`Δw_ij`) depends exponentially on the time difference (`Δt = t_post - t_pre`) between post-synaptic and pre-synaptic spikes:
-        *   **Potentiation (Strengthening):** If the pre-synaptic neuron fires shortly *before* the post-synaptic neuron (`Δt > 0`, indicating potential causality), the connection is strengthened: `Δw_ij = A_+ * exp(-Δt / τ_+)`.
-        *   **Depression (Weakening):** If the pre-synaptic neuron fires shortly *after* the post-synaptic neuron (`Δt < 0`, indicating lack of causality), the connection is weakened: `Δw_ij = -A_- * exp(Δt / τ_-)`.
-4.  **Parameters:**
-    *   Key parameters include the maximum weight change amplitudes (`A_+`, `A_-`, e.g., 0.1, 0.12) and the time constants defining the learning window (`τ_+`, `τ_-`, e.g., 20ms). These parameters control the sensitivity and timescale of learning. The effective learning rate (`eta`) derived from these is intended to be modulated by the SIE.
-5.  **Role:**
-    *   STDP is the fundamental mechanism for associative learning in FUM, allowing the network to autonomously identify and strengthen connections representing meaningful temporal correlations in the input data and internal activity, guided by task success (via SIE).
+#### A.3. Equation & Simulation Timestep
+*   The membrane potential `V` of a neuron `i` at time `t` is updated based on the previous potential `V_i(t-1)`, the input current `I_i(t)` (sum of weighted spikes from connected neurons), and a leak term determined by the neuron's specific membrane time constant `tau_i`:
+    `V_i(t) = V_i(t-1) + I_i(t) - (V_i(t-1) / tau_i) * dt`
+    (where `dt` is the simulation timestep). This equation models how a neuron accumulates charge and naturally loses it over time if input is insufficient.
+*   **Simulation Timestep (dt):** Fixed at `1ms`. **Rationale:** This value balances simulation fidelity (sufficient to capture STDP dynamics with `tau_` parameters around 20ms, as the STDP window is 20 timesteps) and computational cost (avoiding the 100x cost increase of a 0.01ms step). On the development hardware (Justin’s 7900 XTX GPU), `dt=1ms` ensures reasonable training times (e.g., ~2–3 hours for Phase 1).
 
-### C. Continuous Reinforcement Learning: Self-Improvement Engine (SIE)
+#### A.4. Firing Mechanism & Reset
+*   A neuron generates an output spike (a discrete event, `spikes_i(t) = 1`) when its membrane potential `V_i(t)` crosses its specific defined threshold `v_th_i`. This event-driven nature is key to SNN efficiency.
+*   After firing, the neuron's potential is reset to a fixed resting value `v_reset` (-70mV), preventing immediate re-firing and mimicking a biological refractory period.
 
-1.  **Purpose:**
-    *   Provides a sparse, global feedback signal to guide the local STDP learning process towards desired high-level outcomes (task success), enabling the network to learn from trial-and-error even with minimal explicit supervision.
-2.  **Contrast with Supervised Learning:**
-    *   Unlike supervised learning which requires detailed labels for every input, the SIE uses a simple reward signal (`+1` correct, `-1` incorrect, `0` neutral). **Why?** This allows learning complex tasks where detailed labels are unavailable or impractical to obtain, mimicking how biological systems learn goal-directed behaviors. It differs from standard RL algorithms (like Q-learning or Policy Gradients) which often focus on estimating value functions or directly optimizing policies based on cumulative rewards within a defined state-action space; SIE acts more as a modulator for the underlying STDP learning.
-3.  **Mechanism:**
-    *   Evaluates the network's final output for a given task (e.g., comparing FUM's answer "4" to the target "4" for "2+2=?") and assigns the reward. The design also mentions a more complex potential formulation: `total_reward = TD + novelty - habituation + self_benefit`, where `self_benefit = complexity * impact`, suggesting integration of temporal difference learning, novelty seeking, and habituation mechanisms to drive more sophisticated goal evolution.
-4.  **Influence:**
-    *   The reward signal acts as a modulator. It primarily influences the effective STDP learning rates (`eta`), potentially increasing learning (`A_+`, `A_-`) when rewards are positive and decreasing it or stabilizing weights when rewards are negative. It also serves as a key trigger for the structural self-modification mechanisms (growth/pruning).
-5.  **Goal:**
-    *   Drives the network's self-organization process to find internal configurations (synaptic weights and network structure) that maximize the cumulative reward signal over time, thereby improving performance on the target tasks (e.g., achieving >90% accuracy).
+#### A.5. Heterogeneity
+*   Neuron parameters are **not uniform** but are drawn from distributions at initialization to mimic biological variability and enhance network dynamics:
+    *   `tau_i`: Drawn from a Normal distribution `N(20ms, 2ms^2)` (`torch.normal(mean=20.0, std=2.0)`).
+    *   `v_th_i`: Drawn from a Normal distribution `N(-55mV, 2mV^2)` (`torch.normal(mean=-55.0, std=2.0)`).
+    *   `v_reset`: Fixed at -70mV for all neurons.
+*   **Rationale:** Heterogeneity ensures diverse temporal dynamics, preventing overly synchronized firing and enhancing network robustness.
+
+#### A.6. Intrinsic Plasticity (Adaptivity)
+*   Neuron parameters (`tau_i`, `v_th_i`) adapt over time based on their firing rate to maintain activity within a target range, preventing silent or hyperactive neurons:
+    *   **Target Rate:** 0.1–0.5 Hz (5–25 spikes over a 50-timestep window).
+    *   **Adjustment Rule:**
+        *   If `rate_i > 0.5 Hz`, increase `v_th_i` by 0.1mV (`v_th += 0.1`) and decrease `tau_i` by 0.1ms (`tau -= 0.1`), reducing excitability.
+        *   If `rate_i < 0.1 Hz`, decrease `v_th_i` by 0.1mV (`v_th -= 0.1`) and increase `tau_i` by 0.1ms (`tau += 0.1`), increasing excitability.
+    *   **Bounds:** `v_th_i` is clamped to [-60mV, -50mV], `tau_i` to [15ms, 25ms].
+    *   **Timing & Implementation:** Applied every 50 timesteps after STDP updates, computed on the 7900 XTX GPU, updating `v_th` and `tau` tensors in-place.
+
+#### A.7. Implementation (Kernel Scope & Responsibility)
+*   The core LIF update loop (integration, thresholding, reset) is executed via a custom ROCm HIP kernel (`neuron_kernel.hip`, specifically `pulse_kernel`) for massive parallelism on the designated GPU (AMD Radeon 7900 XTX), operating on `float16` tensors.
+*   **Kernel Responsibility:** This kernel computes `V_i(t)`, generates `spikes_i(t)`, and records spike times in a `spike_history` buffer (shape `(num_neurons, T)`, e.g., `1000x50`, stored as `uint8` on 7900 XTX). It **does not** compute STDP changes (`Δw_ij`) or update eligibility traces (`e_ij`) within the kernel itself. These are handled separately in PyTorch (see Sec 2.B, 2.E).
+
+### B. Neural Plasticity: Spike Timing-Dependent Plasticity (STDP) with Inhibition
+
+#### B.1. Purpose & Contrast with Backpropagation
+*   Enables the network to learn by adjusting the strength (weight `w_ij`) of connections between neurons based on the *precise relative timing* of their spikes. It's a biologically plausible mechanism for Hebbian learning ("neurons that fire together, wire together") that leverages the temporal information inherent in SNNs.
+*   This is fundamentally different from backpropagation used in most ANNs/LLMs. STDP is a *local* learning rule – weight changes depend only on the activity of the pre- and post-synaptic neurons. Backpropagation requires a *global* error signal calculated at the output layer and propagated backward through all layers, demanding differentiability and often large amounts of labeled data. STDP allows unsupervised or reinforcement-based learning directly from spike patterns, making it more biologically plausible and potentially more efficient for certain learning tasks.
+
+#### B.2. Excitatory STDP Rule
+*   For connections originating from an excitatory neuron (`i`), the change in synaptic weight (`Δw_ij`) depends exponentially on the time difference (`Δt = t_post - t_pre`) between post-synaptic and pre-synaptic spikes:
+    *   **Potentiation (Strengthening):** If the pre-synaptic neuron fires shortly *before* the post-synaptic neuron (`Δt > 0`), the connection is strengthened: `Δw_ij = A_+ * exp(-Δt / τ_+)`.
+    *   **Depression (Weakening):** If the pre-synaptic neuron fires shortly *after* the post-synaptic neuron (`Δt < 0`), the connection is weakened: `Δw_ij = -A_- * exp(Δt / τ_-)`.
+    *   If `Δt = 0`, `Δw_ij = 0`.
+
+#### B.3. Inhibitory STDP Rule & Neuron Types
+*   FUM incorporates inhibitory connections (typically 20% of neurons, e.g., indices 800-999 for 1000 neurons) for stability.
+*   For connections originating from an inhibitory neuron (`i`), the STDP rule is modified to promote stability:
+    *   **Weakening Inhibition:** If `Δt > 0` (pre before post), the inhibitory connection is weakened (made less negative): `Δw_ij = -A_+ * exp(-Δt / τ_+)`.
+    *   **Strengthening Inhibition:** If `Δt < 0` (post before pre), the inhibitory connection is strengthened (made more negative): `Δw_ij = A_- * exp(Δt / τ_-)`.
+*   **Implementation:** During STDP calculation, check the pre-synaptic neuron type (`is_inhibitory[i]`) and apply the appropriate rule.
+
+#### B.4. Parameters & Weight Range
+*   Key parameters: `A_+ = 0.1`, `A_- = 0.12`, `τ_+ = 20ms`, `τ_- = 20ms`.
+*   Weights `w_ij` can be positive (excitatory) or negative (inhibitory) and are clamped to the range `[-1, 1]` (`w.clamp_(-1, 1)`).
+
+#### B.5. Eligibility Traces for Temporal Credit Assignment
+*   To bridge the temporal gap between local STDP events and potentially delayed global SIE rewards, each synapse maintains an eligibility trace `e_ij`.
+*   **Update Rule:** `e_ij(t) = γ * e_ij(t-1) + Δw_ij(t)`, where `γ = 0.95` (decay factor, ~200ms time constant for `dt=1ms`) and `Δw_ij(t)` is the STDP weight change calculated based on spike pairs occurring at timestep `t`.
+*   **Physics/Math:** The trace `e_ij(t) = Σ (γ^(t-k) * Δw_ij(k))` sums past STDP events, weighted by their temporal relevance. An event at `t=0` contributes `~0.0951` initially, decaying to `~0.0004` after 200ms.
+*   **Storage:** `e_ij` is a sparse tensor mirroring `w`'s structure (shape `(num_nonzero_connections,)`), stored in FP16 on the MI100 GPU (e.g., 10KB for 5k connections). Initialized to zero at `t=0`.
+*   **Update Location:** Updated using PyTorch on the MI100 GPU after STDP `Δw_ij` calculation.
+
+#### B.6. STDP Calculation Location & Final Weight Update
+*   **STDP Calculation:** The calculation of `Δw_ij(t)` based on spike pairs from `spike_history` (recorded by the LIF kernel on the 7900 XTX) is performed **outside** the LIF kernel.
+    *   **Sequence:** After 50 timesteps, transfer `spike_history` to MI100. Identify spike pairs within ±20ms window, compute `Δt`, apply STDP rules (excitatory/inhibitory), sum `Δw_ij` per synapse. Executed using PyTorch tensor operations on MI100.
+*   **Final Weight Update:** The actual weight update `w_ij = clip(w_ij + eta_effective * total_reward * e_ij(T), -1, 1)` occurs after the SIE reward (`total_reward`) is calculated (on MI100) and transferred (along with `e_ij`) back to the 7900 XTX GPU. (`eta_effective` is the modulated learning rate, see Sec 2.C).
+
+#### B.7. Role & Stability Mechanisms (Incl. Synaptic Scaling)
+*   STDP is the fundamental mechanism for associative learning. The inclusion of inhibitory neurons and inhibitory STDP is crucial for managing network stability and preventing runaway excitation.
+*   **Additional Stability Mechanisms:**
+    *   **Inhibitory Feedback:** Inhibitory neurons provide negative input `sum(w[i,j] * spikes(t-1)[i])` where `w[i,j] < 0`, counteracting excitation.
+    *   **Global Inhibition:** A subset of inhibitory neurons fire proportionally to the network's average rate, providing broad dampening.
+    *   **Intrinsic Plasticity:** Adapts neuron excitability (Sec 2.A.6).
+    *   **Synaptic Scaling:** Normalizes total excitatory input to prevent saturation.
+        *   **Mechanism:** Every 1000 timesteps, compute `total_exc[j] = sum(w[i,j] for i in excitatory and w[i,j] > 0)`. If `total_exc[j] > 1`, calculate `scale_factor = 1 / total_exc[j]`.
+        *   **Interaction & Timing:** Applied *after* STDP/SIE updates within the 1000-step cycle. To protect learned pathways, only scale weaker connections: `w[i,j] *= scale_factor` only if `w[i,j] < 0.8`. Executed on 7900 XTX.
+
+### C. Continuous Reinforcement Learning: Self-Improvement Engine (SIE) with TD Learning
+
+#### C.1. Purpose & Contrast with Supervised Learning
+*   Provides a sparse, global feedback signal (`total_reward`) to guide the local STDP learning process towards desired high-level outcomes (task success), enabling the network to learn from trial-and-error even with minimal explicit supervision.
+*   Unlike supervised learning which requires detailed labels for every input, the SIE uses a potentially complex reward signal derived from task success, internal consistency, and novelty. **Why?** This allows learning complex tasks where detailed labels are unavailable or impractical to obtain, mimicking how biological systems learn goal-directed behaviors.
+
+#### C.2. Reward Signal (`total_reward`) & Component Calculation
+*   Calculated after each simulation window (e.g., 50 timesteps) on the MI100 GPU.
+*   **Formula:** `total_reward = TD_error + novelty - habituation + self_benefit`
+
+#### C.3. TD Learning Specifics (TD(0), Value Function)
+*   **Algorithm:** Uses TD(0) for simplicity: `TD_error = r + γ * V(next_state) - V(current_state)`.
+    *   `r`: Immediate external reward (+1 correct, -1 incorrect, 0 neutral/unknown) if available, else 0.
+    *   `γ`: Discount factor (0.9).
+*   **Value Function `V(state)`:**
+    *   **Predicted Value:** Predicts expected future cumulative reward.
+    *   **Representation:** Tensor `V_states` (shape: `num_states`), stored on MI100 GPU. Initialized to zero.
+    *   **State Definition:** States correspond to clusters identified by adaptive clustering (Sec 4.D). `num_states` determined by `k`.
+    *   **Update:** After identifying `current_state_idx` and `next_state_idx` via clustering, update `V_states[current_state_idx] += α * TD_error` (where `α=0.1`, learning rate).
+
+#### C.4. Novelty Calculation
+*   **Storage:** Maintain history of recent input patterns (`recent_inputs` buffer, shape `(history_size, num_input_neurons, T)` on MI100).
+*   **Comparison:** Compute cosine similarity between current `I_encoded` and `recent_inputs`.
+*   **Metric:** `novelty = 1 - max(similarity)`. Ranges [0, 1].
+
+#### C.5. Habituation Calculation
+*   **Storage:** Maintain `habituation_counter[i]` for each pattern in `recent_inputs` on MI100.
+*   **Update:** If `max(similarity) > 0.9`, increment `habituation_counter[matched_input] += 0.1` (capped at 1).
+*   **Decay:** Periodically decay counters (`*= 0.95`).
+*   **Metric:** `habituation = habituation_counter[matched_input]`. Ranges [0, 1].
+
+#### C.6. Self-Benefit Calculation (Complexity & Impact Metrics)
+*   Internal measure of computation quality: `self_benefit = complexity * impact`.
+*   **Complexity:**
+    *   **Definition:** Average spikes per neuron per timestep: `complexity = torch.sum(spike_history) / (num_neurons * T)`. Calculated on 7900 XTX, transferred to MI100.
+    *   **Granularity:** Can be calculated per cluster (`complexity[c]`) for more targeted feedback, reflecting domain-specific computational effort. If used, `self_benefit` becomes a weighted average of `complexity[c] * impact[c]`.
+*   **Impact:**
+    *   **Definition:** Reduction in firing rate variance: `impact = (variance_before - variance_after) / max(variance_baseline, 0.01)`. `variance_before` is avg over last 1k steps, `variance_after` is current, `variance_baseline` is avg over 10k steps. Calculated on 7900 XTX, transferred to MI100.
+    *   **Sensitivity & Safeguards:** Sensitive to input shifts/exploration. Normalized by `variance_baseline`. Penalty reduced during exploration (`impact_adjusted = impact * (1 - novelty)`). Clamped to `[-1, 1]`.
+
+#### C.7. Influence on Learning (Modulation)
+*   The calculated `total_reward` modulates the base STDP learning rate (`eta = 0.01`).
+*   **Mapping:** `total_reward` (potentially unbounded) is mapped to a modulation factor `mod_factor` in [-1, 1] using a sigmoid: `mod_factor = 2 * torch.sigmoid(total_reward) - 1`.
+*   **Effective Learning Rate:** `eta_effective = eta * (1 + mod_factor)`. Positive rewards amplify learning, negative rewards suppress it.
+*   **Application:** The final weight update uses this modulated rate and the reward itself: `Δw_ij(T) = eta_effective * total_reward * e_ij(T)` (applied on 7900 XTX). This quadratic scaling emphasizes significant outcomes.
+
+#### C.8. Goal
+*   Drives the network's self-organization process (STDP, structural plasticity) to find internal configurations (synaptic weights `w_ij` and network structure) that maximize the cumulative `total_reward` signal over time, thereby improving performance on target tasks and promoting stable, efficient, and novel computation.
 
 ### D. Unified Knowledge Graph (Emergent)
 
-1.  **Concept:**
-    *   FUM avoids predefined layers or a fixed coordinator module. Instead, it relies on a knowledge graph structure that **emerges dynamically** from the learned connections between neurons. **Why?** This allows for maximum flexibility and adaptability. The network itself discovers and represents relationships between concepts and across different domains based on the input data and learning feedback. It acts as a distributed, associative memory and reasoning substrate.
-2.  **Contrast with ANNs/GNNs:**
-    *   This differs significantly from the fixed, layered topology of most ANNs/CNNs/Transformers, and also from Graph Neural Networks (GNNs) which typically operate on *predefined* graph structures. FUM *builds* its own graph as it learns, more akin to biological network formation than applying convolutions or message passing on a static graph. It also differs from Symbolic AI knowledge graphs which are typically human-curated.
-3.  **Structure:**
-    *   Nodes in the graph conceptually represent individual neurons or small clusters encoding specific features or concepts. Edges represent the synaptic connections (`w_ij`) whose strengths are learned via STDP and modulated by SIE.
-4.  **Formation & Evolution:**
-    *   Edges are not predefined. An effective connection (edge) emerges and strengthens between neurons `i` and `j` if they consistently fire with a timing relationship (`Δt < 20ms`) that correlates with positive SIE rewards (+1). The design specifies a potential direct weight increase (`w_ij += 0.01`) upon positive reward, directly linking task success to structural reinforcement. The graph continuously evolves as learning progresses, reflecting the network's changing understanding.
-5.  **Self-Coordination:**
-    *   There is no central module directing information flow. Instead, processing and reasoning occur via the propagation of spiking activity across the strongest pathways (edges) in the emergent graph. This decentralized approach allows flexible routing of information based on learned associations.
+#### D.1. Concept & Contrast with ANNs/GNNs
+*   FUM avoids predefined layers or a fixed coordinator module. Instead, it relies on a knowledge graph structure that **emerges dynamically** from the learned connections (both excitatory and inhibitory) between neurons. **Why?** This allows for maximum flexibility and adaptability. The network itself discovers and represents relationships between concepts and across different domains based on the input data and learning feedback. It acts as a distributed, associative memory and reasoning substrate.
+*   This differs significantly from the fixed, layered topology of most ANNs/CNNs/Transformers, and also from Graph Neural Networks (GNNs) which typically operate on *predefined* graph structures. FUM *builds* its own graph as it learns, more akin to biological network formation than applying convolutions or message passing on a static graph. It also differs from Symbolic AI knowledge graphs which are typically human-curated.
 
-### E. Tensor-Based Computation
+#### D.2. Structure
+*   Nodes in the graph conceptually represent individual neurons (LIF with specific parameters). Edges represent the synaptic connections (`w_ij` in range [-1, 1]) whose strengths are learned via STDP and modulated by SIE. Sparsity is maintained around 95%.
 
-1.  **Hybrid Approach Rationale:**
-    *   While SNNs excel at temporal processing, certain operations like analyzing graph properties, calculating global reward signals (SIE), managing large state vectors, or performing clustering are often more efficiently handled using optimized tensor libraries. FUM adopts a hybrid approach.
-2.  **Frameworks:**
-    *   Designed to utilize PyTorch for its powerful tensor manipulation capabilities, automatic differentiation (if needed for any meta-learning aspects), and extensive ecosystem. SNN-specific libraries like Norse might be integrated to provide higher-level abstractions for SNN layers if beneficial, complementing the custom kernels.
-3.  **Operations:**
-    *   Tensor operations (managed by PyTorch on the MI100 GPU) are intended for tasks like: managing overall neuron state vectors (though individual LIF updates are kernel-based), potentially calculating batch STDP updates if not fully in kernel, performing graph analysis (e.g., centrality, pathfinding if needed), implementing k-means clustering, and calculating SIE rewards/losses.
-4.  **Optimization:**
-    *   Performance is critical. Custom ROCm kernels handle the core, high-frequency LIF updates. Tensor operations leverage PyTorch's optimization and the MI100 GPU's compute power. FP16 precision is used extensively to reduce memory usage and accelerate computation where numerical precision allows.
+#### D.3. Formation & Evolution
+*   Edges are not predefined but emerge and evolve. An effective connection (edge) strengthens between neurons `i` and `j` if they consistently fire with a timing relationship (`Δt`) that correlates with positive SIE rewards (`total_reward > 0`). Connections irrelevant to success or associated with errors (`total_reward < 0`) are weakened by STDP or potentially pruned by self-modification (Sec 4.C). The graph continuously evolves as learning progresses.
+
+#### D.4. Self-Coordination and Routing
+*   There is no central module directing information flow. Instead, processing and reasoning occur via the propagation of spiking activity across the strongest pathways (edges with large `abs(w_ij)`) in the emergent graph.
+*   **Reliable Routing:** For specific computations (e.g., "2+2=?"), input spike patterns activate corresponding input neurons. These spikes propagate through pathways strengthened by previous STDP/SIE reinforcement for similar tasks (e.g., `w[i,j]` increased for neurons co-firing during "2 + 2 = 4" training). Inhibitory connections and sparse connectivity help filter out irrelevant associations (weak or non-existent pathways, `w[i,j] < 0.1`), ensuring spikes reliably reach functionally relevant clusters (e.g., "math cluster" identified via adaptive clustering) and ultimately the correct output neurons (e.g., neuron representing '4').
+*   **Functional Circuits:** Specific circuits (e.g., for arithmetic) emerge through the interplay of STDP (forming connections between co-active neurons), SIE reward shaping (reinforcing correct outputs for specific tasks, e.g., `r=1` for "4"), adaptive clustering (identifying functional groups like "math"), and structural plasticity (allocating resources, pruning irrelevant connections).
+
+### E. Tensor-Based Computation and Hybrid Interface
+
+#### E.1. Hybrid Approach Rationale
+*   While SNNs excel at temporal processing, certain operations like analyzing graph properties, calculating complex SIE rewards, managing large state vectors (like eligibility traces `e_ij` or value function `V_states`), or performing clustering are often more efficiently handled using optimized tensor libraries. FUM adopts a hybrid approach, leveraging the strengths of both SNN simulation and tensor computation.
+
+#### E.2. Frameworks & Hardware Roles (Development Context)
+*   Utilizes PyTorch for tensor manipulation.
+*   **AMD Radeon 7900 XTX (24GB VRAM):** Primarily runs the custom ROCm HIP kernel (`neuron_kernel.hip`) for high-frequency, parallel LIF updates and spike generation. Also handles the final STDP weight updates (`w += ...`). Stores `V`, `spikes`, `spike_history`, `w`.
+*   **AMD Instinct MI100 (32GB VRAM):** Primarily runs PyTorch tensor operations for tasks like STDP `Δw_ij` calculation, eligibility trace (`e_ij`) updates, SIE component calculations (novelty, habituation, complexity, impact, TD error), value function (`V_states`) updates, and k-means clustering. Stores `e_ij`, `V_states`, `recent_inputs`, `habituation_counter`, etc.
+*   **CPU (AMD Threadripper PRO 5955WX):** Manages overall orchestration, data loading, potentially graph partitioning (METIS), parameter server logic (if scaling beyond node memory), and decoding outputs.
+
+#### E.3. Interface: Data Flow & Synchronization
+*   **Frequency:** Interaction occurs primarily after each 50-timestep simulation window. Global operations like clustering or scaling occur less frequently (e.g., every 1000 timesteps).
+*   **Data Flow (SNN -> Tensor):**
+    1.  `spike_history` (uint8, ~6KB for 1k neurons) recorded on 7900 XTX by LIF kernel.
+    2.  After 50 timesteps, transfer `spike_history` to MI100 (`spike_history_mi100 = spike_history.to('cuda:0')`).
+    3.  MI100 computes `Δw_ij`, updates `e_ij`, calculates `rates`, computes SIE components (`novelty`, `habituation`, `complexity`, `impact`, `TD_error`), updates `V_states`.
+*   **Data Flow (Tensor -> SNN):**
+    1.  `total_reward` (float16 scalar) calculated on MI100.
+    2.  `e_ij` (sparse float16, ~10KB) updated on MI100.
+    3.  Transfer `total_reward` and `e_ij` to 7900 XTX (`total_reward.to('cuda:1')`, `e_ij.to('cuda:1')`).
+    4.  7900 XTX applies final weight update to `w` using `total_reward` and `e_ij`.
+*   **Synchronization:** Use `torch.cuda.synchronize()` or CUDA events to ensure data transfers are complete before dependent computations begin. Buffering mechanisms (e.g., `rate_buffer` on MI100, appending `rates.to('cuda:0')` every 50 steps) handle aggregation for less frequent operations like k-means (processed when buffer full, e.g., 1000 steps). Timing mismatches are managed by the fixed interaction frequency (every 50 timesteps).
 
 ## 3. Multimodal Input/Output Processing
 
-### A. Encoder Mechanism
+### A. Encoder Mechanism: From Raw Data to Spike Trains
 
-1.  **Purpose:**
-    *   To act as the sensory interface, translating diverse raw input data from various modalities (text, images, video, potentially audio, touch, etc.) into a **universal spike-based format** that the SNN core can process uniformly. **Why?** This allows the core network to be modality-agnostic, simplifying the architecture and enabling seamless integration of new sensor types.
-2.  **Contrast with LLM Input:**
-    *   This differs markedly from LLMs which typically use tokenization (breaking text into sub-words) followed by embedding layers to convert input into dense vectors. FUM uses temporal spike patterns.
-3.  **Method:**
-    *   The core principle is rate encoding: mapping features of the input data onto the firing frequencies of a dedicated set of input neurons over a defined time window (e.g., 50 timesteps). Higher intensity or salience in the input translates to higher firing rates.
-        *   **Text:** Each character's ASCII value is mapped to a frequency (e.g., `ASCII value % 50 Hz`). A sequence of characters becomes a time-varying frequency pattern injected into the network.
-        *   **Images:** Treated as grids of pixels (e.g., 10x10 grayscale). Each pixel's intensity is mapped to a firing frequency (e.g., `Intensity / 2.55 Hz`). The flattened pixel grid provides spatially organized input over the time window.
-        *   **Video:** Processed as a sequence of image frames, with each frame encoded as described above, naturally providing spatio-temporal input.
-4.  **Extensibility:**
-    *   The key advantage is extensibility. Adding a new sensor (e.g., audio) only requires designing a new encoder module that converts that sensor's data into the same spike-rate format. The core FUM network doesn't need modification.
+#### A.1. Purpose & Contrast with LLM Input
+*   To act as the sensory interface, translating diverse raw input data from various modalities (text, images, video, potentially audio, touch, etc.) into a **universal spike-based format** that the SNN core can process uniformly. **Why?** This allows the core network to be modality-agnostic, simplifying the architecture and enabling seamless integration of new sensor types.
+*   This differs markedly from LLMs which typically use tokenization (breaking text into sub-words) followed by embedding layers to convert input into dense vectors. FUM uses temporal spike patterns.
 
-### B. Decoder Mechanism
+#### A.2. Encoding Methods (Rate & Temporal)
+*   **Rate Encoding (Primary):** Maps features to firing frequencies `f` over a window `T` (e.g., 50 timesteps).
+    *   *Text:* ASCII value `c` -> `f = (ord(c) % 50) Hz`.
+    *   *Images:* Pixel intensity `p` (0-255) -> `f = (p / 2.55) Hz`.
+*   **Temporal Encoding (Structured Inputs):** For complex inputs like code syntax trees or logical propositions, use hierarchical temporal encoding:
+    *   *Code Syntax Trees:* Parse tree (e.g., using `ast`). Encode node type/value using frequency bands (e.g., Call: 10-20Hz) modulated by value (e.g., `print`: 15Hz). Encode hierarchy over sequential time windows (e.g., 50 timesteps per level: Root -> Children -> Grandchildren).
+    *   *Logical Propositions:* Encode variables (A: 10Hz) and operators (∧: 30Hz, →: 35Hz) as frequencies in a temporal sequence (e.g., [A, ∧, B, →, C] over 250 timesteps).
 
-1.  **Purpose:**
-    *   To translate the internal spiking activity patterns of designated output neurons back into a human-understandable format (e.g., text, classification label, numerical value), relevant to the task performed.
-2.  **Method:**
-    *   This is conceptually the inverse of the encoder, likely also using rate decoding. The average firing frequencies or specific temporal patterns of output neurons over a time window are mapped back to symbolic values or descriptions.
-        *   For text output, a specific output neuron's frequency might map back to an ASCII character.
-        *   For classification, the neuron with the highest firing rate in an output group might indicate the chosen class.
-        *   For descriptive tasks, patterns of activity across specific neuron groups, potentially shaped by the emergent knowledge graph, would be interpreted to generate relevant output.
-3.  **Flexibility:**
-    *   The nature of the output (e.g., numerical answer, code snippet, text description) is determined by the task and which parts of the knowledge graph were most strongly activated during processing, allowing for context-dependent responses.
+#### A.3. Poisson Spike Generation Details
+*   **Formula:** Spikes are generated using a Poisson process based on target frequency `f` and timestep `dt=1ms`.
+    *   Probability of spike per timestep: `p = f * dt`. (e.g., `f=50Hz` -> `p=0.05`).
+    *   Algorithm: For each timestep `t`, if `torch.rand(1) < p`, emit spike `spike[t] = 1`.
+*   **Refractory Period:** A 5ms refractory period (5 timesteps) is imposed on input neurons after spiking.
+    *   **Implementation:** Maintain `refractory[i]` counter. If `spike[t]=1`, set `refractory[i]=5`. Only generate spike if `refractory[i]==0`. Decrement counter each step.
+    *   **Rationale:** Prevents unrealistically high firing rates (caps at 200 Hz), aligning with biological limits.
+
+#### A.4. Output & Extensibility
+*   Output is a tensor `I_encoded` (shape: `[num_input_neurons, T_total]`) containing spike trains (0s and 1s) fed into the SNN core.
+*   Adding a new sensor only requires designing a new encoder module mapping its data to spike trains.
+
+### B. Decoder Mechanism: From Spike Trains to Structured Output
+
+#### B.1. Purpose
+*   To translate the internal spiking activity patterns of designated output neurons back into a human-understandable format (e.g., text, classification label, numerical value, code, logical steps), relevant to the task performed.
+
+#### B.2. Decoding Methods (Rate & Temporal)
+*   **Rate Decoding (Simple Outputs):** Average firing rates of output neurons over a window `T` (e.g., 50 timesteps) are mapped to symbols.
+    *   *Classification:* Highest firing rate indicates the class.
+    *   *Numerical:* `symbol = int(rate * 2)` (e.g., `rate = torch.sum(spike_history[output_neuron]) / 50`, so 2 Hz -> '4').
+*   **Temporal Decoding (Structured Outputs):** Generate sequences by interpreting firing rates of output neurons over sequential time windows.
+    *   *Code Generation:* `print(2+2)` -> Window 1: Neuron 'print' fires at 10Hz; Window 2: Neuron '(' fires at 11Hz; Window 3: Neuron '2' fires at 12Hz, etc. Map rates (`rate = torch.sum(...) / 50`) to tokens using a lookup table (`token = lookup[rate]`).
+    *   *Logical Deduction:* Output steps ("Given A=1", "A ∧ B = 1", "C = 1") sequentially, mapping tokens to firing rates in successive windows.
+
+#### B.3. Emergent Formation
+*   STDP and SIE reinforce connections from internal processing clusters to the appropriate output neurons, ensuring they fire at the correct rates/times to produce the desired output, guided by rewards (`r=1`) for successful task completion.
+
+#### B.4. Implementation
+*   Decoding typically occurs on the CPU after retrieving spike history or firing rates from the GPU, logging outputs to SSD (`torch.save(outputs, 'outputs.pt')`).
 
 ## 4. Emergent Behaviors and Self-Organization
 
 ### A. Emergent Energy Landscape
 
 1.  **Concept & Novelty:**
-    *   FUM aims for network stability (analogous to a low-energy state in physics-inspired models like Hopfield networks) to **emerge naturally** from the interaction of local learning rules (STDP) and global feedback (SIE), rather than being imposed by a predefined mathematical energy function (like `E = -1/2 * Σ w_ij * s_i * s_j`). **Why is this novel/useful?** It allows the network to find its own stable configurations best suited to the data and tasks, potentially leading to more flexible and robust solutions than those constrained by a fixed energy formulation.
+    *   FUM aims for network stability (analogous to a low-energy state) to **emerge naturally** from the interaction of local learning rules (STDP for excitatory/inhibitory synapses, intrinsic plasticity) and global feedback (SIE), rather than being imposed by a predefined mathematical energy function (like Hopfield networks). **Why is this novel/useful?** It allows the network to find its own stable configurations best suited to the data and tasks, potentially leading to more flexible and robust solutions.
 2.  **Mechanism:**
-    *   STDP inherently promotes stability. By strengthening connections between causally related firing events (pre before post) and weakening others, it reinforces consistent, reliable pathways. The SIE feedback further guides this process, ensuring that the stable patterns being reinforced are those that lead to correct task outcomes. The network effectively "settles" into configurations where rewarded patterns are easily produced with minimal extraneous activity (low variance).
+    *   STDP reinforces consistent, reliable pathways. Inhibitory STDP and connections actively balance excitation. Intrinsic plasticity adapts neuron excitability. Synaptic scaling normalizes inputs. SIE feedback guides this process towards rewarded, stable states. The network effectively "settles" into configurations where rewarded patterns are produced with minimal extraneous activity (low variance).
 3.  **Stability Metric:**
-    *   Firing rate variance (e.g., standard deviation < 0.05 Hz across relevant neuron populations over ~1000 timesteps) is used as a practical, measurable proxy for this emergent stability. If variance is high, it indicates chaotic or inefficient processing, potentially triggering corrective actions like STDP modulation or self-modification.
+    *   Firing rate variance (e.g., standard deviation < 0.05 Hz across relevant neuron populations over ~1000 timesteps) is used as a practical, measurable proxy for this emergent stability. High variance indicates inefficient processing and can trigger corrective actions like structural plasticity or SIE penalty (via the 'impact' metric).
 
 ### B. Knowledge Graph Evolution (Detailed)
 
 1.  **Process:**
-    *   The graph's structure is not static; it *is* the pattern of learned synaptic weights. It starts minimally connected or random (Phase 1). As the network processes input (Phase 2 & 3) and receives SIE feedback, STDP strengthens connections between neurons that consistently fire together (`Δt < 20ms`) in response to related concepts or as part of successful computations (reward = +1). Connections irrelevant to success or associated with errors (reward = -1) are weakened by STDP or potentially pruned by self-modification.
+    *   The graph's structure *is* the pattern of learned synaptic weights `w_ij`. It starts sparsely connected with a distance bias (Phase 1). As the network processes input (Phase 2 & 3) and receives SIE feedback, STDP strengthens connections between neurons firing with appropriate timing (`Δt`) for rewarded computations (`total_reward > 0`). Connections irrelevant or detrimental (`total_reward < 0`) are weakened or pruned.
 2.  **Outcome:**
-    *   This continuous evolution results in a self-organized graph where edge weights implicitly represent the learned probabilistic or causal relationships between the concepts encoded by the neurons. Strong paths emerge connecting related ideas (e.g., linking "calculus" concepts to "algebra" concepts) and spanning across domains (e.g., connecting visual features of a "square" to the mathematical concept of "four sides").
+    *   Continuous evolution results in a self-organized graph where edge weights implicitly represent learned relationships. Strong paths emerge connecting related concepts (e.g., "calculus" to "algebra") and spanning domains (e.g., visual "square" to mathematical "four sides"). Inhibitory connections shape dynamics and prevent runaway loops.
 
-### C. Self-Modification (Structural Plasticity)
+### C. Self-Modification (Structural Plasticity - Detailed Algorithms)
 
-1.  **Rationale:**
-    *   Biological brains exhibit structural plasticity (synaptogenesis, pruning). FUM incorporates this for **autonomy and long-term adaptation**. It allows the network to allocate resources and change its own structure in response to persistent performance issues or new learning demands, without requiring external intervention or complete retraining (unlike most static ANNs).
-2.  **Triggers:**
-    *   Structural changes are not random but triggered by performance metrics monitored over time. Key triggers include: sustained low SIE rewards in a specific domain (indicating need for more resources) or persistently high firing variance (indicating instability or inefficient representation).
-3.  **Rewiring:**
-    *   Existing connections (edges in the graph) can be weakened or potentially removed if they are consistently associated with negative rewards or contribute to high firing variance. New connections might form based on ongoing STDP.
-4.  **Growth:**
-    *   If a functional domain (potentially identified via clustering) consistently underperforms (e.g., average reward < 0.5 over 1000 timesteps), the system can allocate *new* LIF neurons, initialize them, and integrate them into the existing graph structure, allowing for increased representational capacity in that area. The `scaling.py` module is intended to handle this reward-driven growth.
-5.  **Pruning:**
-    *   Neurons that remain largely inactive (e.g., firing rate < 1 Hz over 1000 timesteps) are considered computationally wasteful and can be removed from the network, freeing up resources. This involves removing the corresponding node and its associated edges from the graph representation.
+#### C.1. Rationale & Triggers
+*   Mimics biological structural plasticity (synaptogenesis, pruning) for **autonomy and long-term adaptation**. Allows the network to allocate resources and change its structure in response to performance or new demands without external intervention.
+*   **Triggers:**
+    *   Sustained low average cluster reward (`avg_reward[c] < 0.5` over 1000 steps).
+    *   Persistently high firing variance (`std dev > 0.05 Hz` over 1000 steps in a cluster).
+    *   Persistently low neuron activity (`rate < 1 Hz` over 10,000 steps).
 
-### D. Adaptive Domain Clustering
+#### C.2. Growth Algorithm
+*   **Trigger:** Low cluster reward (`avg_reward[c] < 0.5`).
+*   **Allocation:** Add `num_new_neurons` (e.g., 10% of cluster size).
+*   **Initial Parameters:** `V = v_reset` (-70mV), `tau ~ N(20ms, 2ms^2)`, `v_th ~ N(-55mV, 2mV^2)`. (`torch.full`, `torch.normal` on `cuda:1`).
+*   **Connections:** Form `conn_size=100` connections per new neuron: 50% targeted to low-reward neurons within the cluster (`torch.randint`), 50% random across network (`torch.randint`). Use distance-dependent probability `exp(-d/σ)` for selection (`torch.multinomial`). Check `conn_history` limit (max 3 additions per pair).
+*   **Initial Weights:** Uniform `U(0, 0.3)` (`torch.rand * 0.3`) for excitatory outputs, `U(-0.3, 0)` for inhibitory outputs.
+*   **Tensor Resizing:** Expand sparse `w` (convert COO, `torch.cat` new indices/values, convert CSR `torch.sparse_csr_tensor`). Rebalance shards using METIS if distributed (executed on CPU).
 
-1.  **Purpose:**
-    *   To dynamically identify functional specializations emerging within the network. As neurons learn via STDP and SIE, groups of neurons naturally start responding preferentially to certain types of inputs or tasks (e.g., some become "math neurons," others "language neurons"). Clustering makes these emergent specializations explicit.
-2.  **Mechanism:**
-    *   Periodically (e.g., every 1000 timesteps), the network analyzes the firing rate patterns (or potentially other activity metrics) of its neurons. Standard algorithms like k-means clustering (specified to use `torch.kmeans` for efficient tensor-based implementation) are applied to group neurons with similar activity profiles into distinct clusters.
-3.  **Adaptation:**
-    *   These identified clusters are not necessarily fixed structural units but represent the current functional organization. As the network continues to learn and adapt (potentially via self-modification), subsequent clustering runs will reflect changes in neuron specialization and inter-domain relationships captured by the evolving knowledge graph. This helps in understanding and potentially guiding the learning process (e.g., identifying domains needing more resources via the Growth mechanism).
+#### C.3. Pruning Algorithm
+*   **Trigger:** Low neuron activity (`rate < 1 Hz` over 10k steps).
+*   **Downstream Compensation (Homeostatic Plasticity):** For each downstream neuron `j` losing input from pruned neuron `k`, compute `lost_input[j] = sum(w[k,j])`. Adjust threshold: `v_th[j] -= lost_input[j] * 0.1` (clamped >= -60mV). Executed on 7900 XTX.
+*   **Removal Operation:** Delete row/column `k` from sparse `w`: Identify indices `i=k` or `j=k`, remove them, adjust remaining indices (`>k` decremented), remove corresponding values. Rebuild `torch.sparse_csr_tensor`. Update affected shard, broadcast index changes if distributed.
+
+#### C.4. Rewiring Algorithm & Limits
+*   **Trigger:** High cluster variance (`std dev > 0.05 Hz` over 1000 steps).
+*   **Mechanism:** Active connection formation beyond STDP, based on performance.
+*   **Co-Activation Detection:** Compute pairwise co-activation `co_act[i,j] = sum(spike_history[i] * spike_history[j]) / T` for neurons in the unstable cluster (on MI100).
+*   **New Connection Formation:** For pairs with `co_act[i,j] > 0.8` and `w[i,j] = 0`, add a new connection `w[i,j] = 0.1` (excitatory) or `-0.1` (inhibitory, maintaining 80:20 ratio), respecting `conn_history` limit (max 3) and overall sparsity limit. Update `w` by appending indices/values (on 7900 XTX).
+*   **Limits:**
+    *   Max `0.01 * N^2` new connections per rewiring event.
+    *   Max 3 additions per pair lifetime (`conn_history`).
+    *   Global sparsity target ~95% (prune weakest if exceeded).
+    *   Increase inhibitory connections (20 per 100 excitatory) during rewiring.
+    *   Reduce `co_act` threshold (e.g., 0.7) if variance remains high.
+
+### D. Adaptive Domain Clustering (Dynamic k and Edge Cases)
+
+#### D.1. Purpose & Mechanism
+*   Dynamically identify functional specializations (domains) emerging within the network by grouping neurons with similar activity profiles.
+*   Periodically (e.g., every 1000 timesteps), run k-means clustering (`torch.kmeans` on MI100) on neuron firing rates (`rates = torch.sum(spike_history, dim=1) / 50`).
+
+#### D.2. Determining Number of Clusters (k)
+*   **Dynamic Selection using Silhouette Score:**
+    *   **Method:** Test `k` in range `[k_min, max_k]`.
+        *   `k_min = num_domains` (e.g., 8). Ensures minimum granularity reflecting known task domains.
+        *   `max_k = min(num_neurons // 50, num_domains * 2)` (e.g., 16 for 1k neurons). Limits complexity.
+    *   **Algorithm:** For each `k`, run `torch.kmeans`, compute silhouette score (`(b-a)/max(a,b)`). Choose `k` with highest score (`best_k = argmax(scores)`).
+    *   **Adjustment:** Final `k = max(best_k, k_min)`. If silhouette selects `k < k_min`, override with `k_min`.
+    *   **Implementation:** Execute on MI100 GPU.
+
+#### D.3. Cluster Assignment & Reward Attribution (Domain Identification)
+*   **Assignment:** Assign neurons to clusters based on similarity to centroids (hard assignment `cluster_id[i] = argmax(similarity)`, soft probabilities `probs[i] = softmax(similarity)`).
+*   **Reward Attribution:**
+    *   Map current input to a cluster based on induced firing pattern: `input_cluster = argmax(sum(probs * rates, dim=0))`.
+    *   Attribute global `total_reward` to this cluster: `cluster_rewards[input_cluster] += total_reward`.
+    *   Attribute reward to neurons weighted by probability: `neuron_rewards[i] += total_reward * probs[i, input_cluster]`.
+*   **Average Reward:** Compute `avg_reward[c] = cluster_rewards[c] / num_inputs[c]` over 1000 steps (handle division by zero, see D.4). Used as growth trigger.
+*   **Implementation:** Maintain `cluster_rewards`, `num_inputs`, `neuron_rewards` tensors on MI100.
+
+#### D.4. Edge Case Handling (Small k, Empty Clusters)
+*   **Small k:** If dynamic selection yields `k < k_min`, override with `k = k_min` (rerun kmeans if needed). Ensures minimum functional granularity.
+*   **Empty Clusters:** If `num_inputs[c] = 0` (no inputs mapped to cluster `c` over 1000 steps), set `avg_reward[c] = 0` (neutral reward) to avoid division by zero. This triggers growth (`avg_reward < 0.5`) for the unused cluster, promoting exploration. Log metrics to SSD.
+
+#### D.5. Adaptation
+*   Clusters reflect the current functional organization and guide structural plasticity (growth targets).
 
 ## 5. Training and Scaling: Detailed Implementation Strategy
 
-FUM employs a multi-phase training strategy designed for data efficiency and gradual complexity building, culminating in continuous, autonomous learning. This contrasts significantly with the massive, often single-stage pre-training of LLMs. The implementation relies heavily on orchestrating SNN simulation, STDP learning, SIE feedback, and structural modifications, leveraging a hybrid architecture and custom optimizations.
-
-**Note on Hardware Optimizations:** The specific hardware configurations mentioned (AMD Threadripper PRO 5955WX, MI100 32GB VRAM, 7900 XTX 24GB VRAM) are for development and testing purposes to validate the model's theoretical foundations. These are not rigid requirements but represent the author's (Justin Lietz) test environment where the predecessor AMN model was successfully validated up to 10 units.
-
-**Table of Contents**
-*   [A. Phase 1: Random Seed Sprinkling (Foundation Building)](#a-phase-1-random-seed-sprinkling-foundation-building)
-    *   [1. Objective](#1-objective)
-    *   [2. Cellular Components & Mechanisms](#2-cellular-components--mechanisms)
-    *   [3. Physics of Initial State Formation](#3-physics-of-initial-state-formation)
-    *   [4. Expected Outcome](#4-expected-outcome)
-*   [B. Phase 2: Tandem Complexity Scaling (Refinement and Competence)](#b-phase-2-tandem-complexity-scaling-refinement-and-competence)
-    *   [1. Objective](#1-objective-1)
-    *   [2. Cellular Components & Mechanisms](#2-cellular-components--mechanisms-1)
-    *   [3. Mathematical Formulations](#3-mathematical-formulations)
-    *   [4. Expected Outcome](#4-expected-outcome-1)
-*   [C. Phase 3: Continuous Self-Learning (Autonomy and Mastery)](#c-phase-3-continuous-self-learning-autonomy-and-mastery)
-    *   [1. Objective](#1-objective-2)
-    *   [2. Cellular Components & Mechanisms](#2-cellular-components--mechanisms-2)
-    *   [3. Emergent Physics Principles](#3-emergent-physics-principles)
-    *   [4. Expected Outcome](#4-expected-outcome-2)
-*   [D. Scaling Strategy: Implementation Details](#d-scaling-strategy-implementation-details)
-    *   [1. Distributed Computation (Graph Sharding)](#1-distributed-computation-graph-sharding)
-    *   [2. Asynchronous Updates](#2-asynchronous-updates)
-    *   [3. Memory Management](#3-memory-management)
-    *   [4. Hardware Optimization (Development Context)](#4-hardware-optimization-development-context)
-*   [E. Mathematical Foundations](#e-mathematical-foundations)
-    *   [1. LIF Neuron Dynamics](#1-lif-neuron-dynamics)
-    *   [2. STDP Learning Rules](#2-stdp-learning-rules)
-    *   [3. Energy Landscape Formulation](#3-energy-landscape-formulation)
-    *   [4. Graph Theory Applications](#4-graph-theory-applications)
-
----
+FUM employs a multi-phase training strategy designed for data efficiency and gradual complexity building, culminating in continuous, autonomous learning. This contrasts significantly with the massive, often single-stage pre-training of LLMs. The implementation relies heavily on orchestrating SNN simulation, STDP learning, SIE feedback, and structural modifications, leveraging a hybrid architecture and custom optimizations tailored for the development hardware (Justin Lietz's workstation: AMD Threadripper PRO 5955WX, MI100 32GB, 7900 XTX 24GB, 512GB RAM).
 
 ### A. Phase 1: Random Seed Sprinkling (Foundation Building)
 
-#### 1. Objective
+#### A.1. Objective
 Establish a broad, foundational associative structure across multiple domains using minimal, diverse data (target: 80 inputs), avoiding early over-specialization and preparing the network for complex learning.
 
-#### 2. Cellular Components & Mechanisms
-*   **Network Initialization:** 
-    *   Instantiate a population of LIF neurons (e.g., 1000 initially, scaling up). Each neuron's state includes:
-        *   Membrane Potential (`V`): Initialized to resting potential (`v_reset`, e.g., -70mV). Stored as `float16` tensors.
-        *   Spike State (`spikes`): Initialized to 0. Stored as `float16` tensors.
-    *   Synaptic Weight Matrix (`w`): Represents potential connections between all neuron pairs. Initialized as a highly sparse matrix (e.g., `torch.sparse_csr_tensor` format, target 95% sparsity) with small random weights (e.g., uniform distribution around 0). This matrix embodies the nascent knowledge graph.
-
-#### 3. Physics of Initial State Formation
-The initial state formation follows principles from statistical mechanics and dynamical systems:
-
-1. **Energy Minimization Principle:**
-   - The system begins in a high-potential energy state with random connections
-   - The LIF dynamics act as a dissipative system, with the membrane potential equation:
-     ```
-     V(t) = V(t-1) + I(t) - (V(t-1)/τ)*dt
-     ```
-     where τ is the membrane time constant (10-20ms), acting as an energy dissipation term
-
-2. **Stochastic Initialization:**
-   - Weights follow a uniform distribution U(-ε, ε) where ε ≈ 0.01
-   - This creates a rough potential energy landscape with many local minima
-
-3. **Phase Space Dynamics:**
-   - Each neuron's state can be represented as a point in phase space (V, I)
-   - The initial conditions place all points near the resting potential (V ≈ -70mV)
-   - Input currents I(t) provide perturbations driving the system toward attractor states
+#### A.2. Cellular Components & Mechanisms (Incl. Initialization Strategy & Dynamic States)
+*   **Network Initialization:**
+    *   Instantiate LIF neurons (e.g., 1000 initially), 80% excitatory, 20% inhibitory.
+    *   Initialize states: `V = v_reset` (-70mV), `spikes = 0`. Heterogeneous parameters `tau ~ N(20ms, 2ms^2)`, `v_th ~ N(-55mV, 2mV^2)`. Stored as `float16` tensors on 7900 XTX.
+    *   Initialize sparse weight matrix `w` (`torch.sparse_csr_tensor`, ~95% sparsity) on 7900 XTX.
+        *   **Connectivity (Structural Bias):** Use distance-dependent bias (`exp(-d/σ)`, `σ=5`) for connection probability, where `d` is Euclidean distance in a virtual 2D grid. Sample using `torch.multinomial`. Encourages local clustering.
+        *   **Initial Weights (Distribution):** Uniform `U(0, 0.3)` (`torch.rand * 0.3`) for excitatory outputs, `U(-0.3, 0)` for inhibitory outputs. Clamped to `[-1, 1]`. Small range avoids saturation, allows STDP shaping.
+    *   **Initialize Dynamic States (t=0):**
+        *   **Eligibility Traces (`e_ij`):** Initialized to zero. Sparse `float16` tensor mirroring `w`'s structure on MI100 (`torch.sparse_csr_tensor(w._indices(), torch.zeros_like(w._values()))`). Ensures first updates based only on initial STDP events.
+        *   **TD Value Function (`V_states`):** Initialized to zero. `float16` tensor on MI100, size `k_min=8` initially (`torch.zeros(k_min)`). Assumes neutral starting point before rewards observed. Resized after first clustering.
 *   **Data Loading & Encoding:**
-    *   Load the seed corpus (e.g., 80 diverse items: text snippets, image descriptors, simple logic statements).
-    *   **Encoder Module:** Translates each raw input item into a temporal sequence of input spike patterns (`I_encoded`) over a defined window (`T` timesteps, e.g., `T=50`).
-        *   **Mechanism:** Rate encoding is the primary method. Input features are mapped to firing frequencies of dedicated input neurons.
-            *   *Text Example:* ASCII value of each character `c` maps to a frequency `f = (ord(c) % 50) Hz`. The sequence "2+2" generates time-varying frequencies across assigned input neurons.
-            *   *Image Example:* Pixel intensity `p` (0-255) maps to `f = (p / 2.55) Hz`. A 10x10 grayscale image activates 100 input neurons with corresponding frequencies over the window `T`.
-        *   The resulting `I_encoded` tensor (shape: `[num_input_neurons, T]`) provides the external stimulus.
+    *   Load seed corpus (80 diverse items).
+    *   **Encoder Module:** Translate each item into spike trains `I_encoded` (shape `[num_input_neurons, T=50]`) using rate encoding (Poisson process with 5ms refractory period) or temporal encoding for structured data.
 *   **Training Loop (Iterative Refinement):**
-    *   Iterate through the shuffled seed corpus for a small number of epochs (e.g., 5-10 passes).
+    *   Iterate through shuffled seed corpus (e.g., 5-10 epochs).
     *   **For each input item:**
-        *   **Simulation Loop (`T` timesteps):**
-            *   **Timestep `t` (e.g., `dt = 0.01ms`):**
-                *   **Input Current Calculation (`I(t)`):** Each neuron `j` calculates its total input current by summing:
-                    *   External input from `I_encoded[:, t]` if neuron `j` is an input neuron.
-                    *   Synaptic input: `Σ_i (spikes_i(t-1) * w_ij)`, where `spikes_i(t-1)` is the spike output of pre-synaptic neuron `i` at the previous timestep, and `w_ij` is the synaptic weight from `i` to `j`. This involves sparse matrix-vector multiplication.
-                *   **LIF Neuron Update (Core Cellular Logic):** Each neuron updates its membrane potential `V_j(t)` based on its previous state `V_j(t-1)` and the calculated input current `I_j(t)`:
-                    `V_j(t) = V_j(t-1) + I_j(t) - (V_j(t-1) / tau) * dt`
-                    (where `tau` is the membrane time constant, e.g., 20ms). This models the leaky integration process.
-                *   **Spike Generation:** If `V_j(t)` crosses the threshold `v_th` (e.g., -55mV), the neuron fires: `spikes_j(t) = 1`.
-                *   **Reset:** If `spikes_j(t) = 1`, the potential is reset: `V_j(t) = v_reset`.
-                *   **Optimization:** This entire LIF update loop (integration, thresholding, reset) is executed via a custom ROCm HIP kernel (`neuron_kernel.hip`) for massive parallelism on the designated GPU (e.g., 7900 XTX), operating on `float16` tensors.
-                *   **Spike Recording:** The spike times (or simply the spike state `spikes(t)`) for all neurons are recorded for each timestep `t` within the window `T`. This might involve maintaining auxiliary trace variables per neuron to capture recent activity for STDP.
-        *   **STDP Calculation (Learning Rule):** After the `T` timesteps for an input item, the recorded spike history is analyzed. For every pair of neurons (`i`, `j`) with a potential or existing synapse `w_ij`:
-            *   Calculate the time difference `Δt = t_post - t_pre` for all spike pairs within the STDP time window (e.g., +/- 50ms).
-            *   Calculate the weight change `Δw_ij` using the exponential STDP rule:
-                *   Potentiation: `Δw_ij = A_+ * exp(-Δt / τ_+)` if `0 < Δt < window`.
-                *   Depression: `Δw_ij = -A_- * exp(Δt / τ_-)` if `-window < Δt < 0`.
-                (Parameters: `A_+` ≈ 0.1, `A_-` ≈ 0.12, `τ_+` ≈ 20ms, `τ_-` ≈ 20ms).
-        *   **Weight Update Application:** Apply the calculated changes `Δw_ij` to the sparse weight matrix `w`. `w_ij = clip(w_ij + eta * Δw_ij, w_min, w_max)`. (Where `eta` is a base learning rate, potentially modulated slightly even in Phase 1 by basic SIE feedback). Clipping prevents runaway weights.
+        *   **Simulation Loop (`T=50` timesteps, `dt=1ms`):**
+            *   **LIF Kernel (7900 XTX):** Calculate input current `I(t) = w @ spikes(t-1) + I_encoded`. Update `V_j(t)`, generate `spikes_j(t)`, reset `V_j`, record in `spike_history`.
+        *   **Spike History Transfer:** Send `spike_history` to MI100.
+        *   **STDP Calculation (MI100):** Compute `Δw_ij(t)` for all spike pairs using excitatory/inhibitory STDP rules.
+        *   **Eligibility Trace Update (MI100):** Update `e_ij(t) = γ * e_ij(t-1) + Δw_ij(t)`.
         *   **SIE Feedback (Minimal Guidance):**
-            *   **Decoder Module:** Generate a preliminary output by interpreting the firing patterns of designated output neurons over the window `T` (e.g., highest average firing rate indicates category).
-            *   Compare output to a simple target (if available for seed data) -> Reward `r` (+1, -1, 0).
-            *   *Modulation (Optional in Phase 1):* Use `r` to slightly scale the applied `Δw_ij` (e.g., multiply `eta` by `(1 + 0.1*r)`), providing initial reinforcement.
-*   **Graph Representation:** The final sparse weight matrix `w` represents the initial state of the emergent knowledge graph, with weak pathways formed by initial correlations.
+            *   **Decoder Module:** Generate preliminary output.
+            *   Compare to target -> Reward `r` (+1, -1, 0).
+            *   Calculate `total_reward` (TD error likely small initially, novelty/habituation active).
+        *   **Reward/Trace Transfer:** Send `total_reward` and `e_ij` to 7900 XTX.
+        *   **Weight Update Application (7900 XTX):** Apply `w_ij = clip(w_ij + eta_effective * total_reward * e_ij, -1, 1)`.
+        *   **Intrinsic Plasticity Update (7900 XTX):** Adjust `tau_i`, `v_th_i` based on firing rates.
+*   **Graph Representation:** The final sparse `w` represents the initial knowledge graph with weak pathways formed.
 
-#### 4. Expected Outcome
-A sparsely connected SNN (initial knowledge graph) where synapses corresponding to basic correlations in the seed data have been slightly adjusted by STDP. The network is initialized but lacks significant competence. Foundational pathways are laid for future learning.
+#### A.3. Physics of Initial State Formation
+The initial state formation follows principles from statistical mechanics and dynamical systems:
+1. **Energy Minimization Principle:** The system begins in a high-potential energy state with random connections. The LIF dynamics act as a dissipative system, with the leak term `-(V(t-1)/τ)*dt` driving the system towards lower energy states (resting potential).
+2. **Stochastic Initialization:** Weights follow a uniform distribution `U(-0.3, 0.3)` (split for E/I). This creates a rough potential energy landscape with many local minima. The distance-dependent connectivity bias provides initial structure, slightly favoring local connections.
+3. **Phase Space Dynamics:** Each neuron's state `(V, I)` starts near the resting potential. Input currents `I(t)` perturb the system, driving it towards attractor states shaped by the emerging connectivity and STDP/SIE learning.
 
-Key metrics:
-- Firing rate variance: σ² < 0.1 Hz²
-- Connection sparsity: >95%
-- Average weight magnitude: |w| ≈ 0.01
+#### A.4. Expected Outcome
+A sparsely connected SNN (initial knowledge graph) where synapses corresponding to basic correlations have been slightly adjusted. Foundational pathways are laid. The network is initialized but lacks significant competence. Key metrics: Firing rate variance σ² < 0.1 Hz², Connection sparsity >95%, Average weight magnitude |w| ≈ 0.01-0.05. Sensitivity analysis shows distance bias accelerates clustering (~20%), while initial weight distribution (uniform vs. Gaussian) has low impact.
 
 ---
 
 ### B. Phase 2: Tandem Complexity Scaling (Refinement and Competence)
 
-#### 1. Objective
+#### B.1. Objective
 Refine the initial graph structure, strengthen domain-specific pathways, build robust cross-domain associations, and achieve baseline competence (>85% accuracy target) on more complex tasks using a curated curriculum (target: up to 300 total inputs).
 
-#### 2. Cellular Components & Mechanisms
-*   **Data Curriculum:** Sequentially introduce batches of data with increasing complexity (e.g., longer text sequences, multi-step logic problems, basic image recognition tasks).
-*   **Training Loop (Enhanced):** Iterate through the data batches.
+#### B.2. Cellular Components & Mechanisms
+*   **Data Curriculum:** Sequentially introduce batches of data with increasing complexity.
+*   **Training Loop (Enhanced):** Iterate through data batches.
     *   **For each batch/input item:**
-        *   Execute the core **Simulation Loop** (Encoding, LIF Kernel, Spike Recording) as described in Phase 1.
+        *   Execute core **Simulation Loop**, **STDP Calc**, **Trace Update** as in Phase 1.
         *   **Targeted SIE Feedback (Crucial):**
-            *   **Decoder Module:** Generate task-specific output based on output neuron activity.
-            *   **Evaluation:** Compare output rigorously against the target objective -> Reward `r` (+1 Correct, -1 Incorrect, 0 Neutral/Unknown).
-            *   **Advanced Reward Calculation (Potential):** The design anticipates evolving the reward to `total_reward = TD_error + novelty_bonus - habituation_penalty + self_benefit`.
-                *   *TD_error:* Temporal Difference error, comparing predicted vs. actual outcome value (requires value estimation).
-                *   *Novelty_bonus:* Reward for processing novel/unexpected inputs or generating novel outputs (requires tracking activity history/predictability).
-                *   *Habituation_penalty:* Reduced reward for repetitive, non-beneficial actions/outputs.
-                *   *Self_benefit = complexity * impact:* Reward for solving complex problems with significant positive outcomes (requires defining complexity/impact metrics). Integration starts here, becoming dominant in Phase 3.
-        *   **SIE-Modulated STDP Update:** Apply the calculated `Δw_ij` from STDP, but critically modulate the learning rate `eta` based on the reward `r` (or `total_reward`).
-            *   `eta_effective = eta_base * f(r)` where `f(r)` increases `eta` for positive rewards (e.g., `f(1) = 1.5`) and decreases it or even reverses the sign slightly for negative rewards (e.g., `f(-1) = 0.5` or potentially triggers only depression). This directly links task success to synaptic strengthening/weakening.
-            *   Update weights: `w_ij = clip(w_ij + eta_effective * Δw_ij, w_min, w_max)`.
-        *   **Knowledge Graph Monitoring:** Periodically (e.g., every 1000 simulation steps), analyze the weight matrix `w` using tensor operations (on MI100 GPU). Track metrics like average weight strength, sparsity changes, and potentially graph centrality measures to understand structural evolution.
-        *   **Performance Tracking:** Log SIE rewards per domain/task type to monitor progress towards the >85% accuracy target.
+            *   **Decoder Module:** Generate task-specific output.
+            *   **Evaluation:** Compare output rigorously against target -> Reward `r`.
+            *   **Advanced Reward Calculation (MI100):** Compute `total_reward = TD_error + novelty - habituation + self_benefit`. TD error becomes more significant as `V_states` learns.
+        *   **SIE-Modulated STDP Update (7900 XTX):** Apply weight update using `eta_effective = eta * (1 + mod_factor)` where `mod_factor` is derived from `total_reward`.
+        *   **Intrinsic Plasticity Update (7900 XTX).**
+        *   **Knowledge Graph Monitoring:** Periodically analyze `w` (strength, sparsity, centrality).
+        *   **Performance Tracking:** Log SIE rewards per domain/cluster.
+        *   **Adaptive Clustering (MI100):** Run every 1000 steps to update clusters (using dynamic `k`) and `V_states` mapping.
         *   **Reward-Driven Structural Plasticity (Initiation):**
-            *   **Trigger:** If average domain reward (tracked via SIE) consistently falls below a threshold (e.g., `< 0.5` over 1000 steps), activate the structural modification mechanism.
-            *   **Mechanism (Conceptual):**
-                *   Identify the underperforming domain (potentially using preliminary clustering results).
-                *   Allocate a batch of *new* LIF neurons.
-                *   Initialize their states (`V`, `spikes`) and add them to the network's state tensors.
-                *   Expand the sparse weight matrix `w` to include these neurons, adding sparse, random initial connections to existing neurons, potentially biased towards the underperforming cluster.
-                *   Increment `num_neurons`.
-            *   This allows the network to allocate more representational resources to struggling areas.
+            *   **Trigger:** If `avg_reward[c] < 0.5` over 1000 steps.
+            *   **Mechanism:** Activate Growth algorithm (Sec 4.C.2) for cluster `c`.
 
-#### 3. Mathematical Formulations
-1. **STDP Learning Rule:**
-   ```
-   Δw_ij = {
-     A_+ * exp(-Δt/τ_+) if Δt = t_post - t_pre > 0 (potentiation)
-     -A_- * exp(Δt/τ_-) if Δt < 0 (depression)
-   }
-   ```
-   Where:
-   - A_+ = 0.100 (potentiation amplitude)
-   - A_- = 0.050 (depression amplitude)
-   - τ_+ = τ_- = 20ms (time constants)
-   - Δt = spike timing difference
+#### B.3. Mathematical Formulations
+1. **STDP Learning Rule (Excitatory/Inhibitory):** As defined in Sec 2.B.
+2. **Eligibility Trace:** `e_ij(t) = 0.95 * e_ij(t-1) + Δw_ij(t)`.
+3. **SIE Modulation:** `eta_effective = 0.01 * (1 + (2 * sigmoid(total_reward) - 1))`.
+4. **TD Learning:** `TD_error = r + 0.9 * V(next_state) - V(current_state)`; `V(state) += 0.1 * TD_error`.
+5. **Cluster Coherence Metric (Silhouette Score):** Used to determine `k` for k-means.
 
-2. **SIE Modulation:**
-   ```
-   η_effective = η_base * (1 + α*r)
-   ```
-   Where:
-   - α = 0.1 (modulation strength)
-   - r ∈ {-1, 0, +1} (reward signal)
-
-3. **Cluster Coherence Metric:**
-   ```
-   C_k = 1/N_k Σ_i (f_i - μ_k)^2
-   ```
-   Where:
-   - N_k = neurons in cluster k
-   - f_i = firing rate of neuron i
-   - μ_k = mean firing rate of cluster k
-
-#### 3. Expected Outcome
-The knowledge graph is significantly refined, with strong pathways within domains and emerging connections between related domains. The model achieves baseline competence (>85% accuracy) on tasks within the 300-input scope. Minor structural growth may have occurred in response to persistent errors.
+#### B.4. Expected Outcome
+Knowledge graph significantly refined, strong intra-domain pathways (`w[i,j] ≈ 0.8`), emerging inter-domain connections. Baseline competence (>85% accuracy) achieved. Minor structural growth may have occurred.
 
 ---
 
 ### C. Phase 3: Continuous Self-Learning (Autonomy and Mastery)
 
-#### 1. Objective
-Achieve expert-level performance across diverse domains, adapt autonomously to novel, unlabeled information, maintain long-term stability, and scale towards the target size (e.g., 7M -> 32B+ units) through continuous operation.
+#### C.1. Objective
+Achieve expert-level performance, adapt autonomously to novel, unlabeled information, maintain long-term stability, and scale towards target size (e.g., 7M -> 32B+ units) through continuous operation.
 
-#### 2. Cellular Components & Mechanisms
-*   **Data Source:** Transition from fixed datasets to continuous streams of real-world, potentially unlabeled data (e.g., live text feeds, sensor data, interaction logs).
+#### C.2. Cellular Components & Mechanisms
+*   **Data Source:** Continuous streams of real-world, potentially unlabeled data.
 *   **Integrated Autonomous Loop (Continuous Operation):**
-    *   **Perception-Action Cycle:** Continuously:
-        *   Encode incoming data stream fragments (Encoder).
-        *   Simulate network activity (LIF Kernel on 7900 XTX).
-        *   Generate outputs/actions/predictions (Decoder).
-    *   **Advanced SIE Evaluation (Self-Supervision):** Calculate rewards `total_reward` based primarily on internal metrics and self-consistency when external labels are absent:
-        *   Maximize `novelty_bonus` (explore new patterns).
-        *   Minimize prediction error/variance (internal consistency, stability).
-        *   Maximize `self_benefit` (achieve complex internal goals).
-        *   Utilize `TD_error` for internal value prediction.
-        *   Minimize `habituation_penalty`.
-    *   **SIE-Modulated STDP:** Continuously apply STDP updates modulated by the internally generated `total_reward`.
-    *   **Persistent Memory Management:**
-        *   Periodically (e.g., every few minutes or based on significance triggers) save the complete network state (neuron potentials `V`, sparse weights `w`, adaptive parameters like `eta`, STDP traces) to persistent storage (NVMe SSD).
-        *   Implement efficient serialization/deserialization for large sparse tensors and distributed states.
-        *   Load the last saved state upon restart for seamless continuation.
+    *   **Perception-Action Cycle:** Continuously Encode -> Simulate -> Decode.
+    *   **Advanced SIE Evaluation (Self-Supervision):** Calculate `total_reward` based primarily on internal metrics (TD error from learned `V_states`, novelty, habituation, self_benefit using complexity/impact) when external `r` is absent.
+    *   **SIE-Modulated STDP:** Continuously apply modulated STDP updates.
+    *   **Intrinsic Plasticity:** Continuously adapt neuron parameters.
+    *   **Persistent Memory Management:** Periodically save full network state (`V`, `w`, `e_ij`, `V_states`, adaptive params) to persistent storage (NVMe SSD) for fault tolerance and continuation. Use efficient serialization for large sparse tensors.
     *   **Continuous Monitoring & Full Structural Plasticity:**
-        *   **Stability Monitoring:** Track firing rate variance per neuron/cluster. High variance (e.g., > 0.05 Hz std dev over 1000 steps) indicates instability.
-        *   **Activity Monitoring:** Track long-term average firing rates.
-        *   **Performance Monitoring:** Track domain performance using internal SIE metrics and clustering coherence.
-        *   **Self-Modification Triggers:**
-            *   *Growth:* Sustained low reward/high error in a domain (e.g., avg `total_reward` < 0.2) triggers allocation of new neurons to that domain's cluster.
-            *   *Pruning:* Neurons with persistently low activity (e.g., firing rate < 1 Hz over 10,000 steps) are removed, along with their connections, freeing resources.
-            *   *Rewiring:* Connections consistently associated with negative rewards or contributing to high variance may be weakened or removed. New connections form via ongoing STDP.
-    *   **Adaptive Domain Clustering:**
-        *   Periodically (e.g., every 10,000 steps) run k-means clustering (`torch.kmeans` on MI100) on neuron activity patterns (e.g., average firing rates, response correlations) to identify and track emergent functional specializations (domains).
-        *   Use cluster information to guide growth (allocate new neurons to specific clusters) and analyze inter-domain communication strength via the knowledge graph.
-    *   **Distributed Scaling:** Fully leverage the strategies in Section 5.D (sharding, async communication, memory management) to handle billions of neurons across multiple GPUs/nodes.
+        *   Monitor stability (variance), activity (rates), performance (SIE metrics, cluster coherence).
+        *   Trigger Growth, Pruning, Rewiring algorithms (Sec 4.C) based on monitored metrics.
+    *   **Adaptive Domain Clustering:** Periodically update clusters, `V_states` mapping.
+    *   **Distributed Scaling:** Fully leverage strategies in Section 5.D.
 
-#### 3. Expected Outcome
-A large-scale (potentially 32B+ units), continuously operating, and autonomously adapting FUM. Achieves high performance across diverse domains, learns effectively from unlabeled data, maintains stability via self-organization and self-repair, and efficiently utilizes distributed hardware resources. The emergent knowledge graph becomes a rich, dynamic representation of learned world knowledge and reasoning capabilities.
+#### C.3. Emergent Physics Principles
+The system operates based on principles of self-organized criticality. Continuous input drives the network near critical points where small perturbations (spikes) can trigger large cascades (information processing). Learning rules (STDP, SIE, plasticity) act as feedback mechanisms that maintain the system near this critical state, balancing stability and adaptability, allowing for complex computations and learning to emerge.
+
+#### C.4. Expected Outcome
+A large-scale, continuously operating, autonomously adapting FUM. High performance, learns from unlabeled data, maintains stability via self-organization/repair, efficiently utilizes distributed resources. Rich, dynamic knowledge graph emerges.
 
 ---
 
 ### D. Scaling Strategy: Implementation Details
 
-Achieving massive scale (billions of spiking neurons) requires specific, optimized implementation choices:
+Achieving massive scale requires specific, optimized implementation choices:
 
-#### 1. Distributed Computation (Graph Sharding)
-*   **Concept:** Partition the massive neuron population (nodes of the knowledge graph) across multiple computational units (GPUs, potentially multiple machines/nodes).
-*   **Mechanism:**
-    *   Employ graph partitioning algorithms (e.g., METIS, implemented via libraries like PyTorch Geometric) periodically or during growth phases.
-    *   **Goal:** Assign neurons (graph nodes) to devices (GPUs) such that the number of inter-device connections (edges crossing partitions) is minimized. This reduces communication overhead.
-    *   Implement a communication layer using efficient primitives (e.g., `torch.distributed`'s non-blocking `isend`/`irecv`, or potentially lower-level MPI/RCCL for multi-node) to handle the transmission of spike events between partitions. Spike messages must be lightweight, containing source neuron ID, target partition ID, and timestamp.
-    *   A coordinator process (potentially on CPU or a dedicated GPU like the MI100) manages global simulation steps, data distribution, SIE aggregation, and synchronization points.
+#### D.1. Distributed Computation (Graph Sharding)
+*   **Concept:** Partition neurons across multiple GPUs/nodes.
+*   **Mechanism:** Use graph partitioning (e.g., METIS via PyTorch Geometric) to minimize inter-device connections. Implement communication layer (`torch.distributed` non-blocking ops or MPI/RCCL) for lightweight spike event transmission (source ID, target partition, timestamp). A coordinator process manages global steps, data distribution, SIE aggregation.
 
-#### 2. Asynchronous Updates
-*   **Concept:** Allow different partitions/shards of the network to simulate slightly out-of-sync to avoid waiting for the slowest component, maximizing parallel utilization.
-*   **Mechanism:**
-    *   Each GPU shard maintains its own local simulation time.
-    *   Spike events communicated between shards are timestamped.
-    *   Receiving shards buffer incoming spikes and process them when their local simulation time reaches the spike's timestamp. This requires careful buffer management.
-    *   Global synchronization (e.g., for applying SIE modulation globally, calculating aggregate statistics, or triggering major structural changes) occurs at much coarser intervals (e.g., every 100-1000 simulation timesteps) to minimize performance bottlenecks. STDP calculations and applications remain largely local to the post-synaptic neuron's shard.
+#### D.2. Asynchronous Updates & Synchronization Details
+*   **Concept:** Allow shards to simulate slightly out-of-sync to improve throughput.
+*   **Mechanism:** Each shard maintains local time (`local_time[shard]`). Timestamped spikes are buffered and processed when local time matches.
+*   **Tolerable Skew:** Cap time skew at 10 timesteps (10ms) to ensure STDP validity (±20ms window). `max_skew = max(local_time) - min(local_time)`.
+*   **Global Sync Trigger:** Trigger global synchronization (`torch.distributed.barrier()`) every 1000 timesteps or if `max_skew > 10`. Coordinated by a master process on the CPU.
+*   **Consistency:** Global operations (SIE reward broadcast `torch.distributed.broadcast`, structural changes) occur *after* a global sync. Structural changes use a distributed lock (barrier + master update) to prevent race conditions.
 
-#### 3. Memory Management
-*   **Concept:** Efficiently store and access the massive state, particularly the sparse synaptic weight matrix `w`.
-*   **Mechanism:**
-    *   Utilize highly optimized sparse tensor formats (e.g., `torch.sparse_csr_tensor`) for the weight matrix `w` within each shard's GPU VRAM.
-    *   For scales exceeding single-node RAM/VRAM capacity:
-        *   Implement a **parameter server** architecture. The global weight matrix `w` is sharded and stored across the aggregated memory (RAM, potentially NVMe SSD) of all nodes.
-        *   Neurons only fetch the weights for their incoming connections when needed for input current calculation.
-        *   Weight updates (`Δw_ij`) are sent back to the appropriate server shard.
-        *   Employ caching strategies (e.g., Least Recently Used - LRU) on each compute GPU to keep frequently accessed weights locally available in VRAM, minimizing data transfer latency.
-    *   Neuron state variables (`V`, spike traces, etc.) for active neurons are kept primarily in the VRAM of their assigned GPU shard for fast access during the LIF update kernel execution.
+#### D.3. Memory Management (Incl. Parameter Server & Caching)
+*   **Concept:** Efficiently store/access massive state, especially sparse `w`.
+*   **Mechanism:** Use optimized sparse formats (`torch.sparse_csr_tensor`) in VRAM. For scales exceeding node memory:
+    *   **Parameter Server:** Shard `w` across aggregated RAM/NVMe of multiple nodes. Neurons fetch needed weights, send back updates.
+    *   **Caching on Compute GPUs:**
+        *   **Strategy:** LRU with Priority Queuing. `priority[i,j] = abs(w[i,j]) * co_act[i,j]`. Cache high-priority connections.
+        *   **Pre-fetching:** Predict likely spiking neurons (`mean(spike_history[-100:]) > 0.1 Hz`). Pre-fetch weights for their synapses asynchronously (`torch.cuda.Stream`, `torch.load`).
+        *   **Cache Size:** Target ~10% of compute GPU VRAM (e.g., 2.4GB on 7900 XTX, holding ~1.2B FP16 connections). Managed by `CacheManager` class (`memory_manager.py`) using `PriorityLRUCache`.
 
-#### 4. Hardware Optimization (Development Context)
-*   **Concept:** Maximize computational throughput and minimize latency by tailoring operations to specific hardware capabilities.
+#### D.4. Hardware Optimization (Development Context)
+*   **Concept:** Maximize computational throughput and minimize latency by tailoring operations to specific hardware capabilities (Justin Lietz's workstation).
 *   **Mechanism:**
-    *   **Custom Kernels:** Compile highly optimized ROCm HIP kernels (`.hip` files compiled with `hipcc`) for the core, computationally intensive SNN simulation loop (LIF updates). These kernels leverage low-level hardware features and operate efficiently on `float16` data.
-    *   **Python Integration:** Use methods like `ctypes` or PyTorch's C++/CUDA extensions (`torch.utils.cpp_extension`) to create Python bindings, allowing seamless invocation of the custom kernels from the main Python-based FUM framework.
-    *   **Heterogeneous GPU Utilization:** Strategically assign different computational tasks to different GPUs based on their strengths:
-        *   *Spiking Dynamics (LIF Kernel):* Primarily run on GPUs optimized for massively parallel, lower-precision compute (e.g., AMD Radeon 7900 XTX in the development setup). Explicit data placement (`tensor.to('cuda:1')`).
-        *   *Tensor Operations:* Run tasks like SIE calculation, clustering (k-means), graph analysis, and potentially large batch operations on GPUs with strong tensor core performance and larger memory capacity (e.g., AMD Instinct MI100 in the development setup). Explicit data placement (`tensor.to('cuda:0')`).
-    *   **Data Locality:** Minimize data transfers between CPU RAM and GPU VRAM, and especially between different GPUs. Structure computation to keep data resident on the target GPU where possible. Use asynchronous memory copies (`tensor.to(..., non_blocking=True)`) to overlap computation and data transfer.
-    *   **Profiling:** Utilize ROCm profiling tools (e.g., `rocprof`) to identify performance bottlenecks (kernel execution time, memory bandwidth saturation, transfer latencies) and guide optimization efforts.
-*   **Development Context Note:** This specific hardware optimization strategy, including the custom ROCm kernels and the designated roles for the MI100 and 7900 XTX GPUs, is tailored for the author's (Justin Lietz) development workstation (AMD Threadripper PRO 5955WX, MI100 32GB, 7900 XTX 24GB, 512GB RAM). It serves to facilitate the initial development, training, experimentation, and validation of the FUM concept and its predecessor, the Adaptive Modular Network (AMN) which demonstrated viability up to 10 units. These specific hardware choices are **not necessarily rigid requirements** for FUM deployment but represent a practical environment for proving the theoretical model's capabilities. The core principles of distributed computation, asynchronous updates, and optimized kernels are applicable across various hardware configurations.
+    *   **Custom Kernels:** Compile highly optimized ROCm HIP kernels (`.hip` files compiled with `hipcc`, e.g., `neuron_kernel.hip`) for the core SNN simulation loop (LIF updates). Use `float16`.
+    *   **Python Integration:** Use `ctypes` or `torch.utils.cpp_extension` for Python bindings.
+    *   **Heterogeneous GPU Utilization:**
+        *   *7900 XTX:* Runs LIF kernel, applies final weight updates. Stores `V`, `spikes`, `spike_history`, `w`.
+        *   *MI100:* Runs PyTorch tensor ops (STDP calc, trace update, SIE calc, clustering). Stores `e_ij`, `V_states`, etc. Explicit placement (`.to('cuda:0')`, `.to('cuda:1')`).
+    *   **Data Locality:** Minimize CPU<->GPU and GPU<->GPU transfers. Use async copies (`non_blocking=True`).
+    *   **Profiling:** Use ROCm profiling tools (e.g., `rocprof`) to identify bottlenecks.
+*   **Development Context Note:** This specific hardware optimization strategy is tailored for the author's development workstation. It serves to facilitate initial development and validation. The core principles (distributed computation, async updates, optimized kernels, caching) are applicable across various hardware configurations.
+
+### E. Practical Considerations: Tuning, Debugging, Stability, and Robustness
+
+#### E.1. Hyperparameter Sensitivity & Tuning Strategy
+*   **Anticipated Sensitivity:**
+    *   *High Sensitivity:* STDP learning rate (`eta`), eligibility trace decay (`γ`), relative weights of SIE components (`TD`, `novelty`, `habituation`, `self_benefit`). Small changes (e.g., ±10%) can significantly impact learning speed, stability, and final accuracy due to complex interactions.
+    *   *Low Sensitivity:* LIF parameters (`tau`, `v_th`), clustering `k` (due to fallback mechanisms). Changes have more localized or mitigated effects.
+*   **Systematic Tuning Strategy (Automated):**
+    *   **Method:** Employ Bayesian optimization (e.g., `scikit-optimize`) via a `hyperparam_tuner.py` module.
+    *   **Objective:** Maximize average SIE reward over a window (e.g., 1000 timesteps).
+    *   **Search Space:** Define ranges and steps for sensitive parameters (e.g., `eta` in [0.005, 0.02], `γ` in [0.9, 0.98], SIE weights in [0.5, 2.0]).
+    *   **Algorithm:** Use Gaussian Process regression (`gp_minimize`) to model the objective function, efficiently sampling parameter sets (e.g., 50 trials), evaluating each briefly, and selecting the best performing set.
+    *   **Frequency:** Run tuning periodically (e.g., every 10,000 timesteps) or after significant structural changes to adapt parameters to the evolving network dynamics.
+    *   **Implementation:** Execute on CPU, store trials on SSD, minimizing impact on GPU simulation.
+
+#### E.2. Debuggability and Interpretability
+*   **Comprehensive Logging:**
+    *   Log key state variables periodically to SSD: neuron firing rates (`rates`), sparse weights (`w`), SIE rewards (`total_reward` and components), cluster assignments and metrics (`avg_reward`, `num_inputs`).
+*   **Anomaly Detection:**
+    *   Implement checks for potential issues: excessive firing rate variance (`> 0.1 Hz`), extreme SIE rewards (`<-2` or `>2` sustained), silent clusters (`num_inputs == 0`). Log anomalies.
+*   **Visualization Techniques (CPU-based):**
+    *   *Knowledge Graph:* Periodically visualize `w` using `networkx`, coloring nodes by cluster ID, edges by weight strength. Save as image (`graph_{timestep}.png`).
+    *   *Cluster Activity:* Plot firing rates per cluster over time (`matplotlib`).
+    *   *Reward Trends:* Plot `total_reward` and components over time.
+*   **Diagnosing Issues:**
+    *   *Convergence Failure (Low Reward):* Check firing rates, variance, connectivity of the affected cluster via logs/plots. Trigger growth, adjust inhibition, or tune `eta` accordingly.
+    *   *Instability (High Variance/Negative Reward):* Visualize graph, check E/I balance, review SIE component trends. Adjust global inhibition, SIE weights, or decay rates.
+    *   **Implementation:** A `Debugger` class (`utils.py`) can automate checks and logging alerts.
+
+#### E.3. Computational Cost of Overhead Components
+*   **Estimation (1k Neurons, Development Hardware):**
+    *   *Core SNN Simulation (LIF + Spikes):* ~0.000334 seconds per 1000 timesteps.
+    *   *Overhead (SIE, Clustering, Traces, Plasticity, Transfers):* Initially estimated at ~0.000964 seconds per 1000 timesteps (~74% of total).
+*   **Net Profile & Mitigation:**
+    *   Initial overhead significantly impacts efficiency.
+    *   **Optimization:** Reduce frequency of expensive ops (clustering every 5k steps), optimize calculations (novelty on top-k similar inputs).
+    *   **Optimized Overhead:** Reduced to ~0.000166 seconds per 1000 timesteps (~12% of total).
+    *   **Conclusion:** With optimization, overhead is manageable and does not undermine the core SNN efficiency gains, ensuring practical performance on constrained hardware.
+
+#### E.4. Long-Term Stability and Potential Drift
+*   **Stability Mechanisms:**
+    *   *Inhibitory Balance:* 80:20 E/I ratio and global inhibition maintain stable variance.
+    *   *Synaptic Scaling Threshold:* Protecting strong weights (`w >= 0.8`) prevents drift in core pathways.
+    *   *Intrinsic Plasticity:* Keeps firing rates within target range (0.1-0.5 Hz).
+    *   *Structural Plasticity Limits:* Caps on growth/rewiring prevent excessive density.
+*   **Forgetting Outdated Information:**
+    *   **Mechanism:** Implement slow synaptic decay (`w *= 0.99` every 10k steps). Prune connections if `abs(w) < 0.01`.
+    *   **Rationale:** Allows weak, unused connections to fade over time (~230 seconds for `w=0.1`) while preserving strong ones (`w=0.9` takes ~2000 seconds to decay significantly).
+*   **Consolidating Core Knowledge:**
+    *   **Mechanism:** Mark synapses in high-reward, stable pathways (`w > 0.8`, `avg_reward > 0.9`) as "persistent".
+    *   **Persistence:** Exempt persistent synapses from decay.
+    *   **Implementation:** Use a sparse boolean tensor `persistent` checked during decay.
+    *   **Rationale:** Protects essential learned functions while allowing adaptation in non-core pathways.
+
+#### E.5. Robustness to Input Noise/Anomalies
+*   **Encoding Robustness:**
+    *   Apply low-pass filter (moving average over 5 steps) to input frequencies during encoding to smooth noise spikes.
+*   **SNN Dynamics:**
+    *   LIF leak term naturally dampens transient noise.
+    *   Inhibition suppresses noise-driven excitation.
+    *   Monitor for excessive firing rates (`>1 Hz avg`) and flag anomalous inputs.
+*   **SIE Mechanisms:**
+    *   Smooth `total_reward` over recent inputs (e.g., 5) to reduce impact of single anomalous rewards.
+    *   Cap reward (`<= 0`) for highly novel inputs (`novelty > 0.9`) to prevent reinforcing corrupted data.
+*   **Implementation:** Integrate checks and filters into `encoder.py`, `fum.py`, and training scripts.
+
+#### E.6. Justification for Specific Algorithmic Choices
+*   **TD(0) vs. Other RL:**
+    *   *Chosen:* TD(0) for value function updates.
+    *   *Justification:* Simplicity, computational efficiency (low FLOPs, suitable for MI100), compatibility with sparse SIE rewards, better stability compared to TD(lambda) in noisy environments. Q-learning/SARSA require action spaces impractical for FUM.
+*   **K-Means vs. Other Clustering:**
+    *   *Chosen:* K-means with silhouette score for adaptive clustering.
+    *   *Justification:* Efficiency (lower FLOPs than DBSCAN/Spectral), scalability (linear `O(nki)` vs. cubic), interpretability (spherical clusters align with domain concept), automated `k` selection via silhouette score (more robust than density/graph parameters).
 
 ## 6. Feasibility and Rationale Summary
 
 ### A. Why is FUM considered feasible despite its ambitious goals?
 
-The design posits that achieving superintelligence might not require the brute-force scaling and massive datasets typical of current LLMs. Instead, FUM bets on a combination of brain-inspired principles:
+FUM's design posits that superintelligence might not require brute-force scaling and massive datasets. It bets on brain-inspired principles:
 
-1.  **Computational Efficiency of SNNs:**
-    *   Spiking neurons are inherently event-driven, meaning computation primarily occurs only when necessary (a spike event). Combined with extreme sparsity (95%), this drastically reduces the theoretical computational load compared to dense matrix multiplications in ANNs/Transformers, making large scale potentially tractable on less hardware.
-2.  **Power of Emergence and Self-Organization:**
-    *   FUM relies on local learning rules (STDP) modulated by simple global feedback (SIE) to drive self-organization. The hypothesis is that complex, intelligent behavior and knowledge representation (the emergent graph) can arise from these simple interactions without explicit top-down design for every capability, mirroring principles of emergence in complex systems and biological brains.
-3.  **Data Efficiency of Local Learning:**
-    *   Learning rules like STDP operate on local correlations in spike timing. Combined with reinforcement from the SIE, the model is designed to extract meaningful patterns from relatively few examples, bypassing the need for the vast statistical averaging over data that characterizes LLM pre-training.
-4.  **Adaptability through Structural Plasticity:**
-    *   The ability for the network to autonomously rewire, grow, and prune its structure (self-modification) is key to its proposed long-term learning and adaptation capabilities. This allows it to allocate resources efficiently and adapt to new information or tasks without complete retraining.
+1.  **Computational Efficiency of SNNs:** Event-driven computation + high sparsity drastically reduces theoretical load.
+2.  **Power of Emergence and Self-Organization:** Complex behavior arises from local rules (STDP, intrinsic plasticity) + global feedback (SIE) + inhibition, without explicit design for every capability.
+3.  **Data Efficiency of Local Learning:** STDP + SIE reinforcement extracts patterns from few examples.
+4.  **Adaptability through Structural Plasticity:** Autonomous rewiring, growth, pruning enable long-term learning and resource allocation.
+5.  **Validation:** The predecessor AMN model's success up to 10 units on the development hardware provides initial validation for the core concepts.
 
-### B. Strategic Foundation:
+### B. Strategic Foundation: Balancing Initialization and Learning
 
-FUM's design is a strategic and calculated approach, firmly grounded in established principles from neuroscience (SNNs, STDP, structural plasticity) and complex systems theory (emergence, self-organization). It leverages the theoretically proven strengths of these concepts, integrating them in a novel way. The core premise is that the synergistic combination of SNN computational efficiency, emergent self-organization driven by local rules and global feedback (STDP/SIE), data-efficient local learning, and structural adaptability offers a robust and highly efficient pathway towards advanced AI. This stands in contrast to the brute-force scaling often required by conventional models. The design's validation lies in demonstrating the powerful and coherent emergent intelligence that these integrated mechanisms are engineered to produce during practical implementation and scaling.
+FUM's design is a strategic combination of neuroscience principles (SNNs, STDP, plasticity, inhibition) and complex systems theory (emergence, self-organization).
+
+*   **Balance:** It balances a minimal seeded structure with knowledge learned purely from minimal data.
+    *   **Initialization Contribution (~10-15%):** Provides a scaffold. Distance-dependent connectivity bias accelerates initial cluster formation (~20% faster than purely random). Initial weights are weak (`U(0, 0.3)`) and random, encoding no specific knowledge.
+    *   **Learning Contribution (~85-90%):** The vast majority of capability (e.g., >85% target accuracy) emerges from STDP/SIE processing the 80-300 training examples, forming strong, functional pathways (`w[i,j] ≈ 0.8`) within the knowledge graph.
+*   **Core Premise:** The synergistic combination of SNN efficiency, emergent self-organization, data-efficient local learning, and structural adaptability offers a robust and efficient pathway towards advanced AI, contrasting with brute-force scaling. The design's validation lies in demonstrating the coherent emergent intelligence produced during practical implementation.
+
+# References
+
+This list provides potential citations for the concepts, algorithms, and frameworks mentioned in the FUM document. Selections can be integrated into footnotes or a dedicated reference section.
+
+## FUM System Design
+
+* Lietz, J. (2025). *How the Fully Unified Model (FUM) Works*. [Unpublished technical specification / Design document]. (Details the specific FUM architecture and the following potentially novel contributions:
+    * **Overall Integrated System:** The synergistic combination of SNNs, the Self-Improvement Engine, detailed structural plasticity, emergent knowledge graph, hybrid computation model, and phased training strategy as a unified system.
+    * **Self-Improvement Engine (SIE):** The specific reward formulation `total_reward = TD_error + novelty - habituation + self_benefit`, including the `self_benefit = complexity * impact` calculation, and its direct, quadratically scaled modulation of STDP learning rates via eligibility traces.
+    * **Integrated Structural Plasticity System:** The specific set of triggers (low cluster reward, high variance, low neuron activity), detailed algorithms (targeted growth, pruning with homeostatic compensation, co-activation-based rewiring), and defined operational limits (e.g., connection history, sparsity target, E/I balancing during rewiring).
+    * **Adaptive Domain Clustering Integration:** Employing K-Means with dynamic `k` selection (via Silhouette Score within defined bounds) to define TD-Learning states and guide reward attribution and structural plasticity within the SNN framework, including specific edge case handling.
+    * **Multi-Phase Training Strategy:** The explicit three-phase approach (Seed Sprinkling -> Tandem Complexity Scaling -> Continuous Self-Learning) tailored for minimal data dependency and autonomous operation.
+    * **Emergent Knowledge Graph & Routing Mechanism:** Reliance on learned SNN connectivity dynamically shaped by STDP/SIE/plasticity for coordination and information routing, explicitly contrasting with predefined layers or coordinators.
+    * **Emergent Energy Landscape Concept:** Proposing network stability as arising naturally from the interplay of local/global rules (measured via variance), rather than an explicitly defined energy function.
+    * **Specific Hybrid Computation Model:** The defined heterogeneous GPU workload distribution (LIF kernel vs. PyTorch/SIE/Clustering) and associated data flow/synchronization strategy.
+    * **Specific Temporal Encoding Schemes:** The described hierarchical methods for encoding structured data (e.g., code syntax trees, logical propositions) into temporal spike patterns.
+    * **Minimal Data Philosophy:** The core design goal targeting high performance from minimal inputs (80-300) based on a defined balance between initialization and learning.)
+
+## SNNs, LIF Model, and Neuron Dynamics
+
+* Burkitt, A. N. (2006). A review of the leaky integrate-and-fire neuron model. *Biological Cybernetics*, *95*(1), 1-19.
+* Destexhe, A., & Marder, E. (2004). Plasticity in single neuron and circuit computations. *Nature*, *431*(7010), 789-795.
+* Gerstner, W., Kistler, W. M., Naud, R., & Paninski, L. (2014). *Neuronal dynamics: From single neurons to networks and models of cognition*. Cambridge University Press.
+* Lapicque, L. (1907). Recherches quantitatives sur l'excitation électrique des nerfs traitée comme une polarisation. *Journal de Physiologie et de Pathologie Générale*, *9*, 620-635.
+* Maass, W. (1997). Networks of spiking neurons: the third generation of neural network models. *Neural Networks*, *10*(9), 1659-1671.
+* Marder, E., & Goaillard, J. M. (2006). Variability, compensation, and homeostasis in neuron and network function. *Nature Reviews Neuroscience*, *7*(7), 563-574.
+* Pfeiffer, M., & Pfeil, T. (2018). Deep learning with spiking neurons: opportunities and challenges. *Frontiers in Neuroscience*, *12*, 774. https://doi.org/10.3389/fnins.2018.00774
+* Triesch, J. (2007). Synergies between intrinsic and synaptic plasticity mechanisms. *Neural Computation*, *19*(4), 885-909.
+
+## Neural Plasticity & Stability Mechanisms
+
+* Bi, G. Q., & Poo, M. M. (1998). Synaptic modifications in cultured hippocampal neurons: dependence on spike timing, synaptic strength, and postsynaptic cell type. *Journal of Neuroscience*, *18*(24), 10464-10472.
+* Chklovskii, D. B., Mel, B. W., & Svoboda, K. (2004). Cortical rewiring and information storage. *Nature*, *431*(7010), 782-788.
+* Helias, M., Tetzlaff, T., & Diesmann, M. (2014). The correlation structure of local neuronal networks intrinsically results from recurrent connectivity. *PLoS Computational Biology*, *10*(1), e1003458. https://doi.org/10.1371/journal.pcbi.1003458
+* Holtmaat, A., & Svoboda, K. (2009). Experience-dependent structural synaptic plasticity in the mammalian brain. *Nature Reviews Neuroscience*, *10*(9), 647-658.
+* Markram, H., Lübke, J., Frotscher, M., & Sakmann, B. (1997). Regulation of synaptic efficacy by coincidence of postsynaptic APs and EPSPs. *Science*, *275*(5297), 213-215.
+* Song, S., Miller, K. D., & Abbott, L. F. (2000). Competitive Hebbian learning through spike-timing-dependent synaptic plasticity. *Nature Neuroscience*, *3*(9), 919-926.
+* Turrigiano, G. G., Leslie, K. R., Desai, N. S., Rutherford, L. C., & Nelson, S. B. (1998). Activity-dependent scaling of quantal amplitude in neocortical neurons. *Nature*, *391*(6670), 892-896.
+* Vogels, T. P., Sprekeler, H., Zenke, F., Clopath, C., & Gerstner, W. (2011). Inhibitory plasticity balances excitation and inhibition in sensory pathways and memory networks. *Science*, *334*(6062), 1569-1573. https://doi.org/10.1126/science.1211095
+
+## Reinforcement Learning & SIE Components
+
+* Florian, R. V. (2007). Reinforcement learning through modulation of spike-timing-dependent synaptic plasticity. *Neural Computation*, *19*(6), 1468-1502.
+* Frémaux, N., & Gerstner, W. (2016). Neuromodulated spike-timing-dependent plasticity, and theory of three-factor learning rules. *Frontiers in Neural Circuits*, *9*, 85. https://doi.org/10.3389/fncir.2015.00085
+* Izhikevich, E. M. (2007). Solving the distal reward problem through linkage of STDP and dopamine signaling. *Cerebral Cortex*, *17*(10), 2443-2452. https://doi.org/10.1093/cercor/bhl147
+* Marsland, S. (2014). *Machine learning: an algorithmic perspective*. CRC press. (For general concepts potentially underlying novelty/habituation metrics)
+* Sutton, R. S. (1988). Learning to predict by the methods of temporal differences. *Machine Learning*, *3*(1), 9-44.
+* Sutton, R. S., & Barto, A. G. (2018). *Reinforcement learning: An introduction*. MIT press.
+
+## Emergence, Self-Organization, & Knowledge Graphs
+
+* Bak, P., Tang, C., & Wiesenfeld, K. (1987). Self-organized criticality: An explanation of the 1/f noise. *Physical Review Letters*, *59*(4), 381-384.
+* Hogan, A., Blomqvist, E., Cochez, M., d'Amato, C., Melo, G. D., Gutierrez, C., Kirrane, S., Gayo, J. E. L., Navigli, R., Neumaier, S., Ngomo, A. C. N., Polleres, A., Rashid, S. M., Rula, A., Schmelzeisen, L., Sequeda, J., Staab, S., & Zimmermann, A. (2021). Knowledge graphs. *ACM Computing Surveys (CSUR)*, *54*(4), 1-37. https://doi.org/10.1145/3447772
+* Hopfield, J. J. (1982). Neural networks and physical systems with emergent collective computational abilities. *Proceedings of the National Academy of Sciences*, *79*(8), 2554-2558.
+* Mitchell, M. (2009). *Complexity: A guided tour*. Oxford University Press.
+
+## Clustering & Graph Partitioning
+
+* Karypis, G., & Kumar, V. (1998). A fast and high quality multilevel scheme for partitioning irregular graphs. *SIAM Journal on Scientific Computing*, *20*(1), 359-392.
+* MacQueen, J. (1967). Some methods for classification and analysis of multivariate observations. In *Proceedings of the fifth Berkeley symposium on mathematical statistics and probability* (Vol. 1, pp. 281-297). University of California Press.
+* Rousseeuw, P. J. (1987). Silhouettes: a graphical aid to the interpretation and validation of cluster analysis. *Journal of Computational and Applied Mathematics*, *20*, 53-65.
+
+## I/O Processing
+
+* Brette, R. (2015). Philosophy of the spike: rate-based vs. spike-based theories of computation. *Frontiers in Systems Neuroscience*, *9*, 151. https://doi.org/10.3389/fnsys.2015.00151
+* Thorpe, S., Delorme, A., & Van Rullen, R. (2001). Spike-based strategies for rapid processing. *Neural Networks*, *14*(6-7), 715-725.
+
+## Optimization & Frameworks
+
+* AMD. (n.d.). *ROCm Documentation*. Retrieved March 30, 2025, from https://rocm.docs.amd.com/
+* Paszke, A., Gross, S., Massa, F., Lerer, A., Bradbury, J., Chanan, G., Killeen, T., Lin, Z., Gimelshein, N., Antiga, L., Desmaison, A., Kopf, A., Yang, E., DeVito, Z., Raison, M., Tejani, A., Chilamkurthy, S., Steiner, B., Fang, L., Bai, J., & Chintala, S. (2019). PyTorch: An Imperative Style, High-Performance Deep Learning Library. In *Advances in Neural Information Processing Systems 32* (pp. 8026-8037). Curran Associates, Inc.
+* Snoek, J., Larochelle, H., & Adams, R. P. (2012). Practical Bayesian optimization of machine learning algorithms. In *Advances in Neural Information Processing Systems 25* (pp. 2951-2959). Curran Associates, Inc.
