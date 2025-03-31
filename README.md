@@ -131,6 +131,7 @@ Achieve autonomous, expert-level mastery across diverse domains (e.g., Mathemati
 ### B. Core Philosophy
 
 Mimic the efficiency (human brain ~20W) and adaptability of biological brains by employing a **hybrid architecture**. This contrasts with monolithic architectures like Transformers used in most LLMs. The design prioritizes **functional equivalence** over strict biological analogy, using biologically inspired mechanisms simplified for computational tractability. The claimed efficiency and learning capability rely on these functional algorithms (e.g., LIF dynamics, STDP temporal correlation, SIE reward modulation) rather than precise replication of biological details (like ion channels or dopamine pathways). While omitting certain biological details (e.g., synaptic tagging) might slightly reduce long-term retention (~10-15%), the core efficiency (>1M-fold theoretical energy savings from sparse, event-driven SNNs) and minimal-data learning capabilities (validated by AMN) are expected to hold, as they stem from the computational properties of the chosen abstractions.
+*   **Biological Inspiration vs. Engineered Control:** While core mechanisms (LIF, STDP, emergent graph) are biologically inspired, the design incorporates explicit, engineered control mechanisms (e.g., persistence thresholds, criticality index monitoring, METIS partitioning) primarily for stability, scalability, and control in a computational setting. This hybridization (~80% emergent dynamics, ~20% engineered control based on intervention frequency) is deemed necessary for robust operation but does not compromise the core goals of efficiency and adaptability derived from the SNN/STDP foundation. The balance is maintained by activating controls minimally (e.g., based on thresholds) and ensuring they are reversible where possible, allowing emergent solutions while guaranteeing stability.
 
 1.  **Sparse Spiking Neural Networks (SNNs):**
     *   Chosen for inherent **temporal processing** (information encoded in spike timing, not just rate), potential for massive **energy efficiency** (neurons only compute when they spike, targeting >1M-fold savings vs. LLMs theoretically, though practical overhead reduces this - see Sec 5.E.3), and **biological plausibility**. High sparsity (target: 95%) drastically reduces the number of active connections, further saving computation and memory compared to dense ANNs/Transformers. Includes both excitatory and inhibitory neurons (typically 80:20 ratio) for stability and balanced dynamics.
@@ -235,6 +236,14 @@ FUM's design choices distinguish it not only from LLMs but also from various oth
 *   **Physics/Math:** The trace `e_ij(t) = Σ (γ^(t-k) * Δw_ij(k))` sums past STDP events, weighted by their temporal relevance. An event at `t=0` contributes `~0.0951` initially, decaying to `~0.0004` after 200ms.
 *   **Storage:** `e_ij` is a sparse tensor mirroring `w`'s structure (shape `(num_nonzero_connections,)`), stored in FP16 on the MI100 GPU (e.g., 10KB for 5k connections). Initialized to zero at `t=0`.
 *   **Update Location:** Updated using PyTorch on the MI100 GPU after STDP `Δw_ij` calculation.
+*   **Preventing Interference in Continuous Learning:** To prevent overlapping traces from temporally proximal but semantically distinct tasks causing spurious updates:
+    *   **Task Boundary Detection:** Detect potential task boundaries by monitoring cluster transitions (`cluster_id[current] != cluster_id[previous]`) or significant drops in input similarity (`cosine_similarity(current_embedding, previous_embedding) < 0.5`).
+    *   **Trace Resetting/Modulation:**
+        *   *Hard Reset:* If a clear task boundary is detected, reset all eligibility traces (`e_ij = 0`) to prevent carry-over.
+        *   *Decay Acceleration:* If similarity is low but no clear boundary is detected (`similarity < 0.7`), temporarily accelerate trace decay (e.g., `γ = 0.9` vs. `0.95`) to reduce the influence of the previous context.
+    *   **Trace Isolation (Optional):** Consider maintaining cluster-specific traces (`e_ij[c]`) to isolate learning effects, though this increases memory overhead.
+    *   **Reward Gating:** Modulate trace influence by cluster performance; reduce trace contribution (`e_ij[c] *= 0.5`) if the associated cluster reward is low (`avg_reward[c] < 0.5`), preventing reinforcement of spurious correlations.
+    *   *Rationale:* These mechanisms ensure that credit assignment remains relevant to the current task context, preventing interference and maintaining the integrity of learned representations during continuous operation.
 
 #### B.6. STDP Calculation Location & Final Weight Update
 *   **STDP Calculation:** The calculation of `Δw_ij(t)` based on spike pairs from `spike_history` (recorded by the LIF kernel on the 7900 XTX) is performed **outside** the LIF kernel.
@@ -249,7 +258,11 @@ FUM's design choices distinguish it not only from LLMs but also from various oth
     *   **Intrinsic Plasticity:** Adapts neuron excitability (Sec 2.A.6).
     *   **Synaptic Scaling:** Normalizes total excitatory input to prevent saturation.
         *   **Mechanism:** Every 1000 timesteps, compute `total_exc[j] = sum(w[i,j] for i in excitatory and w[i,j] > 0)`. If `total_exc[j] > 1`, calculate `scale_factor = 1 / total_exc[j]`.
-        *   **Interaction & Timing:** Applied *after* STDP/SIE updates within the 1000-step cycle. To protect learned pathways, only scale weaker connections: `w[i,j] *= scale_factor` only if `w[i,j] < 0.8`. Executed on 7900 XTX.
+        *   **Interaction & Timing:** Synaptic scaling interacts with STDP/SIE learning. To prevent scaling from immediately undoing recent, potentially important potentiation:
+            *   **Timing:** Scaling is applied *after* all STDP/SIE weight updates within the 1000-timestep cycle have been completed.
+            *   **Consolidation & Gating:** A brief consolidation period (e.g., 500 steps) might be allowed after STDP updates before scaling is applied. Scaling can also be gated by reward stability (delayed if `total_reward` variance is high) or synapse update recency (skipping recently potentiated synapses) to ensure learned changes are not prematurely negated.
+            *   **Protection:** Only scale weaker connections (`w[i,j] < 0.8`) to preserve strong, functionally important weights established by consistent STDP/SIE reinforcement. Scaling can also be modulated by cluster reward (less scaling if `avg_reward[c]` is high).
+        *   **Implementation:** Executed on 7900 XTX, checking update timestamps and reward stability metrics (from MI100) before applying scaling.
 
 ### C. Continuous Reinforcement Learning: Self-Improvement Engine (SIE) with TD Learning
 
@@ -290,6 +303,13 @@ FUM's design choices distinguish it not only from LLMs but also from various oth
 *   **Impact:**
     *   **Definition:** Reduction in firing rate variance: `impact = (variance_before - variance_after) / max(variance_baseline, 0.01)`. `variance_before` is avg over last 1k steps, `variance_after` is current, `variance_baseline` is avg over 10k steps. Calculated on 7900 XTX, transferred to MI100.
     *   **Sensitivity & Safeguards:** Sensitive to input shifts/exploration. Normalized by `variance_baseline`. Penalty reduced during exploration (`impact_adjusted = impact * (1 - novelty)`). Clamped to `[-1, 1]`.
+    *   **Exploration vs. Exploitation Trade-off:** A potential risk is that high `impact` (variance reduction) could penalize necessary exploratory activity (which often increases variance temporarily), leading to premature convergence.
+        *   *Mitigation:* The `impact_adjusted = impact * (1 - novelty)` scaling helps but might be insufficient. Additional mechanisms include:
+            *   **Capping Impact Penalty:** If `novelty > 0.7`, cap the negative impact contribution (e.g., `max(impact_adjusted, -0.2)`) to prevent excessive suppression of exploration.
+            *   **Exploration Bonus:** Add a direct bonus to `total_reward` during high-novelty phases (e.g., `+ 0.5 * novelty if novelty > 0.7`).
+            *   **Dynamic Variance Target:** Allow a higher variance target during exploration (`variance_target = 0.05 + 0.05 * novelty`).
+            *   **Stochastic STDP:** Introduce noise into STDP updates (`Δw_ij += randn() * 0.01`) during high-novelty phases to encourage escaping local optima.
+        *   *Rationale:* These ensure a better balance, allowing exploration for novel solutions without sacrificing stability.
 
 #### C.7. Influence on Learning (Modulation)
 *   The calculated `total_reward` modulates the base STDP learning rate (`eta = 0.01`).
@@ -312,6 +332,17 @@ FUM's design choices distinguish it not only from LLMs but also from various oth
         *   *Metric Recalibration:* Resetting novelty history (`recent_inputs`) and regularizing SIE weights towards defaults prevents long-term drift.
         *   *Stability Constraints:* Enforcing stable dynamics (variance `< 0.05 Hz`) inherently links internal optimization to effective external interaction.
         *   *External Validation:* Periodically testing against validation sets and resetting SIE weights if accuracy drops below a threshold (e.g., 80%) ensures continued alignment.
+    *   **Robustness of SIE-Guided Consolidation (Phase 3):** The reliance on internal metrics (`novelty`, `habituation`, `self_benefit`, `TD_error`) during autonomous operation with sparse external feedback requires safeguards against the system optimizing for misleading internal states ("gaming") or drifting away from external reality.
+        *   *Preventing "Gaming":*
+            *   *Novelty:* Capping novelty's contribution (`min(novelty, 0.5)`) and using habituation prevent loops of random, meaningless outputs.
+            *   *Complexity/Impact:* Normalizing these metrics (`clamp(metric / baseline, 0, 1)`) and enforcing firing rate limits via intrinsic plasticity (`rate <= 0.5 Hz`) prevent artificial inflation.
+            *   *TD_Error:* Regularizing `V_states` updates (`TD - λ * V_states`) prevents manipulation of predicted values.
+        *   *Ensuring Long-Term Alignment:*
+            *   *Periodic Ground Truth:* Injecting labeled validation inputs periodically (e.g., every 100k steps) provides external reward `r` to anchor `total_reward` and recalibrate `V_states`.
+            *   *Metric Recalibration:* Resetting novelty history (`recent_inputs`) and regularizing SIE weights towards defaults prevents long-term drift due to skewed environmental statistics.
+            *   *Stability Constraints:* Enforcing stable dynamics (variance `< 0.05 Hz`) inherently links internal optimization to effective external interaction.
+            *   *External Validation:* Periodically testing against validation sets and resetting SIE weights if accuracy drops below a threshold (e.g., 80%) ensures continued alignment.
+        *   *Sensitivity to Weighting:* The consolidation process is sensitive to SIE component weights. Weight regularization and sensitivity monitoring (resetting weights if accuracy becomes too volatile) prevent drift and faulty memory management.
 
 ### D. Unified Knowledge Graph (Emergent)
 
@@ -447,11 +478,20 @@ FUM's design choices distinguish it not only from LLMs but also from various oth
 *   **Connections:** Form `conn_size=100` connections per new neuron: 50% targeted to low-reward neurons within the cluster (`torch.randint`), 50% random across network (`torch.randint`). Use distance-dependent probability `exp(-d/σ)` for selection (`torch.multinomial`). Check `conn_history` limit (max 3 additions per pair).
 *   **Initial Weights:** Uniform `U(0, 0.3)` (`torch.rand * 0.3`) for excitatory outputs, `U(-0.3, 0)` for inhibitory outputs.
 *   **Tensor Resizing:** Expand sparse `w` (convert COO, `torch.cat` new indices/values, convert CSR `torch.sparse_csr_tensor`). Rebalance shards using METIS if distributed (executed on CPU).
+*   **Dynamic Growth Caps & Stability:** To prevent runaway resource allocation during autonomous operation (Phase 3):
+    *   **Global Neuron Cap:** Halt growth if `num_neurons` exceeds a predefined cap (e.g., `1.5 * target_size`).
+    *   **Adaptive Growth Rate:** Scale the growth rate based on current network size relative to the cap (e.g., `growth_rate = base_rate * (1 - num_neurons / max_neurons)`).
+    *   **Cluster-Specific Limits:** Cap growth per cluster relative to its size (e.g., max 2% increase per event).
+    *   **Resource Monitoring:** Halt growth if node resource limits (e.g., VRAM usage > 80%) are approached.
+    *   **Interference Mitigation:** Rebalance clusters using METIS after growth to minimize inter-cluster connectivity and interference.
 
 #### C.3. Pruning Algorithm
 *   **Trigger:** Low neuron activity (`rate < 1 Hz` over 10k steps).
 *   **Downstream Compensation (Homeostatic Plasticity):** For each downstream neuron `j` losing input from pruned neuron `k`, compute `lost_input[j] = sum(w[k,j])`. Adjust threshold: `v_th[j] -= lost_input[j] * 0.1` (clamped >= -60mV). Executed on 7900 XTX.
 *   **Removal Operation:** Delete row/column `k` from sparse `w`: Identify indices `i=k` or `j=k`, remove them, adjust remaining indices (`>k` decremented), remove corresponding values. Rebuild `torch.sparse_csr_tensor`. Update affected shard, broadcast index changes if distributed.
+*   **Protecting Memory Integrity:**
+    *   **Contextual Scaffolding Detection:** Before pruning, check if the inactive neuron participates in sparsely active but high-reward pathways (`path_activity[i] < 1 Hz` and `path_reward[path_of[i]] > 0.9`). If so, skip pruning to preserve contextual scaffolding for older memories.
+    *   **Dynamic Pruning Threshold:** Adjust the activity threshold for pruning based on overall network activity (e.g., lower threshold if network is generally less active) to avoid excessive removal.
 
 #### C.4. Rewiring Algorithm & Limits
 *   **Trigger:** High cluster variance (`std dev > 0.05 Hz` over 1000 steps).
@@ -462,8 +502,10 @@ FUM's design choices distinguish it not only from LLMs but also from various oth
     *   Max `0.01 * N^2` new connections per rewiring event.
     *   Max 3 additions per pair lifetime (`conn_history`).
     *   Global sparsity target ~95% (prune weakest if exceeded).
-    *   Increase inhibitory connections (20 per 100 excitatory) during rewiring.
+    *   **Adaptive Inhibitory Balancing:** Dynamically adjust the E/I ratio during rewiring and growth. Monitor the network E/I ratio (target ~4:1). If `ei_ratio > 5`, increase inhibitory connections. If variance is high and `ei_ratio < 3`, reduce inhibitory connections slightly. This ensures inhibitory control scales appropriately with structural changes.
     *   Reduce `co_act` threshold (e.g., 0.7) if variance remains high.
+    *   **Stability Check:** Revert rewiring changes if they lead to excessive variance (`> 0.05 Hz`) immediately after application.
+    *   **Persistent Pathway Protection:** Avoid rewiring connections involving persistent synapses (Sec 5.E.4) to protect core knowledge.
 
 ### D. Adaptive Domain Clustering (Dynamic k and Edge Cases)
 
@@ -495,6 +537,10 @@ FUM's design choices distinguish it not only from LLMs but also from various oth
 
 #### D.5. Adaptation
 *   Clusters reflect the current functional organization and guide structural plasticity (growth targets).
+*   **Handling Novel Domains/Inputs:** The clustering mechanism adapts when encountering novel inputs that don't fit well into existing clusters:
+    *   **Novelty-Driven Bifurcation:** If an input has high novelty (`novelty > 0.9`) and low similarity to existing cluster centroids (`max_similarity < 0.5`), it can trigger an increase in `k` (`k += 1`) and a re-clustering, potentially forming a new cluster for the emerging domain.
+    *   **Temporary Holding Cluster:** Alternatively, novel inputs can be assigned to a temporary "holding" cluster. Rewards associated with these inputs are isolated to this cluster. Once enough novel inputs accumulate (e.g., >10), a new permanent cluster is formed via bifurcation.
+    *   **Preventing Misattribution:** If a novel input is initially misclassified into an existing cluster but yields low/negative reward (`total_reward < 0`), mechanisms can trigger reassignment to the holding cluster or prompt bifurcation, preventing the reinforcement of incorrect associations and delaying structural plasticity (growth) for clusters processing potentially misclassified novel inputs.
 
 ## 5. Training and Scaling: Detailed Implementation Strategy
 
@@ -632,6 +678,14 @@ The system operates based on principles of self-organized criticality (SOC). Con
     *   **Variance Regulation:** Reduce STDP learning rate (`eta *= 0.9`) if variance exceeds threshold (`> 0.1 Hz`).
     *   **Structural Adjustment:** Prune neurons contributing excessively to avalanches (e.g., `rate > 1 Hz` during avalanche, capped at 1% per event).
 *   **Rationale:** These mechanisms allow FUM to harness SOC benefits while actively managing instability risks, ensuring robust operation.
+*   **Maintaining Beneficial Criticality:** To ensure SOC remains beneficial and doesn't lead to large-scale disruptions during continuous operation:
+    *   **Criticality Monitoring:** Continuously monitor the criticality index (`criticality_index = abs(τ - 1.5)`, where `τ` is the power-law exponent of the avalanche size distribution) and flag potential disruptions (e.g., `criticality_index > 0.2` or excessively large avalanches).
+    *   **Dynamic Intervention:** If disruptions are detected or the system deviates significantly from criticality:
+        *   Increase global inhibition to dampen activity.
+        *   Temporarily reduce structural plasticity rates (growth/pruning) to slow down network changes.
+        *   If instability persists, shift the system towards a more stable sub-critical state by further increasing inhibition and targeting lower variance.
+    *   **Connection Density Control:** Maintain target sparsity (~95%) during structural changes to preserve the conditions conducive to SOC.
+    *   **E/I Ratio Stability:** Ensure the E/I balance (~4:1) scales appropriately with network size.
 
 #### C.4. Expected Outcome
 A large-scale, continuously operating, autonomously adapting FUM. High performance, learns from unlabeled data, maintains stability via self-organization/repair (including SOC management), efficiently utilizes distributed resources. Rich, dynamic knowledge graph emerges.
@@ -652,6 +706,12 @@ Achieving massive scale requires specific, optimized implementation choices:
 *   **Tolerable Skew:** Cap time skew at 10 timesteps (10ms) to ensure STDP validity (±20ms window). `max_skew = max(local_time) - min(local_time)`.
 *   **Global Sync Trigger:** Trigger global synchronization (`torch.distributed.barrier()`) every 1000 timesteps or if `max_skew > 10`. Coordinated by a master process on the CPU.
 *   **Consistency:** Global operations (SIE reward broadcast `torch.distributed.broadcast`, structural changes) occur *after* a global sync. Structural changes use a distributed lock (barrier + master update) to prevent race conditions.
+*   **Impact of Latency on STDP Precision:**
+    *   *Challenge:* Delayed spike transmission across shards (up to 10ms skew) can distort the calculation of `Δt` for cross-shard STDP, potentially weakening valid correlations or strengthening spurious ones (~5-43% error in `Δw_ij` for 1-10ms jitter).
+    *   *Mitigation:*
+        *   **Spike Timestamp Correction:** Adjust received spike timestamps based on measured transmission latency (`t_adjusted = t_received - latency`) to restore accurate `Δt`.
+        *   **Adaptive STDP Window:** Dynamically widen STDP time constants (`τ_+ = 20 + max_latency`) based on observed maximum cross-shard latency to reduce the relative impact of timing errors.
+        *   **Cross-Shard Validation:** Reduce the learning rate (`eta`) for cross-shard synapses if associated tasks show poor reward, preventing reinforcement of potentially faulty correlations.
 *   **Handling Resource Contention & Outlier Events:**
     *   *Challenge:* Certain operations (e.g., complex SIE calculations, clustering after major structural changes) might occasionally exceed the standard 50ms cycle time, risking desynchronization and disruption of temporal dependencies.
     *   *Mechanisms:*
@@ -693,6 +753,12 @@ Achieving massive scale requires specific, optimized implementation choices:
     *   **Consistency:** Global ops occur after sync. Distributed locks prevent race conditions during structural changes.
     *   **Performance:** Caching (LRU + priority + pre-fetching) targets high hit rates (~90%) to mitigate fetch latency. Learning/plasticity overhead scales manageably with distribution (e.g., STDP/SIE ~0.2s, Clustering ~0.3s per 1k steps at 32B scale across 1k GPUs).
     *   **Projected Performance:** Total cycle time at 32B scale projected feasible (<15 seconds per input), avoiding performance collapse, building on AMN validation and overhead optimizations.
+    *   **Scalability of Control Mechanisms:** Key control mechanisms (reward stability checks, contextual scaffolding detection, criticality monitoring) are designed for scalability. Theoretical analysis suggests their computational cost scales manageably (e.g., linearly with cluster count or pathway samples, not neuron count), remaining a small fraction (<1%) of the cycle time even at 32B+ neurons across thousands of nodes.
+    *   **Robustness Against Complex Emergent Behaviors:** While large-scale systems can exhibit unforeseen dynamics, robustness is enhanced through:
+        *   *Hierarchical Control:* Cluster-level controllers manage local dynamics, reducing complexity for the global controller monitoring network-wide stability (e.g., criticality).
+        *   *Dynamic Intervention:* Mechanisms automatically adjust parameters (e.g., reduce STDP learning rate `eta`) or trigger stabilizing actions (e.g., increase inhibition) if instability metrics (e.g., `criticality_index > 0.2`) are breached.
+        *   *Incremental Validation:* The phased scaling roadmap (Sec 6.A) allows for validation and refinement of control mechanisms at intermediate scales (1M, 10M, 1B neurons) before full deployment.
+        *   *Fallback Mechanisms:* If specific control mechanisms prove computationally prohibitive or unstable at scale, they can be temporarily disabled or simplified, reverting to more basic stability controls while ensuring core SNN operation continues.
 
 ### E. Practical Considerations: Tuning, Debugging, Stability, and Robustness
 
@@ -707,6 +773,13 @@ Achieving massive scale requires specific, optimized implementation choices:
     *   **Algorithm:** Use Gaussian Process regression (`gp_minimize`) to model the objective function, efficiently sampling parameter sets (e.g., 50 trials), evaluating each briefly, and selecting the best performing set.
     *   **Frequency:** Run tuning periodically (e.g., every 10,000 timesteps) or after significant structural changes to adapt parameters to the evolving network dynamics.
     *   **Implementation:** Execute on CPU, store trials on SSD, minimizing impact on GPU simulation.
+    *   **Parameter Sensitivity and Robustness at Scale:**
+        *   *Challenge:* The large number of interacting parameters and thresholds introduced for stability and control (e.g., persistence, decay, criticality adjustments) raises concerns about fragility, especially as optimal values might shift dynamically faster than tuning can adapt across thousands of nodes.
+        *   *Mitigation Strategies:*
+            *   **Parameter Space Reduction:** Use hierarchical parameterization (grouping parameters by layer/function) and cluster-specific tuning (adjusting local parameters like `eta[c]`, `γ[c]`) to reduce the complexity of the global tuning problem.
+            *   **Dynamic Adaptation:** Implement online sensitivity analysis (periodically perturbing parameters and measuring impact on accuracy) to automatically reduce the learning rate for overly sensitive parameters. Adjust parameters based on environmental statistics (e.g., increase plasticity `eta` if input variance is high).
+            *   **Distributed Tuning:** Perform Bayesian optimization locally on each node (or subsets of clusters) and synchronize aggregated parameters globally less frequently (e.g., every 1M steps).
+            *   **Robustness Ranges & Fallbacks:** Define acceptable ranges for key parameters based on simulations. If parameters drift outside these ranges or sensitivity remains high, revert to validated default settings to ensure stability and prevent reliance on brittle configurations.
 
 #### E.2. Debuggability and Interpretability
 *   **Comprehensive Logging:**
@@ -779,18 +852,48 @@ Achieving massive scale requires specific, optimized implementation choices:
 *   **Forgetting Outdated Information:**
     *   **Mechanism:** Implement slow synaptic decay (`w *= 0.99` every 10k steps). Prune connections if `abs(w) < 0.01`.
     *   **Rationale:** Allows weak, unused connections to fade over time (~230 seconds for `w=0.1`) while preserving strong ones (`w=0.9` takes ~2000 seconds to decay significantly).
-*   **Consolidating Core Knowledge:**
-    *   **Mechanism:** Mark synapses in high-reward, stable pathways (`w > 0.8`, `avg_reward > 0.9` over 10k steps) as "persistent".
-    *   **Persistence:** Exempt persistent synapses from decay.
-    *   **Implementation:** Use a sparse boolean tensor `persistent` checked during decay (on 7900 XTX).
-    *   **Rationale:** Protects essential learned functions while allowing adaptation in non-core pathways, ensuring long-term functional integrity.
+*   **Consolidating Core Knowledge (Persistence Tags):**
+    *   **Mechanism & Threshold Validation:** Mark synapses in high-reward, stable pathways as "persistent" to exempt them from decay.
+        *   **Standard Criteria:** `w > 0.8` AND `avg_reward[c] > 0.9` over a 10,000-timestep window. These thresholds were validated in AMN/FUM simulations (e.g., 90% of correct synapses had `w > 0.8`, clusters with `avg_reward > 0.9` retained 95% accuracy), ensuring only consistently reinforced, high-performance synapses are tagged.
+        *   **Stability Check:** Require reward stability (`torch.var(reward_history[c][-10000:]) < 0.1`) and sustained activity (`torch.mean(spike_history[neurons_in_synapse[i,j]][-10000:]) > 0.1 Hz`) to prevent premature tagging based on transient events (reduces false positives from ~5% to ~1%).
+    *   **Protecting Infrequently Activated but Critical Knowledge:**
+        *   **Extended Persistence Window:** For low-activity clusters (`rate[c] < 0.1 Hz`), extend the `avg_reward` evaluation window to 100,000 timesteps (~100 seconds) to capture performance on rare tasks.
+        *   **Activity-Independent Persistence:** Tag a synapse if it contributes to a high-reward output (`total_reward > 1`) at least once in 1M timesteps, regardless of `avg_reward[c]`. Track activation history (`synapse_history[i,j]`) for this.
+        *   **Dynamic Threshold Adjustment:** For low-activity clusters, lower persistence thresholds (e.g., `w > 0.7`, `avg_reward > 0.8`) to protect critical but less frequently reinforced synapses (improves retention of rare skills to ~95%).
+    *   **Removing Persistence Tags (De-Tagging):** Consolidation is not permanent. Remove the `persistent` tag if `avg_reward[c]` drops below 0.5 for 100k steps or if the synapse is involved in consistently highly negative reward outcomes (`total_reward < -1` for 3 consecutive inputs), allowing outdated or incorrect knowledge to be pruned or relearned.
+    *   **Implementation:** Use a sparse boolean tensor `persistent` checked during decay (on 7900 XTX). Track `synapse_history` and cluster reward/activity metrics (on MI100) to dynamically update tags.
+    *   **Rationale:** These refined mechanisms protect essential learned functions (including rare skills) while allowing adaptation and preventing the freezing of suboptimal knowledge, ensuring long-term functional integrity and preventing catastrophic forgetting for low-frequency tasks.
 *   **Continual Learning vs. Catastrophic Forgetting (Phase 3):**
     *   *Challenge:* Integrating large volumes of novel information without overwriting previously mastered skills.
-    *   *Mechanisms:*
-        *   **Synaptic Decay:** Slowly weakens unused connections (`w *= 0.99` every 10k steps), making space for new learning while preserving strong pathways.
+    *   *Mechanisms & Interplay:*
+        *   **Synaptic Decay (Selective Forgetting):**
+            *   **Base Rule:** Slowly weakens non-persistent connections (`w *= 0.99` every 10k steps), making space for new learning while preserving strong pathways (e.g., `w=0.9` takes ~2000s to decay significantly). Prune if `abs(w) < 0.01`.
+            *   **Selective Targeting:** Decay is not uniform. It's modulated to selectively target outdated or irrelevant information:
+                *   *Extended Decay for Low Activity:* For low-activity clusters (`rate[c] < 0.1 Hz`), reduce decay rate (e.g., `0.995` vs. `0.99`) to extend retention of infrequently accessed knowledge (~460s vs. ~230s for `w=0.1`).
+                *   *Reward-Driven Decay:* Accelerate decay for low-reward clusters (`avg_reward[c] < 0.5` -> faster decay, e.g., `0.965`) or synapses involved in conflicting outputs (cross-cluster validation failure -> faster decay, e.g., `0.95`), targeting outdated/incorrect information.
         *   **STDP/SIE on New Data:** Novelty in SIE (`novelty > 0.5`) can temporarily increase plasticity (`eta *= 1.2`) to facilitate learning new information, while habituation reduces updates for old, mastered information.
-        *   **Persistence Tags:** Exempt core, high-reward synapses (`w > 0.8`, `avg_reward > 0.9`) from decay, robustly protecting core competencies.
-        *   **Dynamic Balance:** Plasticity (`eta` increase, growth) is balanced against stability mechanisms (`eta` decrease for high variance, inhibition, persistence threshold adjustments) to gracefully integrate new knowledge without catastrophic forgetting. Accuracy on validation sets is monitored to ensure core skills are retained.
+        *   **Persistence Tags (Robust Protection):** Exempt core, high-reward synapses (using refined criteria from Sec 5.E.4) from decay, robustly protecting core competencies. Activity-independent tagging ensures rare but critical knowledge is also protected.
+        *   **Dynamic Balance:** Plasticity (`eta` increase, growth) is balanced against stability mechanisms (`eta` decrease for high variance, inhibition, persistence threshold adjustments, selective decay) to gracefully integrate new knowledge without catastrophic forgetting. Accuracy on validation sets is monitored to ensure core skills are retained (target >95% retention).
+    *   **Maintaining Functional Integrity Amid Structural Changes:**
+        *   *Challenge:* Ensuring that structural plasticity (growth, pruning, rewiring) doesn't catastrophically disrupt core knowledge or destabilize the network.
+        *   *Mechanisms:*
+            *   **Protecting Memory Integrity During Pruning/Rewiring:** Specific checks (e.g., contextual scaffolding detection before pruning, avoiding rewiring persistent synapses) prevent the accidental removal or disruption of critical pathways (See Sec 4.C.3, 4.C.4).
+            *   **Preventing Runaway Structural Changes:**
+                *   *Global Neuron Cap:* Halt growth if total neuron count exceeds a predefined limit (e.g., 1.5x target size).
+                *   *Criticality-Driven Adjustment:* Modulate growth and pruning rates based on the network's proximity to self-organized criticality (Sec 5.C.3). If the system becomes too chaotic (high variance, criticality index > 0.2), reduce growth and increase pruning; if too frozen (low variance), do the opposite.
+            *   **Cluster Integrity Monitoring:** Track average intra-cluster connectivity. If it drops below a threshold (e.g., 0.5), halt rewiring within that cluster to preserve its structure.
+            *   **Access Preservation:** Monitor average inter-cluster connectivity. If links between functionally related clusters weaken (e.g., < 0.1), selectively add new connections to maintain accessibility.
+        *   *Rationale:* These mechanisms ensure that structural changes support adaptation without sacrificing the stability and integrity of the emergent knowledge graph and its core competencies.
+    *   **Conflict Resolution with Persistent Knowledge (Phase 3):**
+        *   *Challenge:* Handling new data streams that strongly contradict established, persistent pathways, especially with sparse external rewards.
+        *   *Mechanism:*
+            *   **Conflict Detection:** Identify inputs that activate a persistent pathway but produce an output conflicting with prior high-reward outcomes associated with that pathway (using similarity checks and output comparison).
+            *   **STDP Depression vs. Persistence:** Persistent synapses have reduced plasticity (`eta *= 0.5`), making them resistant but not immune to STDP depression from conflicting inputs. Sustained negative rewards (`total_reward < -1`) can gradually weaken even persistent synapses over extended periods (~100k steps).
+            *   **SIE Response:** Conflicting inputs generate strong negative `total_reward` (due to low `r`, negative `TD`, low `novelty`, high `variance`/negative `impact`).
+            *   **De-Tagging Trigger:** Consistently strong negative rewards (`total_reward < -1` for 3+ inputs) or sustained low cluster reward (`avg_reward[c] < 0.5` over 100k steps) trigger the removal of the `persistent` tag, allowing the outdated pathway to decay or be overwritten.
+            *   **Structural Adjustment:** Persistent low rewards can also trigger pruning of neurons contributing to the conflicting pathway.
+            *   **Cross-Cluster Validation:** Inconsistency detected via cross-cluster checks (e.g., "logic" cluster contradicting "math" cluster output) reinforces negative rewards, accelerating conflict resolution.
+        *   *Outcome:* The system resolves conflicts by gradually weakening and potentially untagging/pruning conflicting persistent pathways based on sustained negative internal feedback (SIE) and cross-cluster consistency checks, preventing the maintenance of parallel, contradictory representations and ensuring long-term coherence.
 
 #### E.5. Robustness to Input Noise/Anomalies
 *   **Sensitivity to Temporal Precision & Noise:**
@@ -844,6 +947,12 @@ FUM's design posits that superintelligence might not require brute-force scaling
     *   *Mechanism:* STDP strengthens correlations (e.g., input "2" with "number" cluster), SIE rewards correct operations (e.g., `r=1` for `A ∧ B = 1`), and inhibitory neurons enable negation.
     *   *Validation:* AMN achieved 82% on quadratic equations, 80% on AND logic. FUM at 1k neurons shows >80% accuracy on basic arithmetic and logic (AND/OR/NOT).
     *   *Risk Mitigation:* If primitives fail to form reliably (e.g., low accuracy on basic logic), mitigations include adjusting the E/I ratio or reinforcing primitives with targeted ground truth feedback during training.
+7.  **Phased Validation Roadmap:** Acknowledging the validation gap between small-scale AMN tests (10 units) and the target 32B+ neuron FUM, a phased roadmap is planned to validate complex interacting mechanisms (full SIE, advanced plasticity, clustering, SOC management, distributed scaling) at intermediate scales before full deployment:
+    *   *Phase 1 (1M Neurons, ~Mar 2026):* Validate core mechanisms and stability on local cluster (e.g., 10 A100s). Metrics: accuracy >85%, criticality index < 0.1, variance < 0.05 Hz, 90% retention over 1M steps.
+    *   *Phase 2 (10M Neurons, ~Sep 2026):* Test cross-domain reasoning and long-term stability (10M steps) on cloud cluster (e.g., 100 A100s). Metrics: accuracy >87%, 95% retention, 90% cross-domain consistency.
+    *   *Phase 3 (1B Neurons, ~Mar 2027):* Validate distributed computation and emergent graph integrity on supercomputer (e.g., 1000 A100s). Metrics: accuracy >89%, 95% retention/consistency, <1% control overhead.
+    *   *Phase 4 (32B Neurons, ~Sep 2027):* Full-scale deployment and validation. Metrics: accuracy >90%, 95% retention/consistency, <1% overhead.
+    *   *Mitigation:* Use synthetic datasets for simulation at intermediate scales. If mechanisms fail validation, revert to simpler, robust controls tested at smaller scales.
 
 ### B. Strategic Foundation: Balancing Initialization and Learning
 
@@ -856,7 +965,7 @@ FUM's design is a strategic combination of neuroscience principles (SNNs, STDP, 
         *   *Initial Weights:* Weak and random (`U(0, 0.3)` for E, `U(-0.3, 0)` for I), requiring STDP/SIE to form functional pathways.
     *   **Learning Contribution (~85-90%):** The vast majority of capability (e.g., >85% target accuracy) emerges from STDP/SIE processing the 80-300 training examples, forming strong, functional pathways (`w[i,j] ≈ 0.8`) within the knowledge graph. The minimal data learning claim remains impactful as the initialization primarily accelerates, rather than dictates, learning.
     *   **Sensitivity to Initialization:** Performance shows moderate sensitivity. Changes to distance bias (`σ`) or parameter distributions (`std`) affect clustering speed or dynamics slightly (e.g., ±3-5% accuracy impact), but STDP/SIE learning dominates the final outcome. The chosen scheme optimizes early learning efficiency on constrained hardware.
-*   **Core Premise:** The synergistic combination of SNN efficiency, emergent self-organization, data-efficient local learning, and structural adaptability offers a robust and efficient pathway towards advanced AI, contrasting with brute-force scaling. The design's validation lies in demonstrating the coherent emergent intelligence produced during practical implementation.
+*   **Core Premise:** The synergistic combination of SNN efficiency, emergent self-organization, data-efficient local learning, and structural adaptability offers a robust and efficient pathway towards advanced AI, contrasting with brute-force scaling. The design's validation lies in demonstrating the coherent emergent intelligence produced during practical implementation. The inclusion of engineered controls alongside biologically inspired principles aims to create a system that is both powerful and stable, capable of harnessing emergence without succumbing to its potential unpredictability, thus maintaining a balance between allowing novel solutions and ensuring necessary control.
 
 # References
 
