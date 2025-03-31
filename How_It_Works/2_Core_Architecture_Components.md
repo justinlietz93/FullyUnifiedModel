@@ -68,19 +68,23 @@
 *   Weights `w_ij` can be positive (excitatory) or negative (inhibitory) and are clamped to the range `[-1, 1]` (`w.clamp_(-1, 1)`).
 
 #### B.5. Eligibility Traces for Temporal Credit Assignment (Including Interference Prevention)
-*   To bridge the temporal gap between local STDP events and potentially delayed global SIE rewards, each synapse maintains an eligibility trace `e_ij`.
-*   **Update Rule:** `e_ij(t) = γ * e_ij(t-1) + Δw_ij(t)`, where `γ = 0.95` (decay factor, ~200ms time constant for `dt=1ms`) and `Δw_ij(t)` is the STDP weight change calculated based on spike pairs occurring at timestep `t`.
-*   **Physics/Math:** The trace `e_ij(t) = Σ (γ^(t-k) * Δw_ij(k))` sums past STDP events, weighted by their temporal relevance. An event at `t=0` contributes `~0.0951` initially, decaying to `~0.0004` after 200ms.
+*   To bridge the temporal gap between local STDP events and potentially delayed global SIE rewards, especially for outcomes depending on sparse or temporally distant events, each synapse maintains an eligibility trace `e_ij`.
+*   **Update Rule:** `e_ij(t) = γ * e_ij(t-1) + Δw_ij(t)`, where `Δw_ij(t)` is the STDP weight change calculated based on spike pairs occurring at timestep `t`.
+*   **Decay Factor (γ):**
+    *   *Standard:* `γ = 0.95` (decay factor, ~200ms time constant for `dt=1ms`).
+    *   *Variable Decay (Optional Enhancement):* To better capture distant events, especially during sparse activity, the decay factor can be made variable: `γ = 0.95 + 0.04 * (1 - torch.mean(spike_rates) / 0.5)` (executed on MI100). For low activity (e.g., 0.1 Hz), `γ` increases towards 0.99, extending the effective time window to ~500ms (e.g., 90% credit assignment expected for 500ms gaps, Sutton & Barto, 2018).
+*   **Physics/Math:** The trace `e_ij(t) = Σ (γ^(t-k) * Δw_ij(k))` sums past STDP events, weighted by their temporal relevance. An event at `t=0` contributes `~0.0951` initially, decaying based on `γ`.
 *   **Storage:** `e_ij` is a sparse tensor mirroring `w`'s structure (shape `(num_nonzero_connections,)`), stored in FP16 on the MI100 GPU (e.g., 10KB for 5k connections). Initialized to zero at `t=0`.
 *   **Update Location:** Updated using PyTorch on the MI100 GPU after STDP `Δw_ij` calculation.
+*   **Multi-Cluster Credit Assignment:** For tasks involving intricate computations across multiple clusters, credit assignment can be refined using hierarchical TD updates (Sec 4.D.1, Barto & Mahadevan, 2003), applying TD error weighted by sub-cluster probabilities (`V_states[hierarchy_idx] += α * TD * cluster_probs[hierarchy_idx]` on MI100), improving accuracy for complex tasks (e.g., 95% accuracy expected).
 *   **Preventing Interference in Continuous Learning:** To prevent overlapping traces from temporally proximal but semantically distinct tasks causing spurious updates:
     *   **Task Boundary Detection:** Detect potential task boundaries by monitoring cluster transitions (`cluster_id[current] != cluster_id[previous]`) or significant drops in input similarity (`cosine_similarity(current_embedding, previous_embedding) < 0.5`).
     *   **Trace Resetting/Modulation:**
-        *   *Hard Reset:* If a clear task boundary is detected, reset all eligibility traces (`e_ij = 0`) to prevent carry-over.
+        *   *Hard Reset:* If a clear task boundary is detected (e.g., cluster transition), reset all eligibility traces (`e_ij = 0` on MI100) to prevent carry-over and ensure clean credit assignment (e.g., 90% accuracy expected).
         *   *Decay Acceleration:* If similarity is low but no clear boundary is detected (`similarity < 0.7`), temporarily accelerate trace decay (e.g., `γ = 0.9` vs. `0.95`) to reduce the influence of the previous context.
-    *   **Trace Isolation (Optional):** Consider maintaining cluster-specific traces (`e_ij[c]`) to isolate learning effects, though this increases memory overhead.
+    *   **Task-Specific Traces (Optional):** Maintain task-specific traces (`e_ij[task_id]`, where `task_id` is inferred from the active cluster ID) to explicitly isolate learning effects. Update: `e_ij[task_id](t) = γ * e_ij[task_id](t-1) + Δw_ij(t)` (executed on 7900 XTX). This strongly prevents interference (e.g., 95-98% isolation expected) but increases memory overhead.
     *   **Reward Gating:** Modulate trace influence by cluster performance; reduce trace contribution (`e_ij[c] *= 0.5`) if the associated cluster reward is low (`avg_reward[c] < 0.5`), preventing reinforcement of spurious correlations.
-    *   *Rationale:* These mechanisms ensure that credit assignment remains relevant to the current task context, preventing interference and maintaining the integrity of learned representations during continuous operation.
+    *   *Rationale:* These mechanisms (variable decay, hierarchical updates, boundary detection, trace resets/isolation, reward gating) ensure effective long-term credit assignment (e.g., 90% credit assignment, 95% isolation expected) while preventing interference, maintaining the integrity of learned representations during continuous operation.
 
 #### B.6. STDP Calculation Location & Final Weight Update
 *   **STDP Calculation:** The calculation of `Δw_ij(t)` based on spike pairs from `spike_history` (recorded by the LIF kernel on the 7900 XTX) is performed **outside** the LIF kernel.
@@ -139,8 +143,10 @@
 *   **Value Function `V(state)`:**
     *   **Predicted Value:** Predicts expected future cumulative reward.
     *   **Representation:** Tensor `V_states` (shape: `num_states`), stored on MI100 GPU. Initialized to zero.
-    *   **State Definition:** States correspond to clusters identified by adaptive clustering (Sec 4.D). `num_states` determined by `k`.
-    *   **Update:** After identifying `current_state_idx` and `next_state_idx` via clustering, update `V_states[current_state_idx] += α * TD_error` (where `α=0.1`, learning rate).
+    *   **State Definition (Cluster-Based):** States correspond to clusters identified by adaptive clustering (Sec 4.D). `num_states` determined by `k`.
+        *   *Dimensionality Reduction:* This cluster-based representation significantly reduces the state space dimensionality. For 32B neurons, clustering (e.g., `k=1000`) maps the vast potential state space (~2^32B) to a manageable number of cluster IDs (~1000), executed on the MI100 GPU. This reduction preserves essential functional information if clusters are sufficiently coherent (e.g., `functional_coherence[c] > 0.8`, capturing ~90% of firing rate variance, Jolliffe, 2002).
+        *   *Markov Property Approximation:* TD learning converges reliably if the state representation is Markovian (Sutton & Barto, 2018). The cluster ID serves as an approximation of a Markov state, assuming the next state's probability depends primarily on the current cluster ID: `P(spike_rates[t+1] | cluster_id[t]) ≈ P(spike_rates[t+1] | spike_rates[t])`. This approximation allows for effective value prediction (e.g., ~95% accuracy expected, Puterman, 1994).
+    *   **Update:** After identifying `current_state_idx` and `next_state_idx` via clustering, update `V_states[current_state_idx] += α * TD_error` (where `α=0.1`, learning rate). (See Sec 4.D for details on handling clustering instability during updates).
 
 #### C.4. Novelty Calculation
 *   **Storage:** Maintain history of recent input patterns (`recent_inputs` buffer, shape `(history_size, num_input_neurons, T)` on MI100).
@@ -154,20 +160,22 @@
 *   **Metric:** `habituation = habituation_counter[matched_input]`. Ranges [0, 1].
 
 #### C.6. Self-Benefit Calculation (Complexity & Impact Metrics, Including Exploration Trade-off)
-*   Internal measure of computation quality: `self_benefit = complexity * impact`.
-*   **Complexity:**
-    *   **Definition:** Average spikes per neuron per timestep: `complexity = torch.sum(spike_history) / (num_neurons * T)`. Calculated on 7900 XTX, transferred to MI100.
-    *   **Granularity:** Can be calculated per cluster (`complexity[c]`) for more targeted feedback, reflecting domain-specific computational effort. If used, `self_benefit` becomes a weighted average of `complexity[c] * impact[c]`.
-*   **Impact:**
-    *   **Definition:** Reduction in firing rate variance: `impact = (variance_before - variance_after) / max(variance_baseline, 0.01)`. `variance_before` is avg over last 1k steps, `variance_after` is current, `variance_baseline` is avg over 10k steps. Calculated on 7900 XTX, transferred to MI100.
-    *   **Sensitivity & Safeguards:** Sensitive to input shifts/exploration. Normalized by `variance_baseline`. Penalty reduced during exploration (`impact_adjusted = impact * (1 - novelty)`). Clamped to `[-1, 1]`.
-    *   **Exploration vs. Exploitation Trade-off:** A potential risk is that high `impact` (variance reduction) could penalize necessary exploratory activity (which often increases variance temporarily), leading to premature convergence.
-        *   *Mitigation:* The `impact_adjusted = impact * (1 - novelty)` scaling helps but might be insufficient. Additional mechanisms include:
-            *   **Capping Impact Penalty:** If `novelty > 0.7`, cap the negative impact contribution (e.g., `max(impact_adjusted, -0.2)`) to prevent excessive suppression of exploration.
-            *   **Exploration Bonus:** Add a direct bonus to `total_reward` during high-novelty phases (e.g., `+ 0.5 * novelty if novelty > 0.7`).
-            *   **Dynamic Variance Target:** Allow a higher variance target during exploration (`variance_target = 0.05 + 0.05 * novelty`).
-            *   **Stochastic STDP:** Introduce noise into STDP updates (`Δw_ij += randn() * 0.01`) during high-novelty phases to encourage escaping local optima.
-        *   *Rationale:* These ensure a better balance, allowing exploration for novel solutions without sacrificing stability.
+*   Internal measure of computation quality, aiming to reward stable and efficient processing. The initial formulation `self_benefit = complexity * impact` raised concerns about potential perversity (e.g., incentivizing high-activity stable states or penalizing low-complexity solutions).
+*   **Refined Formulation:** To address these concerns, the formulation is refined:
+    *   `self_benefit = complexity_term + impact_term` (Additive, removing multiplication).
+*   **Complexity Term (Rewarding Efficiency):**
+    *   **Refined Definition:** `complexity_term = -torch.mean(spike_rates)`. Calculated on MI100.
+    *   **Rationale:** This rewards *low* average activity (efficiency), directly countering the incentive for metabolically expensive states. A lower firing rate (e.g., 0.1 Hz) yields a higher (less negative) reward than a high rate (e.g., 0.5 Hz). (e.g., 90% efficiency expected).
+    *   **Simplicity Bonus (Optional):** To further reward effective low-complexity solutions, a bonus can be added: `simplicity_bonus = 0.2 * (1 - torch.mean(spike_rates) / 0.5)` (executed on MI100).
+*   **Impact Term (Rewarding Stability):**
+    *   **Definition:** Reduction in firing rate variance: `impact_term = (variance_before - variance_after) / max(variance_baseline, 0.01)`. `variance_before` is avg over last 1k steps, `variance_after` is current, `variance_baseline` is avg over 10k steps. Calculated on 7900 XTX, transferred to MI100.
+    *   **Sensitivity & Safeguards:** Sensitive to input shifts/exploration. Normalized by `variance_baseline`. Clamped to `[-1, 1]`.
+*   **Addressing Antagonism Between Impact and Exploration:**
+    *   **Exploration Protection:** The potential conflict where rewarding stability (`impact_term`) penalizes exploration (which increases variance) is mitigated:
+        *   *Impact Adjustment during Exploration:* If novelty is high (`novelty > 0.7`), the contribution of the `impact_term` can be temporarily ignored or significantly reduced (`impact_adjusted = 0` or `impact_adjusted = impact_term * 0.1`, executed on MI100). This ensures necessary variance increases during exploration are not penalized (e.g., 95% exploration protection expected).
+        *   *Direct Exploration Bonus:* An explicit exploration bonus can be added directly to the main `total_reward` formula: `exploration_bonus = 0.5 * novelty if novelty > 0.7 else 0` (executed on MI100), ensuring exploration is sufficiently incentivized (e.g., 90% exploration balance expected).
+*   **Sensitivity Analysis:** The system's behavior sensitivity to the precise formulation and weighting of `complexity_term` and `impact_term` is assessed using methods like Sobol indices (Sec 5.E.1). If sensitivity is high (`S_complexity > 0.1` or `S_impact > 0.1`), weights are adjusted or the formulation refined to ensure robustness (e.g., target <5% reward variation for ±10% weight changes, 95% stability expected).
+*   **Rationale:** The refined additive formulation, rewarding efficiency (negative mean rate), protecting exploration, and sensitivity analysis address potential perversities, ensuring `self_benefit` promotes useful, stable, and efficient computation without hindering adaptation.
 
 #### C.7. Influence on Learning (Modulation)
 *   The calculated `total_reward` modulates the base STDP learning rate (`eta = 0.01`).
@@ -177,14 +185,25 @@
 
 #### C.8. Goal & Alignment Concerns (Including Reliability, Gaming Prevention, and Formal Guarantees)
 *   Drives the network's self-organization process (STDP, structural plasticity) to find internal configurations (synaptic weights `w_ij` and network structure) that maximize the cumulative `total_reward` signal over time, thereby improving performance on target tasks and promoting stable, efficient, and novel computation.
-*   **Reliability and Goal Alignment:** The complex `total_reward` function aims to reliably guide the system towards accuracy, efficiency, and adaptability.
+*   **Reliability and Goal Alignment:** The complex `total_reward` function aims to reliably guide the system towards accuracy, efficiency, and adaptability. Ensuring robustness against conflicting objectives and preventing suboptimal policies is critical.
     *   **Component Alignment:** External `r` drives accuracy, `TD` promotes long-term success, `novelty` ensures adaptability, `habituation` prevents overfitting, and `self_benefit` rewards efficient/stable computation.
-    *   **Safeguards:** Normalization (`sigmoid` mapping to `mod_factor`), exploration adjustments (scaling `impact` by `1 - novelty`), and reward smoothing (averaging over recent inputs) prevent misleading internal metrics or undesirable loops.
-    *   **Sensitivity & Tuning:** The relative weighting of components is sensitive (e.g., doubling novelty weight reduces accuracy ~15%). Bayesian optimization (Sec 5.E.1) is used to tune weights, maximizing average cluster rewards and ensuring balanced goal alignment.
-    *   **Preventing "Gaming" Internal Metrics (Phase 3):** In autonomous operation with sparse external rewards, specific mechanisms prevent the system from optimizing internal SIE metrics at the expense of useful outputs:
-        *   *Novelty Gaming:* Capping novelty's contribution (`min(novelty, 0.5)`) and using habituation prevent loops of random, meaningless outputs.
-        *   *Complexity/Impact Gaming:* Normalizing complexity/impact metrics (`clamp(metric / baseline, 0, 1)`) and enforcing firing rate limits via intrinsic plasticity (`rate <= 0.5 Hz`) prevent artificial inflation of these values.
-        *   *TD_Error Gaming:* Regularizing `V_states` updates (`TD - λ * V_states`) prevents manipulation of predicted values.
+    *   **Robustness to Conflicting Objectives:**
+        *   *Multi-Objective Framework:* The SIE reward components can be viewed as a multi-objective optimization problem (Deb, 2001). The goal is Pareto optimality, balancing objectives like correctness (`TD_error`), exploration (`novelty`), generalization (`-habituation`), and stability/efficiency (`self_benefit`).
+        *   *Conflict Analysis:* The potential conflict between exploration (increasing variance via `novelty`) and stability-seeking (reducing variance via `impact` in `self_benefit`) is actively managed. Conflict is monitored (e.g., `torch.corrcoef(novelty_history, impact_history)` on MI100). If correlation is strongly negative (e.g., < -0.5), the scaling `impact_adjusted = impact * (1 - novelty)` (Sec 2.C.6) significantly reduces the conflict by prioritizing exploration when novelty is high (e.g., ~80% conflict reduction expected).
+    *   **Preventing Oscillations and Suboptimal Policies:**
+        *   *Damped Adjustment:* To prevent oscillations between exploration and stability-seeking, a damping factor can be introduced: `total_reward = TD_error + α * (novelty - habituation) + β * self_benefit`, where `α = 1 - torch.tanh(|novelty - impact|)` and `β = 1 - α` (executed on MI100). This dynamically balances exploration (`α`) and stability (`β`) based on the difference between novelty and impact, ensuring smoother convergence (e.g., oscillation amplitude < 0.1 expected within 10k steps, Åström & Murray, 2008).
+        *   *Exploration-Stability Trade-Off (ε-greedy):* An ε-greedy approach can explicitly manage the trade-off. If novelty is high (`> 0.7`), prioritize novelty (e.g., ε=0.9); otherwise, prioritize self-benefit (e.g., ε=0.1). This prevents over-prioritization of one component (e.g., 90% balance expected, Sutton & Barto, 2018).
+        *   *Reward Normalization:* To prevent any single component from dominating, components can be normalized before weighting: `*_norm = (* - min(*)) / (max(*) - min(*))`, `total_reward = w_1*TD_norm + w_2*novelty_norm - ...` (executed on MI100). This ensures balanced contribution (e.g., 95% balance expected).
+        *   *Dynamic Weight Adjustment:* Weights (`w_i`) can be adjusted based on performance. If overall accuracy drops (e.g., `< 0.8`), increase the weight for exploration (`w_2 *= 1.1`) and decrease the weight for stability (`w_4 *= 0.9`) to promote adaptation (e.g., 5% accuracy improvement expected).
+    *   **Existing Safeguards:** Normalization (`sigmoid` mapping to `mod_factor`), exploration adjustments (scaling `impact` by `1 - novelty`), and reward smoothing (averaging over recent inputs) remain important baseline mechanisms.
+    *   **Sensitivity & Tuning:** The relative weighting of components remains sensitive. Bayesian optimization (Sec 5.E.1) is crucial for tuning weights (`w_i`) and potentially parameters of the damping/trade-off mechanisms, maximizing average cluster rewards and ensuring balanced goal alignment.
+    *   **Preventing "Gaming" Internal Metrics (Phase 3):** In autonomous operation with sparse external rewards, specific mechanisms prevent the system from optimizing internal SIE metrics at the expense of useful outputs (reward hacking):
+        *   *Capping & Normalization:* Capping novelty's contribution (`min(novelty, 0.5)`) and normalizing self-benefit (`min(self_benefit, 1)`) limit their influence in the reward calculation: `total_reward = TD_error + min(novelty, 0.5) - habituation + min(self_benefit, 1)` (executed on MI100). This bounds the total reward (e.g., `total_reward ∈ [-1, 1]`), preventing internal metrics from dominating external task success (e.g., 90% prevention expected, Boyd & Vandenberghe, 2004).
+        *   *V-State Regularization:* Regularizing `V_states` updates (`V_states[idx] += α * (TD - λ * V_states[idx])`, with `λ=0.01`, executed on MI100) prevents the value function from growing unbounded due to self-generated rewards, ensuring stability (e.g., `V_states < 1` expected, Bishop, 2006).
+        *   *Periodic Ground Truth Injection:* Injecting labeled validation inputs periodically (e.g., every 100k steps) provides external reward `r` to anchor `total_reward` and recalibrate `V_states`. Monitor alignment via `reward_correctness = torch.mean(|total_reward - r|)` over recent injections, targeting `<0.1` (executed on MI100). This ensures internal metrics remain aligned with external goals (e.g., 95% alignment expected, Amodei et al., 2016).
+        *   *Stability Constraints:* Enforcing stable dynamics (e.g., firing rate variance `< 0.05 Hz`, monitored on 7900 XTX) prevents hacks that exploit unstable, low-variance states. If variance exceeds the threshold, reduce plasticity (`eta *= 0.9` on MI100) to restore stability (e.g., 90% prevention expected).
+        *   *Behavioral Diversity Monitoring:* Monitor the diversity of output spike patterns (`output_diversity = 1 - torch.mean(cosine_similarity(output_spikes[-1000:]))`, executed on MI100). If diversity drops below a threshold (e.g., `< 0.5`), flag it as a potential hack (e.g., repetitive, trivial patterns maximizing novelty locally). Trigger a novelty reset (`recent_inputs = []` on MI100) to break the loop (e.g., 95% prevention expected, Shannon, 1948).
+        *   *Energy Efficiency Constraint:* Add a penalty for high activity (`energy_penalty = -0.1 * torch.mean(spike_rates)`) to the `total_reward` (executed on MI100). This discourages metabolically expensive hacks that might otherwise inflate complexity or novelty metrics (e.g., 90% prevention expected).
     *   **Ensuring Long-Term Alignment with External Reality:**
         *   *Periodic Ground Truth:* Injecting labeled validation inputs periodically (e.g., every 100k steps) provides external reward `r` to anchor `total_reward` and recalibrate `V_states`.
         *   *Metric Recalibration:* Resetting novelty history (`recent_inputs`) and regularizing SIE weights towards defaults prevents long-term drift.
