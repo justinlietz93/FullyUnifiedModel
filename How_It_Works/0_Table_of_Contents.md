@@ -40,6 +40,9 @@
         *   [E.1. Hybrid Approach Rationale](#e1-hybrid-approach-rationale)
         *   [E.2. Frameworks & Hardware Roles (Development Context)](#e2-frameworks--hardware-roles-development-context)
         *   [E.3. Interface: Data Flow & Synchronization](#e3-interface-data-flow--synchronization)
+    *   [F. Adaptive Domain Clustering](#f-adaptive-domain-clustering) <!-- Assuming 2F exists based on file structure -->
+    *   [G. Validation of Mechanism Interactions](#g-validation-of-mechanism-interactions)
+    *   [H. Stability Analysis (Placeholder)](#h-stability-analysis-placeholder) <!-- Placeholder for 2E -->
 *   [3. Multimodal Input/Output Processing](#3-multimodal-inputoutput-processing)
     *   [A. Encoder Mechanism: From Raw Data to Spike Trains](#a-encoder-mechanism-from-raw-data-to-spike-trains)
         *   [A.1. Purpose & Contrast with LLM Input](#a1-purpose--contrast-with-llm-input)
@@ -64,6 +67,10 @@
         *   [D.3. Cluster Assignment & Reward Attribution (Domain Identification)](#d3-cluster-assignment--reward-attribution-domain-identification)
         *   [D.4. Edge Case Handling (Small k, Empty Clusters)](#d4-edge-case-handling-small-k-empty-clusters)
         *   [D.5. Adaptation (Including Novel Domains)](#d5-adaptation-including-novel-domains)
+    *   [E. Emergence of Functional Specialization](#e-emergence-of-functional-specialization) <!-- Assuming 4E exists -->
+    *   [F. Open-Ended Complexity and Development](#f-open-ended-complexity-and-development) <!-- Assuming 4F exists -->
+    *   [G. Emergence Analysis (Placeholder)](#g-emergence-analysis-placeholder)
+    *   [H. Plasticity Metrics (Placeholder)](#h-plasticity-metrics-placeholder)
 *   [5. Training and Scaling: Detailed Implementation Strategy](#5-training-and-scaling-detailed-implementation-strategy)
     *   [A. Phase 1: Random Seed Sprinkling (Foundation Building)](#a-phase-1-random-seed-sprinkling-foundation-building)
         *   [A.1. Objective](#a1-objective)
@@ -92,6 +99,7 @@
         *   [E.3. Computational Cost of Overhead Components & Net Efficiency](#e3-computational-cost-of-overhead-components--net-efficiency)
         *   [E.4. Long-Term Stability and Potential Drift (Phase 3, Including Failure Modes, Consolidation, Forgetting, & Conflict Resolution)](#e4-long-term-stability-and-potential-drift-phase-3-including-failure-modes-consolidation-forgetting--conflict-resolution)
         *   [E.5. Robustness to Input Noise/Anomalies (Including Jitter Mitigation)](#e5-robustness-to-input-noiseanomalies-including-jitter-mitigation)
+        *   [E.5. Scaling Analysis (Placeholder)](#e5-scaling-analysis-placeholder) <!-- Placeholder for 5.E.5 -->
         *   [E.6. Justification for Specific Algorithmic Choices](#e6-justification-for-specific-algorithmic-choices)
         *   [E.7. Managing Complexity Interactions and Emergent Instabilities](#e7-managing-complexity-interactions-and-emergent-instabilities)
         *   [E.8. Distinguishing Generalization from Memorization](#e8-distinguishing-generalization-from-memorization)
