@@ -31,6 +31,7 @@
         *   [C.6. Self-Benefit Calculation (Complexity & Impact Metrics, Including Exploration Trade-off)](#c6-self-benefit-calculation-complexity--impact-metrics-including-exploration-trade-off)
         *   [C.7. Influence on Learning (Modulation)](#c7-influence-on-learning-modulation)
         *   [C.8. Goal & Alignment Concerns (Including Reliability, Gaming Prevention, and Formal Guarantees)](#c8-goal--alignment-concerns-including-reliability-gaming-prevention-and-formal-guarantees)
+        *   [C.9. Dynamic Ethics Adjuster](#c9-dynamic-ethics-adjuster)
     *   [D. Unified Knowledge Graph (Emergent)](#d-unified-knowledge-graph-emergent)
         *   [D.1. Concept & Contrast with ANNs/GNNs](#d1-concept--contrast-with-annsgnns)
         *   [D.2. Structure](#d2-structure)
@@ -40,9 +41,11 @@
         *   [E.1. Hybrid Approach Rationale](#e1-hybrid-approach-rationale)
         *   [E.2. Frameworks & Hardware Roles (Development Context)](#e2-frameworks--hardware-roles-development-context)
         *   [E.3. Interface: Data Flow & Synchronization](#e3-interface-data-flow--synchronization)
-    *   [F. Adaptive Domain Clustering](#f-adaptive-domain-clustering) <!-- Assuming 2F exists based on file structure -->
-    *   [G. Validation of Mechanism Interactions](#g-validation-of-mechanism-interactions)
-    *   [H. Stability Analysis (Placeholder)](#h-stability-analysis-placeholder) <!-- Placeholder for 2E -->
+    *   [F. Adaptive Domain Clustering](#f-adaptive-domain-clustering)
+    *   [G. Validation of Mechanism Interactions](#g-validation-of-mechanism-interactions) <!-- Corresponds to 2G_Interaction_Validation.md -->
+    *   [H. Scaling Dynamics Model](#h-scaling-dynamics-model) <!-- Corresponds to 2G_Scaling_Dynamics_Model.md -->
+    *   [I. Phase Transition Predictor](#i-phase-transition-predictor) <!-- Corresponds to 2H_Phase_Transition_Predictor.md -->
+    *   [J. Stability Analysis (Placeholder)](#j-stability-analysis-placeholder) <!-- Placeholder -->
 *   [3. Multimodal Input/Output Processing](#3-multimodal-inputoutput-processing)
     *   [A. Encoder Mechanism: From Raw Data to Spike Trains](#a-encoder-mechanism-from-raw-data-to-spike-trains)
         *   [A.1. Purpose & Contrast with LLM Input](#a1-purpose--contrast-with-llm-input)
@@ -68,9 +71,10 @@
         *   [D.4. Edge Case Handling (Small k, Empty Clusters)](#d4-edge-case-handling-small-k-empty-clusters)
         *   [D.5. Adaptation (Including Novel Domains)](#d5-adaptation-including-novel-domains)
     *   [E. Emergence of Functional Specialization](#e-emergence-of-functional-specialization) <!-- Assuming 4E exists -->
-    *   [F. Open-Ended Complexity and Development](#f-open-ended-complexity-and-development) <!-- Assuming 4F exists -->
-    *   [G. Emergence Analysis (Placeholder)](#g-emergence-analysis-placeholder)
-    *   [H. Plasticity Metrics (Placeholder)](#h-plasticity-metrics-placeholder)
+    *   [F. Open-Ended Complexity and Development](#f-open-ended-complexity-and-development)
+    *   [K. Theoretical Foundations: Grounding Emergence in Measurable Complexity](#k-theoretical-foundations-grounding-emergence-in-measurable-complexity)
+    *   [G. Emergence Analysis (Placeholder)](#g-emergence-analysis-placeholder) <!-- Note: Lettering adjusted due to adding K -->
+    *   [H. Plasticity Metrics (Placeholder)](#h-plasticity-metrics-placeholder) <!-- Note: Lettering adjusted due to adding K -->
 *   [5. Training and Scaling: Detailed Implementation Strategy](#5-training-and-scaling-detailed-implementation-strategy)
     *   [A. Phase 1: Random Seed Sprinkling (Foundation Building)](#a-phase-1-random-seed-sprinkling-foundation-building)
         *   [A.1. Objective](#a1-objective)
@@ -103,9 +107,15 @@
         *   [E.6. Justification for Specific Algorithmic Choices](#e6-justification-for-specific-algorithmic-choices)
         *   [E.7. Managing Complexity Interactions and Emergent Instabilities](#e7-managing-complexity-interactions-and-emergent-instabilities)
         *   [E.8. Distinguishing Generalization from Memorization](#e8-distinguishing-generalization-from-memorization)
+        *   [E.11. Unified Debugging Framework](#e11-unified-debugging-framework)
 *   [6. Feasibility and Rationale Summary (Including Stability Theory & Validation Scope)](#6-feasibility-and-rationale-summary-including-stability-theory--validation-scope)
     *   [A. Why is FUM considered feasible despite its ambitious goals? (Including Primitive Emergence & Validation Roadmap)](#a-why-is-fum-considered-feasible-despite-its-ambitious-goals-including-primitive-emergence--validation-roadmap)
     *   [B. Strategic Foundation: Balancing Initialization and Learning](#b-strategic-foundation-balancing-initialization-and-learning)
+    *   [C. Resource Analysis and Justification](#c-resource-analysis-and-justification)
+    *   [D. Complexity as Strength: A Feature, Not a Bug](#d-complexity-as-strength-a-feature-not-a-bug)
+    *   [E. Probabilistic Failure Model](#e-probabilistic-failure-model)
+    *   [F. Failure Impact Model](#f-failure-impact-model)
+    *   [G. Ethical and Resource Integration](#g-ethical-and-resource-integration)
 *   [9. Broader Context and Ethical Considerations](./9_Broader_Context_and_Ethical_Considerations.md)
     *   [A. Philosophical Considerations: Consciousness, Subjectivity, and Qualia](#9a-philosophical-considerations-consciousness-subjectivity-and-qualia)
     *   [B. Motivations and Values](#9b-motivations-and-values)

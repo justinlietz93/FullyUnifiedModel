@@ -31,6 +31,7 @@ This list provides citations for the concepts, algorithms, and frameworks mentio
 *   Cochran, W. G. (1977). *Sampling techniques* (3rd ed.). Wiley.
 *   Cormen, T. H., Leiserson, C. E., Rivest, R. L., & Stein, C. (2009). *Introduction to algorithms* (3rd ed.). MIT Press.
 *   Cover, T. M., & Thomas, J. A. (2006). *Elements of information theory*. John Wiley & Sons.
+*   Dawkins, R. (1986). *The Blind Watchmaker*. W. W. Norton & Company.
 *   Dayan, P., & Niv, Y. (2008). Reinforcement learning: the good, the bad and the ugly. *Current Opinion in Neurobiology*, *18*(2), 185-196. https://doi.org/10.1016/j.conb.2008.08.003
 *   Dean, J., & Ghemawat, S. (2008). MapReduce: simplified data processing on large clusters. *Communications of the ACM*, *51*(1), 107-113.
 *   Deb, K. (2001). *Multi-objective optimization using evolutionary algorithms*. John Wiley & Sons.
@@ -52,12 +53,15 @@ This list provides citations for the concepts, algorithms, and frameworks mentio
 *   Goebel, R., Sanfelice, R. G., & Teel, A. R. (2012). *Hybrid dynamical systems: modeling, stability, and robustness*. Princeton University Press.
 *   Goodfellow, I., Pouget-Abadie, J., Mirza, M., Xu, B., Warde-Farley, D., Ozair, S., Courville, A., & Bengio, Y. (2014). Generative adversarial nets. In *Advances in Neural Information Processing Systems 27*.
 *   Goodfellow, I. J., Shlens, J., & Szegedy, C. (2015). Explaining and harnessing adversarial examples. In *International Conference on Learning Representations (ICLR)*.
+*   Gould, S. J. (1989). *Wonderful Life: The Burgess Shale and the Nature of History*. W. W. Norton & Company.
 *   Häusser, M., & Mel, B. (2003). Dendrites: bug or feature?. *Current Opinion in Neurobiology*, *13*(3), 372-383.
 *   Hebb, D. O. (1949). *The organization of behavior: A neuropsychological theory*. Wiley.
 *   Helias, M., Tetzlaff, T., & Diesmann, M. (2014). The correlation structure of local neuronal networks intrinsically results from recurrent connectivity. *PLoS Computational Biology*, *10*(1), e1003458. https://doi.org/10.1371/journal.pcbi.1003458
 *   Hendrycks, D., & Dietterich, T. (2019). Benchmarking neural network robustness to common corruptions and perturbations. In *International Conference on Learning Representations (ICLR)*.
+*   Hendrycks, D., Basart, S., Mu, N., Kadavath, S., Wang, F., Dorundo, E., ... & Steinhardt, J. (2021). Measuring massive multitask language understanding. *arXiv preprint arXiv:2009.03300*.
 *   Hensch, T. K. (2004). Critical period regulation. *Annual Review of Neuroscience*, *27*, 549-579.
 *   Hodgkin, A. L., & Huxley, A. F. (1952). A quantitative description of membrane current and its application to conduction and excitation in nerve. *The Journal of Physiology*, *117*(4), 500-544.
+*   Hoffmann, J., Borgeaud, S., Mensch, A., Buchatskaya, E., Cai, T., Rutherford, E., ... & Sifre, L. (2022). Training compute-optimal large language models. *arXiv preprint arXiv:2203.15556*.
 *   Hogan, A., Blomqvist, E., Cochez, M., d'Amato, C., Melo, G. D., Gutierrez, C., Kirrane, S., Gayo, J. E. L., Navigli, R., Neumaier, S., Ngomo, A. C. N., Polleres, A., Rashid, S. M., Rula, A., Schmelzeisen, L., Sequeda, J., Staab, S., & Zimmermann, A. (2021). Knowledge graphs. *ACM Computing Surveys (CSUR)*, *54*(4), 1-37. https://doi.org/10.1145/3447772
 *   Holtmaat, A., & Svoboda, K. (2009). Experience-dependent structural synaptic plasticity in the mammalian brain. *Nature Reviews Neuroscience*, *10*(9), 647-658.
 *   Hopfield, J. J. (1982). Neural networks and physical systems with emergent collective computational abilities. *Proceedings of the National Academy of Sciences*, *79*(8), 2554-2558.
@@ -68,6 +72,7 @@ This list provides citations for the concepts, algorithms, and frameworks mentio
 *   Kalman, R. E. (1960). A new approach to linear filtering and prediction problems. *Journal of Basic Engineering*, *82*(1), 35-45.
 *   Kandel, E. R. (2001). The molecular biology of memory storage: a dialogue between genes and synapses. *Science*, *294*(5544), 1030-1038.
 *   Kaner, C., Falk, J., & Nguyen, H. Q. (1999). *Testing computer software*. John Wiley & Sons.
+*   Kaplan, J., McCandlish, S., Henighan, T., Brown, T. B., Chess, B., Child, R., ... & Amodei, D. (2020). Scaling laws for neural language models. *arXiv preprint arXiv:2001.08361*.
 *   Karypis, G., & Kumar, V. (1998). A fast and high quality multilevel scheme for partitioning irregular graphs. *SIAM Journal on Scientific Computing*, *20*(1), 359-392.
 *   Khalil, H. K. (2002). *Nonlinear systems* (3rd ed.). Prentice Hall.
 *   Kipf, T. N., & Welling, M. (2017). Semi-supervised classification with graph convolutional networks. In *International Conference on Learning Representations (ICLR)*.
@@ -100,6 +105,7 @@ This list provides citations for the concepts, algorithms, and frameworks mentio
 *   Markram, H., Gerstner, W., & Sjöström, P. J. (2011). Spike-timing-dependent plasticity: a learning rule for the brain?. *Frontiers in Synaptic Neuroscience*, *4*, 2.
 *   Markram, H., Lübke, J., Frotscher, M., & Sakmann, B. (1997). Regulation of synaptic efficacy by coincidence of postsynaptic APs and EPSPs. *Science*, *275*(5297), 213-215.
 *   Marsland, S. (2014). *Machine learning: an algorithmic perspective*. CRC press.
+*   Mayr, E. (1963). *Animal Species and Evolution*. Harvard University Press.
 *   McCloskey, M., & Cohen, N. J. (1989). Catastrophic interference in connectionist networks: The sequential learning problem. *Psychology of learning and motivation*, *24*, 109-165.
 *   Mehrabi, N., Morstatter, F., Saxena, N., Lerman, K., & Galstyan, A. (2021). A survey on bias and fairness in machine learning. *ACM Computing Surveys (CSUR)*, *54*(6), 1-35.
 *   Merkel, D. (2014). Docker: Lightweight Linux Containers for Consistent Development and Deployment. *Linux Journal*, *2014*(239), 2.
