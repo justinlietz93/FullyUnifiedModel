@@ -1,10 +1,16 @@
 ### B. Phase 2: Tandem Complexity Scaling (Refinement and Competence)
 
-#### B.1. Objective
+#### B.1 Objective
+
+##### B.1.i.
 Refine the initial graph structure, strengthen domain-specific pathways, build robust cross-domain associations, and achieve baseline competence (>85% accuracy target) on more complex tasks using a curated curriculum (target: up to 300 total inputs).
 
-#### B.2. Cellular Components & Mechanisms
+#### B.2 Cellular Components & Mechanisms
+
+##### B.2.i.
 *   **Data Curriculum:** Sequentially introduce batches of data with increasing complexity.
+
+##### B.2.ii.
 *   **Training Loop (Enhanced):** Iterate through data batches.
     *   **For each batch/input item:**
         *   Execute core **Simulation Loop**, **STDP Calc**, **Trace Update** as in Phase 1.
@@ -21,15 +27,18 @@ Refine the initial graph structure, strengthen domain-specific pathways, build r
             *   **Trigger:** If `avg_reward[c] < 0.5` over 1000 steps.
             *   **Mechanism:** Activate Growth algorithm (Sec 4.C.2) for cluster `c`.
 
-#### B.3. Mathematical Formulations
+#### B.3 Mathematical Formulations
+
+##### B.3.i.
 1. **STDP Learning Rule (Excitatory/Inhibitory):** As defined in Sec 2.B.
 2. **Eligibility Trace:** `e_ij(t) = 0.95 * e_ij(t-1) + Δw_ij(t)`.
 3. **SIE Modulation:** `eta_effective = 0.01 * (1 + (2 * sigmoid(total_reward) - 1))`.
 4. **TD Learning:** `TD_error = r + 0.9 * V(next_state) - V(current_state)`; `V(state) += 0.1 * TD_error`.
 5. **Cluster Coherence Metric (Silhouette Score):** Used to determine `k` for k-means.
 
-#### B.4. Expected Outcome
+#### B.4 Expected Outcome
+
+##### B.4.i.
 Knowledge graph significantly refined, strong intra-domain pathways (`w[i,j] ≈ 0.8`), emerging inter-domain connections. Baseline competence (>85% accuracy) achieved. Minor structural growth may have occurred.
 
 ---
-

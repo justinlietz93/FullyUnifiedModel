@@ -2,14 +2,26 @@
 
 Achieving massive scale requires specific, optimized implementation choices:
 
-#### D.1. Distributed Computation (Graph Sharding)
+#### D.1 Distributed Computation (Graph Sharding)
+
+##### D.1.i.
 *   **Concept:** Partition neurons across multiple GPUs/nodes.
+
+##### D.1.ii.
 *   **Mechanism:** Use graph partitioning (e.g., METIS via PyTorch Geometric) to minimize inter-device connections. Implement communication layer (`torch.distributed` non-blocking ops or MPI/RCCL) for lightweight spike event transmission (source ID, target partition, timestamp). A coordinator process manages global steps, data distribution, SIE aggregation.
+
+##### D.1.iii.
 *   **Validation (METIS Effectiveness):** Validate partitioning effectiveness by measuring inter-cluster connectivity (`metis_effectiveness = torch.mean(inter_cluster_connectivity)` on MI100 GPU), targeting `<0.05` (master node). Test on heterogeneous hardware mixes (e.g., A100s + GTX 1660s) to ensure effectiveness persists (`P(partition_effective) > 0.9`, master node, e.g., 90% effectiveness expected, 95% scalability expected, Karypis & Kumar, 1998).
 
-#### D.2. Asynchronous Updates & Synchronization Details (Including State Consistency & Race Condition Prevention)
+#### D.2 Asynchronous Updates & Synchronization Details (Including State Consistency & Race Condition Prevention)
+
+##### D.2.i.
 *   **Concept:** Allow shards (partitions of neurons across GPUs/nodes) to simulate slightly out-of-sync (asynchronously) to improve overall throughput by reducing waiting time.
+
+##### D.2.ii.
 *   **Mechanism:** Each shard maintains its own local time (`local_time[shard]`). Spike events transmitted between shards are timestamped. A receiving shard buffers incoming spikes and processes them only when its `local_time` matches the spike's timestamp (adjusted for latency).
+
+##### D.2.iii.
 *   **Tolerable Skew & Synchronization:**
     *   *Skew Cap & Synchronization:* Asynchronous updates across shards target a **1ms skew tolerance** (`max_skew = max(local_time) - min(local_time) <= 1ms`) to align with biological STDP precision (~1ms, Bi & Poo, 1998). **Rationale:** This stricter tolerance ensures high learning accuracy. It is achieved through:
         *   **High-Precision Synchronization:** Utilizing the Precision Time Protocol (PTP, IEEE 1588) with hardware timestamping can achieve synchronization precision down to nanoseconds (e.g., `precision=10ns` achievable with NIC support). This reduces per-node clock jitter significantly (e.g., to ~10µs). Across a large distributed system (e.g., 1000 nodes), the compounded jitter variance can be estimated (e.g., `σ_total^2 ≈ N * σ_node^2`, yielding `σ_total ≈ 316µs` for `N=1000`, `σ_node=10µs`).
@@ -18,18 +30,26 @@ Achieving massive scale requires specific, optimized implementation choices:
     *   *Global Sync Trigger:* A global synchronization (`torch.distributed.barrier()`) is triggered every 1000 timesteps, or immediately if `max_skew > 1ms`. This operation, coordinated by a master process on the CPU, forces all shards to wait until they reach the same simulation time.
     *   *Preserving Local STDP Nature:* While necessary for coordination, engineering solutions like global synchronization or even vector clocks (see below) can introduce temporal distortions (e.g., `Δt_error = 316μs / 5ms = 0.063`, Answer IV.2) or global dependencies not present in purely local biological STDP (Bi & Poo, 1998). This risks altering the fundamental character of local learning (~5% distortion risk expected).
         *   *Mitigation (Local Clocks & STDP):* To minimize this, FUM prioritizes local synchronization using PTP (`local_clock[node_id] = sync_local(PTP)` on 7900 XTX GPU), reducing reliance on global mechanisms (90% local independence expected). STDP calculations use these local clocks where possible (`Δt = local_clock[i] - local_clock[j]` on 7900 XTX GPU), preserving the local nature of the rule (99.9% STDP accuracy expected). Simulations show this reduces STDP distortion significantly (~1% vs. ~4% with global sync, a 75% reduction).
+
+##### D.2.iv.
 *   **Ensuring State Consistency Despite Skew:**
     *   *Challenge:* During the asynchronous periods (up to 10ms skew), the state (e.g., firing rates, weights) of different shards can diverge slightly. This divergence needs to be managed to ensure consistency when global operations eventually occur after a sync.
     *   *State Divergence Bounding:* The 10ms skew inherently bounds divergence. Firing rates typically change slowly (e.g., 0.3 Hz average). A 10ms skew might change rates by ~0.03 Hz (`divergence = torch.max(|spike_rates[t] - spike_rates[t-10ms]|)`), executed on each node’s GPU. This minimal divergence (<0.03 Hz expected) has limited impact on overall state consistency (e.g., 95% state consistency expected).
     *   *Global Sync Correction:* At each global synchronization point, key state information (e.g., average firing rates `spike_rates`, potentially weights `w`) is broadcast from a reference (e.g., master node or aggregated average) to all shards (`torch.distributed.broadcast(spike_rates)`), taking ~0.001 seconds across 1000 nodes with 100GB/s interconnect. Shards then correct their local state (`spike_rates[local] = global_spike_rates`), ensuring network-wide coherence is restored periodically (e.g., 99% coherence expected).
+
+##### D.2.v.
 *   **Conflict-Free Updates (Vector Clocks):**
     *   *Challenge:* Concurrent updates to shared state (like weights `w` influenced by spikes from multiple shards, or eligibility traces `e_ij`) during asynchronous periods could lead to race conditions or conflicting updates.
     *   *Mechanism:* Use vector clocks (Fidge, 1988, "Timestamps in Message-Passing Systems") to ensure causal ordering and prevent conflicts. Each node maintains a vector clock (`vector_clock[node_id]`), incrementing its own entry for each update event. An update (e.g., STDP `Δw_ij`) is applied only if the node's vector clock reflects knowledge of all causally preceding events from other relevant nodes (e.g., `vector_clock[local_node] > vector_clock[remote_node]` for relevant entries). This is executed on the 7900 XTX GPU for STDP updates, preventing conflicts (e.g., 100% conflict-free updates expected).
     *   *Eligibility Trace Consistency:* Eligibility trace updates (`e_ij(t) = γ * e_ij(t-1) + Δw_ij(t)`) also incorporate vector clock checks, ensuring traces accurately reflect the causally consistent sequence of STDP events (e.g., 98% consistency expected), executed on the 7900 XTX GPU.
+
+##### D.2.vi.
 *   **Preventing Race Conditions During Structural Modifications:**
     *   *Challenge:* Global structural changes (growth, pruning, rewiring) initiated after a sync could conflict with ongoing local STDP updates if not properly managed.
     *   *Mechanism (Distributed Lock):* Structural modifications use a distributed lock. Before initiating changes, the master node signals a lock (`lock_structural_changes()`). All nodes acknowledge via the synchronization barrier. During the lock period (typically very short, ~0.01 seconds), local STDP updates might pause or buffer. The master node applies the structural changes (or coordinates distributed application). Once complete, the lock is released (`unlock_structural_changes()`), and normal processing resumes.
     *   *Theoretical Guarantee:* Locking ensures atomicity. If the lock duration is less than the interval between significant conflicting updates (e.g., < 0.01 seconds), race conditions are prevented (e.g., 100% atomicity expected).
+
+##### D.2.vii.
 *   **Impact of Latency on STDP Precision & Temporal Dependency Integrity:**
     *   *Challenge:* Delayed spike transmission across shards (up to 10ms skew) or variable network latency and processing jitter (potentially beyond 10ms during cycle overruns) can distort the calculation of `Δt` for STDP. This risks weakening valid temporal correlations, reinforcing spurious connections, or degrading learning precision, especially for tasks requiring sub-10ms temporal distinctions.
     *   *Mitigation Strategies:*
@@ -56,6 +76,8 @@ Achieving massive scale requires specific, optimized implementation choices:
             *   *Phase 3 (Autonomous):* Stabilized by homeostasis (<1% accuracy reduction).
             *   *Optional Tighter Tolerance:* While 1ms is the target, if specific ultra-high-precision tasks demand it, the system could potentially operate with even tighter synchronization (sub-microsecond PTP) if hardware permits, although the current 1ms target is deemed sufficient for broad capabilities.
     *   *Rationale:* The 1ms skew tolerance, enabled by PTP synchronization and managed by brain-inspired mechanisms (homeostasis, temporal integration), effectively mitigates desynchronization effects and jitter sensitivity (e.g., 99.7% STDP efficacy, 98.5% temporal dependency integrity expected), preserving learning precision in alignment with biological principles, practical for Justin’s workstation and scalable to 32B neurons.
+
+##### D.2.viii.
 *   **Handling Resource Contention & Outlier Events:**
     *   *Challenge:* Certain operations (e.g., complex SIE calculations involving causal inference approximations, clustering after major structural changes) might occasionally exceed the standard 50ms cycle time, risking desynchronization and disruption of temporal dependencies. For example, a background task on the MI100 might take 150ms, causing the SNN simulation on the 7900 XTX to proceed for 3 cycles without updated reward/trace information.
     *   *Mechanisms:*
@@ -78,16 +100,30 @@ Achieving massive scale requires specific, optimized implementation choices:
             *   *Instability Prevention (Stability Check):* After processing the buffer, firing rate variance is computed: `variance = torch.var(spike_rates[-1000:])`, executed on the 7900 XTX GPU. If `variance > 0.05 Hz`, the learning rate `eta` is reduced (`eta *= 0.9`), executed on the MI100 GPU, stabilizing the system (e.g., ~5% variance reduction expected per adjustment).
         *   *Theoretical Guarantee (Stability):* Bounded processing debt ensures stability. If `debt_cycles < 10`, the system processes updates within 500ms, preventing runaway divergence (e.g., variance < 0.05 Hz expected, based on control theory, Åström & Murray, 2008).
     *   *Rationale:* Timestamped buffering, reward context preservation, bounded divergence, eligibility trace adjustments, debt monitoring, and stability checks ensure robust asynchronous buffering (e.g., 95% context accuracy, 99% debt-free operation expected), preventing instability even with significant overruns. These mechanisms ensure the real-time flow of SNN processing and the integrity of STDP learning are maintained even during occasional computational outliers, practical for Justin’s workstation and scalable to 32B neurons.
+
+##### D.2.ix.
 *   **Validation (Bounded Skew Impact):** Test the impact of skew beyond the 10ms cap (e.g., `simulate_skew(skew=20ms)` on MI100 GPU, ~1 second on master node). Compute the impact on weight updates (`skew_impact = torch.mean(|Δw_ij - Δw_ij_no_skew|)`) targeting `<0.01` (master node). For real-world networks with higher skew (e.g., 20ms), adjust STDP parameters (`τ_+=40ms` on MI100 GPU) to maintain bounded impact (`P(learning_disrupted | skew) < 0.1`, master node, e.g., 90% bounded impact expected, 95% integrity expected, Liu & Layland, 1973).
+
+##### D.2.x.
 *   **Validation (Low Overhead):** Test communication and synchronization overhead on heterogeneous hardware (`simulate_overhead(hardware=["A100", "GTX 1660"])` on MI100 GPU), computing `actual_overhead` and targeting `<0.005` seconds (master node). For real-world networks (e.g., 10GB/s Ethernet), use RDMA (`rdma_broadcast`) to reduce overhead (~0.001 seconds, master node). Low overhead ensures cycle time compliance (`P(cycle_violation) < 0.05`, master node, e.g., 90% compliance expected, 95% scalability expected).
 
-#### D.3. Handling Failures, Partitions, and Bottlenecks
+#### D.3 Handling Failures, Partitions, and Bottlenecks
+
+##### D.3.i.
 *   **Node Failures:** Use a fault-tolerant consensus algorithm like Raft (Ongaro & Ousterhout, 2014) for the control plane. If a node fails, Raft automatically reassigns its tasks to a backup node (`raft_reassign(failed_node, backup_node)` on master node, ~0.02 seconds), ensuring continuity (`P(uptime) > 0.99`, master node, e.g., 99% uptime expected, 95% stability expected).
+
+##### D.3.ii.
 *   **Network Partitions:** Implement partition tolerance. If a partition is detected (`partition_detected`), nodes operate in isolated mode (`operate_in_isolated_mode()` on master node), using local SIE rewards (MI100 GPU) to maintain integrity. After the partition heals, reconcile states (`reconcile_state()` on master node, ~0.01 seconds). This ensures stability (`P(stability | partition) > 0.9`, master node, e.g., 90% integrity expected, 95% reconciliation expected, 95% stability expected, Gilbert & Lynch, 2002, "Brewer's Conjecture and the Feasibility of Consistent, Available, Partition-Tolerant Web Services").
+
+##### D.3.iii.
 *   **Bottlenecks:** Detect bottlenecks by monitoring node load (`bottleneck_score = torch.mean(load_history[-1M:])` on MI100 GPU, target `<0.8` on master node). If load exceeds the threshold, offload tasks to backup nodes (`offload_to_backup_node()` on master node) to mitigate the bottleneck (`P(stability | bottleneck) > 0.9`, master node, e.g., 90% mitigation expected, 95% integrity expected).
 
-#### D.4. Memory Management (Incl. Parameter Server & Caching)
+#### D.4 Memory Management (Incl. Parameter Server & Caching)
+
+##### D.4.i.
 *   **Concept:** Efficiently store/access massive state, especially sparse `w`.
+
+##### D.4.ii.
 *   **Mechanism:** Use optimized sparse formats (`torch.sparse_csr_tensor`) in VRAM. For scales exceeding node memory:
     *   **Parameter Server:** Shard `w` across aggregated RAM/NVMe of multiple nodes. Neurons fetch needed weights, send back updates.
     *   **Caching on Compute GPUs:**
@@ -98,8 +134,12 @@ Achieving massive scale requires specific, optimized implementation choices:
         *   *ECC Memory:* Utilize Error-Correcting Code (ECC) memory available on data center GPUs (like MI100, though not typically on consumer cards like 7900 XTX) to automatically detect and correct single-bit memory errors, ensuring data integrity (99.9% error correction expected).
         *   *Redundancy:* For uncorrectable errors or non-ECC hardware, implement data redundancy. Critical state information (e.g., weights, neuron states) can be periodically checkpointed or mirrored to backup nodes. If a memory error is detected, the affected data can be restored from the backup (`reassign_data(backup_node)`), ensuring operational continuity (99% recovery expected).
 
-#### D.5. Hardware Optimization (Development Context)
+#### D.5 Hardware Optimization (Development Context)
+
+##### D.5.i.
 *   **Concept:** Maximize computational throughput and minimize latency by tailoring operations to specific hardware capabilities (Justin Lietz's workstation).
+
+##### D.5.ii.
 *   **Mechanism:**
     *   **Custom Kernels:** Compile highly optimized ROCm HIP kernels (`.hip` files compiled with `hipcc`, e.g., `neuron_kernel.hip`) for the core SNN simulation loop (LIF updates). Use `float16`.
     *   **Python Integration:** Use `ctypes` or `torch.utils.cpp_extension` for Python bindings.
@@ -108,7 +148,14 @@ Achieving massive scale requires specific, optimized implementation choices:
         *   *MI100:* Runs PyTorch tensor ops (STDP calc, trace update, SIE calc, clustering). Stores `e_ij`, `V_states`, etc. Explicit placement (`.to('cuda:0')`, `.to('cuda:1')`).
     *   **Data Locality:** Minimize CPU<->GPU and GPU<->GPU transfers. Use async copies (`non_blocking=True`).
     *   **Profiling:** Use ROCm profiling tools (e.g., `rocprof`) to identify bottlenecks.
+
+##### D.5.iii.
 *   **Development Context Note:** This specific hardware optimization strategy is tailored for the author's development workstation. It serves to facilitate initial development and validation. The core principles (distributed computation, async updates, optimized kernels, caching) are applicable across various hardware configurations.
+
+##### D.5.iv.
+*   **Hardware Agnosticism & Scalability (Refinement from Answer - Hardware Specificity):** FUM's architecture is designed to be hardware-agnostic. GPU-specific references (e.g., MI100, 7900 XTX) serve as concrete implementation examples for the development workstation (AMD Threadripper PRO 5955WX, MI100 32GB VRAM, 7900 XTX 24GB VRAM, 512GB RAM, 6TB SSD). The core design principles (e.g., LIF neurons, STDP, SIE) are independent of specific hardware, ensuring potential scalability across diverse platforms (e.g., targeting MI300 GPUs for future large-scale deployment, Answer 1). Hardware optimizations are abstracted where possible to maintain generality, focusing on the biologically inspired algorithms over specific implementation details (aiming for 95% consistency).
+
+##### D.5.iv.
 *   **Generalizing Hardware Performance & Network Assumptions:**
     *   *Hardware-Agnostic Estimates:* To assess feasibility beyond the specific development hardware, time estimates can be normalized to FLOPS. For example, calculating `avg_reward[c]` (Section 5.D.5) takes ~100,000 FLOPs (~0.0000033s on an A100 @ 30 TFLOPS FP16). On a less powerful GPU (e.g., NVIDIA GTX 1660 @ 5 TFLOPS FP16), the time would be `100,000 / 5e12 ≈ 0.00002` seconds, still <0.1% of a 50ms cycle. A scaling factor (`scale_factor = target_flops / reference_flops`) can be used for quick estimation (`time = ideal_time / scale_factor`).
     *   *Adaptive Resource Allocation:* The system can dynamically adapt to less powerful hardware. If a node's `gpu_flops < 10 TFLOPS`, the master node can reduce its task load (`reduce_task_load(gpu)`), e.g., assigning fewer clusters for SIE calculation, ensuring tasks complete within the cycle time (e.g., 99% timeliness expected on GTX 1660 if load is halved). Feasibility is maintained if `gpu_flops > 1 TFLOPS` (e.g., 100k FLOPs / 1e12 ≈ 0.0001 seconds, <0.2% cycle).
@@ -120,8 +167,12 @@ Achieving massive scale requires specific, optimized implementation choices:
         *   *Mitigation (Compression):* Use compression (`compressed_data = zlib.compress(data)`) to reduce payload size (e.g., ~50% reduction for spike rates), further decreasing transfer time (e.g., to ~0.04 seconds), ensuring scalability (e.g., 99% timeliness expected).
         *   *Rationale:* Hardware-agnostic estimates, adaptive resource allocation, and revised network assumptions with mitigations (increased buffering, data reduction, compression) address concerns about reliance on specific high-end hardware, ensuring broader feasibility (e.g., 99% timeliness, >97% context accuracy expected on slower hardware).
 
-#### D.6. Managing Real-Time Costs of Structural Plasticity
+#### D.6 Managing Real-Time Costs of Structural Plasticity
+
+##### D.6.i.
 *   **Challenge:** Structural changes (growth, pruning, rewiring - see Sec 4.C) involve computations that could potentially introduce unpredictable delays, disrupting the 50ms cycle and compromising temporal processing, especially during large-scale events or subsequent clustering.
+
+##### D.6.ii.
 *   **Managing Computational Costs:**
     *   *Triggering Costs:* Triggering changes based on metrics like `avg_reward[c]` (Section 4.C.2) is computationally cheap. Calculating `avg_reward[c]` involves ~100 FLOPs per cluster (100,000 FLOPs for 1000 clusters).
         *   *Ideal Estimate:* Takes negligible time (~0.0000033 seconds on an A100 GPU), executed on the MI100 GPU. This scales well, remaining <0.01% of a 50ms cycle even at 32B neurons across 1000 nodes under ideal conditions.
@@ -133,11 +184,15 @@ Achieving massive scale requires specific, optimized implementation choices:
         *   *Rewiring:* Rewiring 1% of synapses (128B) requires ~256B FLOPs, taking ~8.53 seconds distributedly, executed on the 7900 XTX GPU.
     *   *Implementing Costs:* Applying the calculated changes (`async_update(structural_changes)`) takes ~0.01 seconds per 1% change (e.g., 0.01s for growth, 0.03s for pruning, 0.08s for rewiring), executed on the master node.
     *   *Stability Checks:* Computing variance (`torch.var(spike_rates)`) post-change takes ~1.07 seconds (~32B FLOPs for 32B neurons), executed on the MI100 GPU. Reverting changes (`revert_structural_changes()`) takes ~0.01 seconds, executed on the master node.
+
+##### D.6.iii.
 *   **Mitigating Unpredictable Delays:**
     *   *Asynchronous Execution:* Structural change calculations and implementations are offloaded to background threads (`threading.Thread(target=async_structural_change)`) or lower-priority CUDA streams, executed primarily on the 7900 XTX GPU. This ensures the main SNN simulation continues within the 50ms cycle (e.g., <0.1% cycle impact expected).
     *   *Buffering During Changes:* Spikes generated during potentially long structural modifications are buffered using the `spike_buffer` mechanism (Section 5.D.2) and processed after the changes complete, executed on the 7900 XTX GPU. This preserves temporal processing integrity (e.g., 95% temporal accuracy expected).
     *   *Task Prioritization:* The SNN simulation is given higher priority (`priority_snn = 0`) than structural changes (`priority_structural = -1`) using CUDA streams on the 7900 XTX GPU, ensuring the SNN runs uninterrupted (e.g., 99% timeliness expected). Even if rewiring takes ~8.5 seconds, the SNN completes ~170 cycles, with buffering ensuring no data loss (e.g., 100% data integrity expected).
     *   *Clustering Optimization:* Clustering after significant growth (e.g., 106M neurons) could take ~1.6 seconds (~48B FLOPs). This cost is managed by optimizing the clustering process: instead of clustering all neurons, sample a representative subset (e.g., 1% or 320M neurons), reducing the cost significantly (~480M FLOPs, ~0.016 seconds), executed on the MI100 GPU. This fits within the 50ms cycle (e.g., <1% cycle impact expected).
+
+##### D.6.iv.
 *   **Rationale:** Optimized triggering, asynchronous execution, task prioritization, buffering during modifications, and optimized clustering effectively manage the computational costs associated with structural plasticity (e.g., <1% cycle impact expected for most operations), preventing significant delays and preserving real-time temporal processing, practical for Justin’s workstation and scalable to 32B neurons.
     *   **7. Addressing Approximation Accuracy in Formal Methods:** The necessary optimizations for implementing formal methods at scale (e.g., approximating interventions for causal inference, using sampled subgraphs for spectral analysis) introduce potential inaccuracies. Ensuring the reliability of formal guarantees despite these approximations requires careful consideration:
         *   **Quantifying Approximation Accuracy:**
@@ -148,43 +203,29 @@ Achieving massive scale requires specific, optimized implementation choices:
             *   *Periodic Re-Computation:* Exact values (e.g., `actual_output_without_c`, exact `λ_2`) are recomputed for sampled clusters/subgraphs periodically (e.g., every 1M timesteps) to correct approximations.
         *   *Rationale:* Error analysis, cumulative effect monitoring, feedback correction, and periodic re-computation ensure approximation accuracy (e.g., error < 0.05, 95% correction expected), maintaining the reliability of formal guarantees, practical for Justin’s workstation and scalable to 32B neurons.
 
-#### D.6. Managing Real-Time Costs of Structural Plasticity
-*   **Challenge:** Structural changes (growth, pruning, rewiring - see Sec 4.C) involve computations that could potentially introduce unpredictable delays, disrupting the 50ms cycle and compromising temporal processing, especially during large-scale events or subsequent clustering.
-*   **Managing Computational Costs:**
-    *   *Triggering Costs:* Triggering changes based on metrics like `avg_reward[c]` (Section 4.C.2) is computationally cheap. Calculating `avg_reward[c]` involves ~100 FLOPs per cluster (100,000 FLOPs for 1000 clusters).
-        *   *Ideal Estimate:* Takes negligible time (~0.0000033 seconds on an A100 GPU), executed on the MI100 GPU. This scales well, remaining <0.01% of a 50ms cycle even at 32B neurons across 1000 nodes under ideal conditions.
-        *   *Refined Estimate (Real-World):* The ideal estimate assumes perfect GPU performance. Real-world factors like GPU contention (e.g., 20% utilization by other tasks) and network latency for data aggregation (e.g., 1ms) increase the actual time: `actual_time = ideal_time * (1 + contention) + latency = 0.0000033 * 1.2 + 0.001 ≈ 0.00100396` seconds. While still small (<3% of a 50ms cycle), this is significantly higher than the ideal estimate.
-        *   *Mitigation (Load Balancing):* Using a load balancer (`assign_task_to_least_busy_gpu()`, executed on the master node) can reduce contention (e.g., to 10%), bringing `actual_time ≈ 0.00100363` seconds, keeping the impact minimal.
-    *   *Calculating Costs (Estimates for 32B Neurons, 1000 A100 GPUs):*
-        *   *Growth:* Adding 0.333% neurons (106M) requires initializing weights (~5.3B FLOPs), taking ~0.177 seconds distributedly, executed on the 7900 XTX GPU.
-        *   *Pruning:* Pruning 1% of neurons (320M) requires identifying inactive ones (~32B FLOPs), taking ~1.07 seconds distributedly, executed on the 7900 XTX GPU.
-        *   *Rewiring:* Rewiring 1% of synapses (128B) requires ~256B FLOPs, taking ~8.53 seconds distributedly, executed on the 7900 XTX GPU.
-    *   *Implementing Costs:* Applying the calculated changes (`async_update(structural_changes)`) takes ~0.01 seconds per 1% change (e.g., 0.01s for growth, 0.03s for pruning, 0.08s for rewiring), executed on the master node.
-    *   *Stability Checks:* Computing variance (`torch.var(spike_rates)`) post-change takes ~1.07 seconds (~32B FLOPs for 32B neurons), executed on the MI100 GPU. Reverting changes (`revert_structural_changes()`) takes ~0.01 seconds, executed on the master node.
-*   **Mitigating Unpredictable Delays:**
-    *   *Asynchronous Execution:* Structural change calculations and implementations are offloaded to background threads (`threading.Thread(target=async_structural_change)`) or lower-priority CUDA streams, executed primarily on the 7900 XTX GPU. This ensures the main SNN simulation continues within the 50ms cycle (e.g., <0.1% cycle impact expected).
-    *   *Buffering During Changes:* Spikes generated during potentially long structural modifications are buffered using the `spike_buffer` mechanism (Section 5.D.2) and processed after the changes complete, executed on the 7900 XTX GPU. This preserves temporal processing integrity (e.g., 95% temporal accuracy expected).
-    *   *Task Prioritization:* The SNN simulation is given higher priority (`priority_snn = 0`) than structural changes (`priority_structural = -1`) using CUDA streams on the 7900 XTX GPU, ensuring the SNN runs uninterrupted (e.g., 99% timeliness expected). Even if rewiring takes ~8.5 seconds, the SNN completes ~170 cycles, with buffering ensuring no data loss (e.g., 100% data integrity expected).
-    *   *Clustering Optimization:* Clustering after significant growth (e.g., 106M neurons) could take ~1.6 seconds (~48B FLOPs). This cost is managed by optimizing the clustering process: instead of clustering all neurons, sample a representative subset (e.g., 1% or 320M neurons), reducing the cost significantly (~480M FLOPs, ~0.016 seconds), executed on the MI100 GPU. This fits within the 50ms cycle (e.g., <1% cycle impact expected).
-*   **Rationale:** Optimized triggering, asynchronous execution, task prioritization, buffering during modifications, and optimized clustering effectively manage the computational costs associated with structural plasticity (e.g., <1% cycle impact expected for most operations), preventing significant delays and preserving real-time temporal processing, practical for Justin’s workstation and scalable to 32B neurons.
-    *   **7. Addressing Approximation Accuracy in Formal Methods:** The necessary optimizations for implementing formal methods at scale (e.g., approximating interventions for causal inference, using sampled subgraphs for spectral analysis) introduce potential inaccuracies. Ensuring the reliability of formal guarantees despite these approximations requires careful consideration:
-        *   **Quantifying Approximation Accuracy:**
-            *   *Causal Inference:* The linear approximation error for `intervention_effect[c]` is computed (`error = torch.mean(|actual_output_without_c - estimated_output_without_c|)`). Theoretically bounded (`error < 0.05 * mean(output)`) for sparse activity. Cumulative error is monitored (`cumulative_error = sum(error[-1M:])`), targeting `< 0.1 * mean(output[-1M:])`.
-            *   *Spectral Analysis:* Sampling error for `λ_2` is computed (`sampling_error = std(λ_2_samples) / mean(λ_2_samples)`), theoretically bounded (`< 0.01` for 0.001% sampling). Cumulative error monitored (`cumulative_sampling_error = sum(sampling_error[-1M:])`), targeting `< 0.05`.
-        *   **Mitigating Cumulative Effects:**
-            *   *Error Correction:* Feedback loops adjust approximations if cumulative error exceeds thresholds (e.g., `cumulative_error > 0.1` -> increase intervention weighting).
-            *   *Periodic Re-Computation:* Exact values (e.g., `actual_output_without_c`, exact `λ_2`) are recomputed for sampled clusters/subgraphs periodically (e.g., every 1M timesteps) to correct approximations.
-        *   *Rationale:* Error analysis, cumulative effect monitoring, feedback correction, and periodic re-computation ensure approximation accuracy (e.g., error < 0.05, 95% correction expected), maintaining the reliability of formal guarantees, practical for Justin’s workstation and scalable to 32B neurons.
+#### D.7 Addressing Practical Engineering Challenges at Scale
 
-#### D.7. Addressing Practical Engineering Challenges at Scale
+##### D.7.i.
 *   **Challenge:** Deploying, debugging, and maintaining correct control logic across a large, distributed, emergent system presents significant practical engineering hurdles.
+
+##### D.7.ii.
 *   **Deployment:** Use containerization (e.g., Docker) to package the FUM components (`deploy_with_docker(ControlManager)` on master node). This ensures consistent environments across heterogeneous nodes, simplifying deployment and reducing configuration errors (e.g., 95% deployment success expected, Merkel, 2014, "Docker: Lightweight Linux Containers for Consistent Development and Deployment").
+
+##### D.7.iii.
 *   **Debugging:** Implement distributed tracing (`trace_distributed(ControlManager)` on MI100 GPU). Log key events and metrics with timestamps and node IDs to a scalable, distributed database (e.g., Apache Cassandra, ~0.0001 seconds per log on master node). This allows reconstructing behavior across nodes for debugging complex issues (e.g., 90% issue detection expected).
+
+##### D.7.iv.
 *   **Maintenance:** Automate maintenance tasks (`auto_maintain(ControlManager, metrics)` on master node). This includes automated parameter tuning (e.g., adjusting `eta`, `growth_rate` on MI100 GPU based on performance metrics), software updates, and health checks, ensuring long-term correctness and reducing manual intervention (e.g., 95% correctness expected).
+
+##### D.7.v.
 *   **Overall Rationale:** Realistic scaling assumptions validated through testing, robust handling of failures/partitions/bottlenecks using established distributed systems techniques (Raft, partition tolerance), and practical engineering strategies (containerization, distributed tracing, automated maintenance) ensure the system's scalability, stability, and manageability (e.g., 95% scalability, 95% stability expected), addressing the complexities of distributed control.
 
-#### D.8. Managing Implementation Complexity and Interaction Effects at Scale
+#### D.8 Managing Implementation Complexity and Interaction Effects at Scale
+
+##### D.8.i.
 *   **Challenge:** Implementing and validating the numerous complex mechanisms (hierarchical clustering, task-specific traces, dynamic validation, error tracking, etc.) adds significant complexity and potential for adverse interactions at scale.
+
+##### D.8.ii.
 *   **Mitigation Strategies:**
     *   **Unified Framework:** Integrate complex control mechanisms into a unified, modular framework (e.g., `ControlManager` class, see Sec 5.E.7) to reduce interaction complexity and improve maintainability (e.g., 90% reduction in interaction complexity expected).
     *   **Incremental Implementation:** Deploy complex mechanisms incrementally during the phased scaling roadmap (Sec 6.A). For example, introduce hierarchical clustering and task-specific traces at the 1M neuron scale, followed by dynamic validation and error tracking at the 10M neuron scale. This gradual approach reduces implementation risk (e.g., ~81% overall success probability for two stages at 90% each, improving to >90% with retries).
@@ -196,6 +237,7 @@ Achieving massive scale requires specific, optimized implementation choices:
     *   **Real-Time Anomaly Detection:** Employ online anomaly detection algorithms (e.g., `OnlineIsolationForest` on MI100, ~0.001s/update) on monitored metrics. Flag anomalies (`anomaly_score < -0.5`) and trigger automated mitigation (e.g., revert to simplified mode, increase inhibition) to handle unforeseen issues during real-world operation (e.g., 95% detection, 90% mitigation expected, Shalev-Shwartz, 2012).
     *   **Rationale:** A unified framework, incremental deployment, simulation-based interaction testing, decentralized execution, fault tolerance, graceful degradation, phased deployment, and real-time anomaly detection help manage implementation complexity, mitigate execution risks, and ensure practical feasibility and robustness at scale (e.g., 99% uptime, 90% success expected).
 
+##### D.8.iii.
 *   **Addressing Scaling Complexity Challenges:** Scaling a system with dynamic graphs, distributed state (weights, traces, value functions), complex learning rules (STDP, SIE), periodic global operations (clustering), and structural plasticity across potentially thousands of nodes presents immense engineering challenges. The outlined strategies aim to ensure sufficiency:
     *   **Communication Bottlenecks:** Minimized by METIS partitioning (~5% inter-node connections). Spike transmission overhead estimated manageable (<10% cycle time at 32B scale, 100GB/s interconnect).
     *   **Synchronization:** 10ms async skew cap maintains STDP validity. Global sync overhead minimal (<1% cycle time).

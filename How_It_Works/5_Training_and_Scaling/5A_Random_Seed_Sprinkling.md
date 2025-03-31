@@ -4,10 +4,14 @@ FUM employs a multi-phase training strategy designed for data efficiency and gra
 
 ### A. Phase 1: Random Seed Sprinkling (Foundation Building)
 
-#### A.1. Objective
+#### A.1 Objective
+
+##### A.1.i.
 Establish a broad, foundational associative structure across multiple domains using minimal, diverse data (target: 80 inputs), avoiding early over-specialization and preparing the network for complex learning.
 
-#### A.2. Cellular Components & Mechanisms (Incl. Initialization Strategy & Dynamic States)
+#### A.2 Cellular Components & Mechanisms (Incl. Initialization Strategy & Dynamic States)
+
+##### A.2.i.
 *   **Network Initialization:**
     *   Instantiate LIF neurons (e.g., 1000 initially), 80% excitatory, 20% inhibitory.
     *   Initialize states: `V = v_reset` (-70mV), `spikes = 0`. Heterogeneous parameters `tau ~ N(20ms, 2ms^2)`, `v_th ~ N(-55mV, 2mV^2)`. Stored as `float16` tensors on 7900 XTX.
@@ -44,9 +48,13 @@ Establish a broad, foundational associative structure across multiple domains us
                 *   **Construction:** Use stratified sampling based on domain concepts (`validation_set = stratified_sample(inputs, strata=domain_concepts, n=16-60)` on master node) to ensure representation of potentially unseen concepts or variations (e.g., "∫(x^2)dx" if only basic arithmetic was in training). (90% OOD coverage expected).
                 *   **Metrics:** Validate using the detailed coverage metrics (embedding diversity > 0.7, concept coverage > 0.9) and bias checks (feature bias < 0.5) described above. (90% diversity, 95% fairness expected). Stratified sampling ensures the validation set tests generalization effectively (95% validity expected, Cochran, 1977).
             *   *Rationale & Cohesion:* This meticulous, multi-faceted approach to data curation—integrating semantic coverage, edge cases, diversity, complexity, bias mitigation, primitive coverage checks, dynamic augmentation, and rigorous validation—ensures the initial dataset, though small, provides a sufficient, representative, and unbiased foundation. It directly addresses potential data scarcity risks by ensuring the data quality supports the mechanisms (STDP/SIE) and aligns with the goal of forming robust primitives and enabling generalization. Risk assessment (`risk_score = 1 - torch.mean([...]) < 0.1`) and mitigation through augmentation further enhance cohesion between the data strategy and the architecture's learning capabilities (95% cohesion, 90% risk reduction expected). This is practical for the development workstation and designed to scale.
-    *   **Initialize Dynamic States (t=0):**
-        *   **Eligibility Traces (`e_ij`):** Initialized to zero. Sparse `float16` tensor mirroring `w`'s structure on MI100 (`torch.sparse_csr_tensor(w._indices(), torch.zeros_like(w._values()))`). Ensures first updates based only on initial STDP events.
-        *   **TD Value Function (`V_states`):** Initialized to zero. `float16` tensor on MI100, size `k_min=8` initially (`torch.zeros(k_min)`). Assumes neutral starting point before rewards observed. Resized after first clustering.
+
+##### A.2.ii.
+*   **Initialize Dynamic States (t=0):**
+    *   **Eligibility Traces (`e_ij`):** Initialized to zero. Sparse `float16` tensor mirroring `w`'s structure on MI100 (`torch.sparse_csr_tensor(w._indices(), torch.zeros_like(w._values()))`). Ensures first updates based only on initial STDP events.
+    *   **TD Value Function (`V_states`):** Initialized to zero. `float16` tensor on MI100, size `k_min=8` initially (`torch.zeros(k_min)`). Assumes neutral starting point before rewards observed. Resized after first clustering.
+
+##### A.2.iii.
 *   **Data Loading & Encoding:**
     *   Load seed corpus (80 diverse items).
     *   **Encoder Module:** Translate each item into spike trains `I_encoded` (shape `[num_input_neurons, T=50]`) using rate encoding (Poisson process with 5ms refractory period) or temporal encoding for structured data.
@@ -54,6 +62,8 @@ Establish a broad, foundational associative structure across multiple domains us
             *   *Clock Distribution:* At scale (e.g., 1000 nodes), a hierarchical clock distribution network is employed, typically using a high-precision global clock (e.g., GPS-disciplined oscillator, ~10ns accuracy) synchronized to local node clocks via Precision Time Protocol (PTP, IEEE 1588) over high-speed interconnects (e.g., 100GB/s NVLink).
             *   *Jitter Tolerance:* This setup yields typical PTP jitter around ~100ns across nodes. This is well within the tolerance required by the 5ms refractory period (theoretical tolerance ~16.67µs for 99.7% confidence), ensuring reliable neuron firing dynamics (99.9% compliance expected).
             *   *Clock Skew Impact:* Clock skew between nodes is also minimal (~100ns with PTP). This low skew has a negligible impact on STDP accuracy, introducing errors typically less than 0.01% for common Δt values (e.g., 1ms), ensuring learning integrity (99.99% STDP accuracy expected). Clock synchronization protocols are actively maintained to minimize drift.
+
+##### A.2.iv.
 *   **Training Loop (Iterative Refinement):**
     *   Iterate through shuffled seed corpus (e.g., 5-10 epochs).
     *   **For each input item:**
@@ -69,15 +79,21 @@ Establish a broad, foundational associative structure across multiple domains us
         *   **Reward/Trace Transfer:** Send `total_reward` and `e_ij` to 7900 XTX.
         *   **Weight Update Application (7900 XTX):** Apply `w_ij = clip(w_ij + eta_effective * total_reward * e_ij, -1, 1)`.
         *   **Intrinsic Plasticity Update (7900 XTX):** Adjust `tau_i`, `v_th_i` based on firing rates.
+
+##### A.2.v.
 *   **Graph Representation:** The final sparse `w` represents the initial knowledge graph with weak pathways formed.
 
-#### A.3. Physics of Initial State Formation
+#### A.3 Physics of Initial State Formation
+
+##### A.3.i.
 The initial state formation follows principles from statistical mechanics and dynamical systems:
 1. **Energy Minimization Principle:** The system begins in a high-potential energy state with random connections. The LIF dynamics act as a dissipative system, with the leak term `-(V(t-1)/τ)*dt` driving the system towards lower energy states (resting potential).
 2. **Stochastic Initialization:** Weights follow a uniform distribution `U(-0.3, 0.3)` (split for E/I). This creates a rough potential energy landscape with many local minima. The distance-dependent connectivity bias provides initial structure, slightly favoring local connections.
 3. **Phase Space Dynamics:** Each neuron's state `(V, I)` starts near the resting potential. Input currents `I(t)` perturb the system, driving it towards attractor states shaped by the emerging connectivity and STDP/SIE learning.
 
-#### A.4. Expected Outcome
+#### A.4 Expected Outcome
+
+##### A.4.i.
 A sparsely connected SNN (initial knowledge graph) where synapses corresponding to basic correlations have been slightly adjusted. Foundational pathways are laid. The network is initialized but lacks significant competence. Key metrics: Firing rate variance σ² < 0.1 Hz², Connection sparsity >95%, Average weight magnitude |w| ≈ 0.01-0.05. Sensitivity analysis shows distance bias accelerates clustering (~20%), while initial weight distribution (uniform vs. Gaussian) has low impact.
 
 ---

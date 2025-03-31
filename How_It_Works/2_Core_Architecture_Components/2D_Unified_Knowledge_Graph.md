@@ -1,21 +1,37 @@
 ### D. Unified Knowledge Graph (Emergent)
 
-#### D.1. Concept, Capacity, and Contrast with ANNs/GNNs/LLMs
+#### D.1 Concept, Capacity, and Contrast with ANNs/GNNs/LLMs
+
+##### D.1.i.
 *   FUM avoids predefined layers or a fixed coordinator module. Instead, it relies on a knowledge graph structure that **emerges dynamically** from the learned connections (both excitatory and inhibitory) between neurons. **Why?** This allows for maximum flexibility and adaptability. The network itself discovers and represents relationships between concepts and across different domains based on the input data and learning feedback (`graph_structure = emerge_from_stdp(spike_patterns)` on 7900 XTX GPU). It acts as a distributed, associative memory and reasoning substrate.
+
+##### D.1.ii.
 *   **Effective Knowledge Capacity:** The capacity stems from the connections. At the target 32B neuron scale with 5% sparsity, this yields ~12.8 trillion connections (master node calculation). Each connection (`w[i,j]`, stored as float16, 2 bytes) encodes an emergent relationship (e.g., "A → B"). This provides an effective capacity of ~25.6 TB (master node calculation), comparable in scale to estimates of the human brain's capacity (~125 TB, assuming ~10^14 synapses, 1 bit/synapse, Gerstner & Kistler, 2002) but achieved through sparse, emergent structures rather than dense statistical correlations.
+
+##### D.1.iii.
 *   **Contrast with LLMs:** Large LLMs (e.g., GPT-3, 175B parameters, ~350GB uncompressed) encode petabytes (~1PB) of *implicit* knowledge through statistical correlations learned from massive datasets (~67M times more data than FUM's target). FUM's ~25.6TB capacity encodes *explicit*, emergent relationships, aiming for significantly higher data efficiency (~100x projected based on emergent knowledge representation theory).
+
+##### D.1.iv.
 *   **Contrast with ANNs/GNNs/Symbolic AI:** This emergent graph differs significantly from the fixed, layered topology of most ANNs/CNNs/Transformers, from GNNs operating on predefined graphs, and from human-curated Symbolic AI knowledge graphs. FUM *builds* its own graph as it learns.
 
-#### D.2. Structure
+#### D.2 Structure
+
+##### D.2.i.
 *   Nodes in the graph conceptually represent individual neurons (LIF with specific parameters). Edges represent the synaptic connections (`w_ij` in range [-1, 1]) whose strengths are learned via STDP and modulated by SIE. Sparsity is maintained around 95%.
 
-#### D.3. Formation, Evolution, Functional Specialization, and Reliability
+#### D.3 Formation, Evolution, Functional Specialization, and Reliability
+
+##### D.3.i.
 *   **Emergent Formation & Evolution:** Edges are not predefined but emerge and evolve through learning. An effective connection (edge) strengthens between neurons `i` and `j` if they consistently fire with a timing relationship (`Δt`) that correlates with positive SIE rewards (`total_reward > 0`). Connections irrelevant to success or associated with errors (`total_reward < 0`) are weakened by STDP or potentially pruned by self-modification (Sec 4.C). The graph continuously evolves as learning progresses.
+
+##### D.3.ii.
 *   **Emergence of Functional Specialization from Homogeneity:**
     *   *Biological Context vs. FUM Approach:* The brain possesses significant architectural heterogeneity (e.g., distinct cortical layers, specialized nuclei) established through developmental priors and refined by activity (Felleman & Van Essen, 1991; Rakic, 1988). FUM, in contrast, starts with a relatively homogenous network of LIF neurons (Section 2.A) and relies on self-organization to develop functional specialization, potentially facing challenges in achieving the same degree of specificity without explicit priors (e.g., potentially ~30% less specificity initially, Sur & Rubenstein, 2005).
     *   *Activity-Dependent Specialization via STDP:* FUM leverages STDP (`Δw_ij = A_+ * exp(-Δt / τ_+)`, executed on 7900 XTX GPU) as the primary driver for specialization. Neurons consistently co-activated by similar input patterns (e.g., arithmetic problems activating a specific subset of input neurons) will strengthen their connections, naturally forming clusters that respond preferentially to those inputs (e.g., an emergent "math" cluster). This mirrors biological activity-dependent plasticity (aiming for 90% specialization accuracy, inspired by Sur & Rubenstein, 2005).
     *   *Inhibitory Feedback for Segregation:* The network's inhibitory neurons (20% of the population, Section B.3) play a crucial role in segregating these emergent functional clusters. By providing lateral inhibition (`I_syn[j] < 0` from inhibitory neurons, executed on 7900 XTX GPU), they suppress activity in non-relevant clusters, sharpening the functional distinction between groups (aiming for 95% segregation, Answer 2.2). This mimics the brain's excitatory-inhibitory balance (e.g., 80%/20% ratio, Buzsáki, 2006), aiming for 95% biological alignment.
     *   *SIE-Guided Reinforcement of Specialization:* The cluster-specific rewards derived from SIE (`cluster_reward[c]`, Answer I.3, executed on MI100 GPU) further guide and reinforce this emergent specialization. Clusters consistently contributing to successful outcomes receive stronger positive rewards, leading to further strengthening of intra-cluster connections (`if cluster_reward[c] > 0.9: strengthen_cluster(c)`). This process enhances functionally relevant pathways (aiming for 90% reinforcement accuracy), analogous to reward-driven plasticity observed in biological systems (e.g., dopamine effects, Roelfsema & Holtmaat, 2011), aiming for 95% biological alignment.
+
+##### D.3.iii.
 *   **Reliability of Complex Relationships & Long-Range Dependencies:** Ensuring complex, nuanced relationships and long-range dependencies emerge reliably and remain stable relies on several mechanisms building upon this emergent specialization:
     *   *Emergent Hierarchical Organization:* The specialized clusters naturally organize hierarchically (`hierarchy = form_hierarchy(graph_structure)` on 7900 XTX GPU). Lower levels (clusters) encode basic primitives (e.g., "add", "AND"), while higher levels represent compositions formed by connections between these clusters (e.g., "math → logic"). This mimics biological hierarchical processing (Felleman & Van Essen, 1991) and enables the reliable formation of complex relationships (90% composition accuracy expected).
     *   *Long-Range Dependencies via SIE/TD Learning:* The SIE's TD error component (`TD = r + γ * V(next_state) - V(current_state)`, Sec 2.C.3) bridges temporal gaps. By updating cluster-based value states (`V_states[hierarchy_idx] += α * TD` on MI100 GPU), it reinforces connections *between* specialized clusters involved in successful long-range sequences (e.g., connecting "math" and "logic" clusters over time), enabling reliable long-range dependencies (85% dependency accuracy expected, based on temporal difference learning, Sutton & Barto, 2018).
@@ -23,6 +39,8 @@
         *   *Risk of Constraining Emergence:* Overly aggressive pathway protection could potentially prune or prevent the formation of unstable but ultimately fruitful emergent pathways (e.g., ~15% loss of fruitful pathways estimated, Sur & Rubenstein, 2005).
         *   *Relaxed Persistence Criteria:* To mitigate this, the criteria for marking pathways as persistent can be relaxed slightly (e.g., `persistent[i,j] = True if w[i,j] > 0.9 and avg_reward[c] > 0.95`, executed on MI100 GPU). This reduces the number of tagged pathways (~20% fewer expected), allowing more connections to remain dynamic and participate in emergent exploration (~15% more dynamic pathways expected).
     *   *Combined Local STDP and Global SIE Modulation:* Local STDP forms connections based on spike timing (`Δw_ij`), while the global SIE reward (`total_reward`) modulates these changes (`Δw_ij = eta * total_reward * e_ij` on MI100 GPU), ensuring that only functionally relevant and correct relationships (even nuanced ones) are strengthened and maintained (90% reliability expected, Frémaux & Gerstner, 2016).
+
+##### D.3.iv.
 *   **Prioritizing True Emergence over Predictability:**
     *   *Risk of Predictability Bias:* While predicting graph evolution (e.g., using GNNs, Sec 2.D.5) or functional organization might seem desirable for control, there's a significant risk that this drive for predictability could bias development towards architectures whose emergence is more easily modeled, potentially sacrificing less predictable but more powerful emergent phenomena (e.g., ~20% loss of novel phenomena estimated, Buzsáki, 2006). The brain's emergence is inherently less predictable (~30% unpredictable phenomena, Buzsáki, 2006).
     *   *FUM's Approach (Prioritizing Emergence):* To align with its core philosophy and maximize the potential for novel discoveries, FUM explicitly prioritizes true emergence over predictability:
@@ -32,10 +50,18 @@
     *   *Impact Assessment:* Simulations comparing GNN-based prediction (`simulate_predictive_bias`) versus FUM's emergence-focused approach show a significant increase in the emergence of novel phenomena (e.g., ~25% novel phenomena without prediction vs. ~10% with, a ~150% improvement, master node calculation).
     *   *Rationale:* By removing predictive modeling and encouraging unpredictable phenomena through relaxed constraints, FUM prioritizes the discovery of true, potentially more powerful emergent solutions over easily modeled ones (aiming for 150% novelty improvement, 95% principle adherence), aligning with biological principles (95% biological alignment expected, Buzsáki, 2006) and remaining practical for the development setup and scalable design.
 
-#### D.4. Self-Coordination and Routing (Including Compositionality & Interference Prevention)
+#### D.4 Self-Coordination and Routing (Including Compositionality & Interference Prevention)
+
+##### D.4.i.
 *   There is no central module directing information flow. Instead, processing and reasoning occur via the propagation of spiking activity across the strongest pathways (edges with large `abs(w_ij)`) in the emergent graph.
+
+##### D.4.ii.
 *   **Reliable Routing:** For specific computations (e.g., "2+2=?"), input spike patterns activate corresponding input neurons. These spikes propagate through pathways strengthened by previous STDP/SIE reinforcement for similar tasks (e.g., `w[i,j]` increased for neurons co-firing during "2 + 2 = 4" training). Inhibitory connections and sparse connectivity help filter out irrelevant associations (weak or non-existent pathways, `w[i,j] < 0.1`), ensuring spikes reliably reach functionally relevant clusters (e.g., "math cluster" identified via adaptive clustering) and ultimately the correct output neurons (e.g., neuron representing '4').
+
+##### D.4.iii.
 *   **Functional Circuits:** Specific circuits (e.g., for arithmetic) emerge through the interplay of STDP (forming connections between co-active neurons), SIE reward shaping (reinforcing correct outputs for specific tasks, e.g., `r=1` for "4"), adaptive clustering (identifying functional groups like "math"), and structural plasticity (allocating resources, pruning irrelevant connections).
+
+##### D.4.iv.
 *   **Task Representation & Context Switching:**
     *   *Abstract Goal Representation:* Task goals (e.g., "solve math problem") are represented by the sustained activity patterns within specific emergent clusters (e.g., "math" cluster). Temporal encoding of inputs (Sec 3.A.2) activates these clusters, and SIE rewards reinforce goal-directed activity until task completion.
     *   *Handling Multi-Domain Inputs:* For inputs spanning domains (e.g., a math word problem), the system relies on:
@@ -43,11 +69,15 @@
         *   **Cluster Activation:** Temporally distinct spike patterns activate the relevant clusters sequentially (e.g., "language" cluster then "math" cluster).
         *   **Inhibitory Suppression:** Active clusters trigger inhibitory neurons that suppress activity in irrelevant clusters, preventing interference. Sparsity also limits cross-talk.
     *   *Dynamic Context:* Context is maintained implicitly by the sustained activity within the currently relevant cluster(s), guided by the emergent graph structure and inhibitory dynamics, without needing an explicit context-setting module.
+
+##### D.4.v.
 *   **Controllability of Emergence:** Ensuring the emergent graph consistently forms correct representations and avoids counter-productive structures relies on several mechanisms:
     *   **SIE Guidance:** Rewarding task success (`r=1`) and stability (`impact`) strengthens correct pathways and prunes incorrect ones.
     *   **Adaptive Clustering:** Identifies functional domains, guiding reward attribution and growth. Incorrect representations trigger corrective growth (`avg_reward < 0.5`).
     *   **Cross-Domain Validation:** Tests ensure pathways generalize.
     *   **Stability Mechanisms:** Sparsity constraints (~95%), inhibitory balancing (20% inhibitory neurons, inhibitory STDP, global inhibition), and structural plasticity limits (caps on growth/rewiring, pruning inactive neurons) prevent unstable structures or dynamics during autonomous operation (Phase 3). Continuous monitoring flags anomalies.
+
+##### D.4.vi.
 *   **Preventing Interference Between Primitives:** To prevent concurrently developing or executing primitives from disrupting each other:
     *   **Cluster-Based Modularity:** Adaptive domain clustering (Section 4.D) groups neurons into functionally distinct clusters (e.g., "math", "logic") with minimal overlap (<5% expected). STDP updates (`Δw_ij`) are localized within clusters, executed on the 7900 XTX GPU, reducing interference.
     *   **Inhibitory Suppression:** Inhibitory neurons (20%) suppress non-relevant clusters: `I_syn[j] < 0` for neurons outside the active cluster (e.g., "logic" cluster suppressed during "math" task, `rate[logic] < 0.1 Hz` expected), executed on the 7900 XTX GPU, ensuring functional isolation.
@@ -55,6 +85,8 @@
     *   **Routing Specificity:** Strengthen cross-cluster links for composition: `cross_connectivity[c1,c2] = torch.mean(w[cluster_members[c1], cluster_members[c2]])`, targeting `cross_connectivity > 0.1`. If `cross_connectivity[math,logic] < 0.1`, add 1% new connections, executed on the 7900 XTX GPU, ensuring routing.
     *   **Handling Structural Plasticity Interference:** Structural plasticity (Section 4.C) includes mechanisms like growth isolation (rebalancing clusters after growth) and rewiring constraints (capping changes, reverting if instability increases) to prevent modifications from disrupting established pathways.
     *   **Implementation:** Compute `cross_connectivity` (~1M FLOPs per cluster pair), rewire (~10M FLOPs for 1% of 12.8T connections), executed on the 7900 XTX GPU, logged to SSD (`torch.save(routing_metrics, 'routing_metrics.pt')`). Spike-timing homeostasis (`homeostatic_adjustment = torch.mean(spike_rates[-1000:]) / target_rate` on 7900 XTX GPU) further stabilizes firing rates, reducing interference potential (95% prevention expected).
+
+##### D.4.vii.
 *   **Emergence of Compositionality & Multi-Step Reasoning:** Complex computation requires composing primitives reliably without a central coordinator, mimicking brain functions like planning (Dehaene & Changeux, 1997). FUM achieves this via:
     *   **Brain-Inspired Compositionality (Cross-Cluster STDP):** Compositional structures emerge through cross-cluster STDP (`Δw_ij = A_+ * exp(-Δt / τ_+)` between clusters, executed on 7900 XTX GPU). For "2 + 2 = 4 → A ∧ B", the "math" cluster computes "4", activating the "logic" cluster via strengthened cross-cluster synapses (`w[math_out, logic_in]`). This forms reliable pathways for multi-step reasoning (90% composition accuracy expected).
     *   **Learning & Sequencing via STDP/SIE:** The ability to sequence primitives correctly is learned. STDP reinforces cross-cluster synapses (`Δw_ij > 0` for `Δt > 0`) when the composition yields a correct outcome (`total_reward=1`), while SIE’s TD component encourages long-term correctness (e.g., `TD > 0` for correct sequencing, executed on MI100 GPU). SIE's global reward ensures the correct composition is reinforced (`total_reward=1` for "2 + 2 = 4 → A ∧ B = 1" reinforces `w[math_out, logic_in]`, 90% reinforcement accuracy expected).
@@ -65,13 +97,19 @@
         *   *Pathway Protection (Persistence):* Critical compositional pathways marked as persistent (`persistent[i,j] = True`, Sec 5.E.4) are protected from rewiring (`skip_rewire(i,j)` on 7900 XTX GPU), ensuring the stability and reliable execution of learned multi-step sequences (95% retention expected). For novel problems (e.g., "3 * 4 = 12 → B ∨ ¬C"), SIE’s novelty component (`novelty=0.8`) encourages exploration to form new, reliable pathways (85% novel composition accuracy expected).
         *   *Implementation:* Compute `total_reward` (~100 FLOPs), validate consistency (~1000 FLOPs), executed on the MI100 GPU, logged to SSD (`torch.save(composition_metrics, 'composition_metrics.pt')`).
 
-#### D.5. Predictability and Control of Emergence
+#### D.5 Predictability and Control of Emergence
+
+##### D.5.i.
 *   **Preventing Unintended Structures:** While emergence allows flexibility, mechanisms are needed to prevent the formation of unintended, parasitic, or computationally inefficient structures/dynamics that satisfy local rules but hinder global task performance, especially at scale (1B+ neurons).
     *   *Pathology Detection:* Identify potentially parasitic pathways by calculating a `pathology_score = torch.mean(spike_rates[path] * (1 - output_diversity[path]))` (executed on MI100 GPU). A high score (target `< 0.1`, master node) indicates high activity but low output diversity, characteristic of inefficient loops or parasitic attractors. If `pathology_score > 0.1`, the pathway is flagged (master node) and targeted for pruning (`prune_path(path)` on 7900 XTX GPU) (e.g., 90% detection expected). Theoretical basis: Anomaly detection ensures `P(pathology_detected) > 0.9` (master node), preventing inefficiencies (e.g., 95% prevention expected, Chandola et al., 2009).
         *   *Risk of Pruning Fruitful Pathways:* Strict pathology detection might prematurely prune pathways that are temporarily unstable or inefficient but could lead to valuable emergent solutions.
         *   *Delayed Pruning:* To mitigate this, the pruning trigger can be delayed. Instead of immediate pruning when `pathology_score > 0.1`, require the condition to persist for a longer duration (e.g., 100,000 timesteps) before executing `prune_path(path)` (executed on 7900 XTX GPU). This allows more time for potentially fruitful but initially unstable pathways to stabilize or demonstrate value (e.g., preserving ~10% more fruitful pathways expected).
     *   *Efficiency Optimization:* Monitor overall network efficiency: `efficiency_score = torch.mean(spike_rates) / torch.mean(output_diversity)` (executed on MI100 GPU), targeting `< 0.3` (master node). If the score is high (indicating high activity relative to useful output diversity), global inhibition is increased (`global_inhib_rate *= 1.1` on 7900 XTX GPU) to reduce overall activity and improve efficiency (e.g., 90% efficiency expected). Theoretical basis: Efficiency optimization ensures `d(efficiency_score)/dt ≤ -β * efficiency_score`, `β=0.1` (master node), preventing inefficiencies (e.g., 95% prevention expected).
+
+##### D.5.ii.
 *   **Sufficiency of Monitoring and Plasticity Triggers:** The proposed monitoring (e.g., SIE rewards, variance) and plasticity triggers (e.g., low reward triggers growth), augmented with relaxed constraints (delayed pruning, relaxed persistence), aim to reliably detect and manage emergent pathologies while preserving potentially fruitful pathways across the entire graph.
     *   *Enhanced Monitoring (Graph Entropy):* Augment monitoring with graph entropy calculation: `graph_entropy = -torch.sum(p * torch.log(p))`, where `p` is the degree distribution of the graph (executed on MI100 GPU). Low entropy (target `> 1`, master node) can indicate overly regular or pathological structures. If `graph_entropy < 1`, flag as a potential pathology (master node) (e.g., 90% detection expected). Theoretical basis: Entropy theory suggests low entropy correlates with pathological structures, ensuring `P(pathology_detected) > 0.9` (master node) (e.g., 95% detection expected, Shannon, 1948).
     *   *Proactive Pruning:* Combine detection signals. If `pathology_score > 0.1` OR `graph_entropy < 1`, proactively prune the associated path (`prune_path(path)` on 7900 XTX GPU), removing inefficient or pathological structures (e.g., 90% removal expected). Theoretical basis: Proactive pruning ensures `P(pathology_removed) > 0.9` (master node), maintaining performance (e.g., 95% performance expected).
+
+##### D.5.iii.
 *   **Rationale:** Graph evolution modeling, functional organization prediction, pathology detection, efficiency optimization, enhanced monitoring (graph entropy), and proactive pruning ensure predictable functional organization and prevent the emergence of unintended structures (e.g., 90% predictability, 95% prevention expected), practical for Justin’s workstation and scalable to 32B neurons.

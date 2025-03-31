@@ -1,16 +1,28 @@
 ### C. Continuous Reinforcement Learning: Self-Improvement Engine (SIE) with TD Learning
 
-#### C.1. Purpose & Contrast with Supervised Learning
+#### C.1 Purpose & Contrast with Supervised Learning
+
+##### C.1.i.
 *   Provides a sparse, global feedback signal (`total_reward`) to guide the local STDP learning process towards desired high-level outcomes (task success), enabling the network to learn from trial-and-error even with minimal explicit supervision.
+
+##### C.1.ii.
 *   Unlike supervised learning which requires detailed labels for every input, the SIE uses a potentially complex reward signal derived from task success, internal consistency, and novelty. **Why?** This allows learning complex tasks where detailed labels are unavailable or impractical to obtain, mimicking how biological systems learn goal-directed behaviors.
 
-#### C.2. Reward Signal (`total_reward`) & Component Calculation (Including Specificity)
+#### C.2 Reward Signal (`total_reward`) & Component Calculation (Including Specificity)
+
+##### C.2.i.
 *   Calculated after each simulation window (e.g., 50 timesteps) on the MI100 GPU.
+
+##### C.2.ii.
 *   **Formula:** `total_reward = TD_error + novelty - habituation + self_benefit`
+
+##### C.2.iii.
 *   **SIE as a Neuromodulatory Analogue:**
     *   *Biological Context:* The brain utilizes multiple neuromodulators (e.g., dopamine, acetylcholine, serotonin) that dynamically interact to provide targeted modulation of specific circuits, influencing excitability, plasticity, and attention (Lisman et al., 2011; Marder, 2012).
     *   *SIE's Role:* The single, calculated `total_reward` signal (executed on MI100 GPU) acts as a global reinforcement signal, analogous to a simplified, system-wide neuromodulatory influence. It guides learning based on overall performance and internal state.
     *   *Potential Limitation:* This global signal inherently simplifies the brain's multifaceted and targeted neuromodulation, potentially limiting circuit-specific guidance (e.g., potentially ~20% less specificity compared to biological systems, Marder, 2012).
+
+##### C.2.iv.
 *   **Enhancing SIE with Brain-Inspired Mechanisms for Specificity:** To provide more targeted guidance, akin to biological neuromodulation, while preserving emergent learning:
     *   **Cluster-Specific Reward Allocation & Modulation:** SIE computes the global `total_reward` but allocates it to clusters based on their contribution (`cluster_contrib[c] = torch.sum(spike_history[cluster_members[c]]) / torch.sum(spike_history)`, executed on MI100 GPU). Furthermore, cluster-specific reward components can be calculated locally: `cluster_reward[c] = torch.mean(total_reward[cluster_members[c]]) + cluster_novelty[c] - cluster_habituation[c]` (executed on MI100 GPU). This allows the reward signal to differentially influence plasticity within specific functional groups (aiming for 90% modulation accuracy, Answer I.1), mimicking the targeted effects of neuromodulators (aiming for 95% biological alignment).
     *   **Dynamic Interaction Analogue:** Interactions between neuromodulatory systems can be approximated by allowing cluster rewards to influence neighbors: `cluster_reward[c] += 0.1 * torch.mean(cluster_reward[neighbor_clusters])` (executed on MI100 GPU). This introduces a dynamic interplay between functional groups (aiming for 85% interaction accuracy, inspired by Marder, 2012).
@@ -18,22 +30,31 @@
         *   *Example Signals:* `dopamine_reward[c] = TD_error[c] + novelty[c]` (reward prediction error + exploration) and `acetylcholine_reward[c] = -habituation[c] + self_benefit[c]` (attention/focus + stability/efficiency), calculated on the MI100 GPU (aiming for 90% diversity, Marder, 2012).
         *   *Combined Modulation:* These signals can then be combined (e.g., weighted average) to form the final `cluster_reward[c]`: `cluster_reward[c] = 0.5 * dopamine_reward[c] + 0.5 * acetylcholine_reward[c]` (executed on MI100 GPU, aiming for 95% modulation accuracy).
         *   *Bias Reduction:* Simulations comparing a single global SIE (`simulate_global_SIE`) versus this localized multi-signal approach indicate a reduction in global bias, promoting more diverse and nuanced activity patterns (e.g., `spike_diversity` increases from 0.6 to 0.75, a ~25% improvement, master node calculation).
-    *   **Preserving Emergence:** Crucially, these SIE enhancements (cluster allocation, dynamic interaction, localized signals) *guide* rather than *dictate*. The final weight update `Δw_ij = eta * cluster_reward[c] * e_ij` (executed on 7900 XTX GPU) still relies on the locally computed eligibility trace `e_ij` derived from STDP. This ensures that while the reward landscape is shaped by SIE, the specific synaptic changes emerge from local activity patterns, preserving the system's capacity for emergent learning (aiming for 90% emergence preservation, Answer 4.2) and avoiding overly constrained, engineered outcomes (aiming for 95% biological alignment).
+        *   *Receptor-Specific Effects (Refinement from Answer 4):* To further enhance targeting accuracy, the effects of these localized signals can be modulated by an analogue of receptor density: `dopamine_effect[c] = dopamine_reward[c] * receptor_density[c]`, `acetylcholine_effect[c] = acetylcholine_reward[c] * (1 - receptor_density[c])`, where `receptor_density[c] ∈ [0, 1]` represents the relative sensitivity of the cluster to different neuromodulators (executed on MI100 GPU). This aims for even finer-grained control, mimicking biological receptor specificity (targeting 95% targeting accuracy, Lisman et al., 2011).
+    *   **Preserving Emergence:** Crucially, these SIE enhancements (cluster allocation, dynamic interaction, localized signals, receptor effects) *guide* rather than *dictate*. The final weight update `Δw_ij = eta * cluster_reward[c] * e_ij` (executed on 7900 XTX GPU) still relies on the locally computed eligibility trace `e_ij` derived from STDP. This ensures that while the reward landscape is shaped by SIE, the specific synaptic changes emerge from local activity patterns, preserving the system's capacity for emergent learning (aiming for 90% emergence preservation, Answer 4.2) and avoiding overly constrained, engineered outcomes (aiming for 95% biological alignment).
+
+##### C.2.v.
 *   **Component Specificity:** Within this framework, the individual SIE components (or their localized analogues like `dopamine_reward`, `acetylcholine_reward`) contribute to targeted guidance:
         *   *TD Error:* Encourages long-term correctness (TD = r + γ * V(next_state) - V(current_state)), reinforcing primitives with consistent outcomes (e.g., TD > 0 for correct addition).
         *   *Novelty:* Promotes exploration (`novelty=0.8` for new patterns), aiding refinement (e.g., new arithmetic operations).
         *   *Habituation:* Reduces rewards for repeated patterns (`habituation += 0.1` per repeat), preventing over-reinforcement of incorrect primitives.
         *   *Self-Benefit:* Rewards stability (`self_benefit = complexity_norm * impact_norm`), ensuring functional primitives (e.g., impact > 0 for stable logic operations).
     *   **Shared Neural Substrate:** Clusters (Section 4.D) provide functional modularity, with inhibitory neurons (20%) suppressing cross-cluster interference (`I_syn[j] < 0` for non-relevant clusters), executed on the 7900 XTX GPU, ensuring specificity.
+
+##### C.2.vi.
 *   **Credit/Blame Attribution:**
     *   **Primitive Failure Detection:** If `total_reward < 0`, attribute blame: `cluster_rewards[c] += cluster_contrib[c] * total_reward`, executed on the MI100 GPU. For a faulty addition ("2 + 2 = 5", `total_reward=-1`), if "math" cluster contributes 80% of spikes, `cluster_rewards[math] -= 0.8`, flagging the primitive as faulty if `cluster_rewards[math] < 0` for 3 consecutive inputs. Trigger targeted adjustment (growth) in the faulty cluster (Section 4.C.2).
     *   **Composition/Routing Failure:** If multiple clusters are active (e.g., "math" and "logic" for "2 + 2 = 4 → A ∧ B") and `total_reward < 0`, compute cross-cluster contribution: `cross_contrib[c1,c2] = torch.sum(spike_history[cluster_members[c1]] * spike_history[cluster_members[c2]])`, executed on the MI100 GPU. If `cross_contrib[math,logic] > 0.5`, flag as a routing failure, increasing cross-cluster connectivity (`cross_connectivity[math,logic] += 0.01`), executed on the 7900 XTX GPU.
     *   **Implementation:** Compute `cluster_contrib[c]` (~1M FLOPs for 1000 clusters), `cross_contrib[c1,c2]` (~1M FLOPs per pair), executed on the MI100 GPU, logged to SSD (`torch.save(contrib_metrics, 'contrib_metrics.pt')`).
 
-#### C.3. TD Learning Specifics (TD(0), Value Function)
+#### C.3 TD Learning Specifics (TD(0), Value Function)
+
+##### C.3.i.
 *   **Algorithm:** Uses TD(0) for simplicity: `TD_error = r + γ * V(next_state) - V(current_state)`.
     *   `r`: Immediate external reward (+1 correct, -1 incorrect, 0 neutral/unknown) if available, else 0.
     *   `γ`: Discount factor (0.9).
+
+##### C.3.ii.
 *   **Value Function `V(state)`:**
     *   **Predicted Value:** Predicts expected future cumulative reward.
     *   **Representation:** Tensor `V_states` (shape: `num_states`), stored on MI100 GPU. Initialized to zero.
@@ -42,42 +63,74 @@
         *   *Markov Property Approximation:* TD learning converges reliably if the state representation is Markovian (Sutton & Barto, 2018). The cluster ID serves as an approximation of a Markov state, assuming the next state's probability depends primarily on the current cluster ID: `P(spike_rates[t+1] | cluster_id[t]) ≈ P(spike_rates[t+1] | spike_rates[t])`. This approximation allows for effective value prediction (e.g., ~95% accuracy expected, Puterman, 1994).
     *   **Update:** After identifying `current_state_idx` and `next_state_idx` via clustering, update `V_states[current_state_idx] += α * TD_error` (where `α=0.1`, learning rate). (See Sec 2.F for details on handling clustering instability during updates).
 
-#### C.4. Novelty Calculation
+#### C.4 Novelty Calculation
+
+##### C.4.i.
 *   **Storage:** Maintain history of recent input patterns (`recent_inputs` buffer, shape `(history_size, num_input_neurons, T)` on MI100).
+
+##### C.4.ii.
 *   **Comparison:** Compute cosine similarity between current `I_encoded` and `recent_inputs`.
+
+##### C.4.iii.
 *   **Metric:** `novelty = 1 - max(similarity)`. Ranges [0, 1].
 
-#### C.5. Habituation Calculation
+#### C.5 Habituation Calculation
+
+##### C.5.i.
 *   **Storage:** Maintain `habituation_counter[i]` for each pattern in `recent_inputs` on MI100.
+
+##### C.5.ii.
 *   **Update:** If `max(similarity) > 0.9`, increment `habituation_counter[matched_input] += 0.1` (capped at 1).
+
+##### C.5.iii.
 *   **Decay:** Periodically decay counters (`*= 0.95`).
+
+##### C.5.iv.
 *   **Metric:** `habituation = habituation_counter[matched_input]`. Ranges [0, 1].
 
-#### C.6. Self-Benefit Calculation (Complexity & Impact Metrics, Including Exploration Trade-off)
-*   Internal measure of computation quality, aiming to reward stable and efficient processing.
-*   **Refined Formulation:** The self_benefit component of SIE’s total_reward (Sec 2.C) is defined as `self_benefit = complexity_term + impact_term` (Answer 4, revisited). This additive formulation, refined from an initial multiplicative form (`complexity * impact`) to better align with biological reward principles (e.g., additive dopamine effects, Schultz, 1998), is used consistently throughout the documentation (100% clarity expected). It addresses concerns about potential perversity (e.g., incentivizing high-activity stable states or penalizing low-complexity solutions) associated with the multiplicative form.
-*   **Complexity Term (Rewarding Efficiency):**
-    *   **Refined Definition:** `complexity_term = -torch.mean(spike_rates)`. Calculated on MI100.
-    *   **Rationale:** This rewards *low* average activity (efficiency), directly countering the incentive for metabolically expensive states. A lower firing rate (e.g., 0.1 Hz) yields a higher (less negative) reward than a high rate (e.g., 0.5 Hz). (e.g., 90% efficiency expected).
-    *   **Simplicity Bonus (Optional):** To further reward effective low-complexity solutions, a bonus can be added: `simplicity_bonus = 0.2 * (1 - torch.mean(spike_rates) / 0.5)` (executed on MI100).
-*   **Impact Term (Rewarding Stability):**
-    *   **Definition:** Reduction in firing rate variance: `impact_term = (variance_before - variance_after) / max(variance_baseline, 0.01)`. `variance_before` is avg over last 1k steps, `variance_after` is current, `variance_baseline` is avg over 10k steps. Calculated on 7900 XTX, transferred to MI100.
-    *   **Sensitivity & Safeguards:** Sensitive to input shifts/exploration. Normalized by `variance_baseline`. Clamped to `[-1, 1]`.
-*   **Addressing Antagonism Between Impact and Exploration:**
-    *   **Exploration Protection:** The potential conflict where rewarding stability (`impact_term`) penalizes exploration (which increases variance) is mitigated:
-        *   *Impact Adjustment during Exploration:* If novelty is high (`novelty > 0.7`), the contribution of the `impact_term` can be temporarily ignored or significantly reduced (`impact_adjusted = 0` or `impact_adjusted = impact_term * 0.1`, executed on MI100). This ensures necessary variance increases during exploration are not penalized (e.g., 95% exploration protection expected).
-        *   *Direct Exploration Bonus:* An explicit exploration bonus can be added directly to the main `total_reward` formula: `exploration_bonus = 0.5 * novelty if novelty > 0.7 else 0` (executed on MI100), ensuring exploration is sufficiently incentivized (e.g., 90% exploration balance expected).
-*   **Sensitivity Analysis:** The system's behavior sensitivity to the precise formulation and weighting of `complexity_term` and `impact_term` is assessed using methods like Sobol indices (Sec 5.E.1). If sensitivity is high (`S_complexity > 0.1` or `S_impact > 0.1`), weights are adjusted or the formulation refined to ensure robustness (e.g., target <5% reward variation for ±10% weight changes, 95% stability expected).
-*   **Rationale:** The refined additive formulation, rewarding efficiency (negative mean rate), protecting exploration, and sensitivity analysis address potential perversities, ensuring `self_benefit` promotes useful, stable, and efficient computation without hindering adaptation.
+#### C.6 Self-Benefit Calculation (Homeostasis-Based)
 
-#### C.7. Influence on Learning (Modulation)
+##### C.6.i.
+*   **Purpose & Biological Correlate (Refinement from Answer 4):** This internal measure aims to promote stable network activity, analogous to biological homeostatic mechanisms that maintain neuronal firing rates within functional ranges (Turrigiano & Nelson, 2004). It replaces the previous complexity/impact-based formulation, which lacked a clear biological correlate and risked conflicting with exploration. This homeostasis-based approach directly rewards stable, balanced activity patterns (aiming for 95% biological alignment).
+
+##### C.6.ii.
+*   **Formula:** `self_benefit = 1 - torch.abs(torch.var(spike_rates[-1000:]) - target_var) / target_var`
+    *   `spike_rates[-1000:]`: Firing rates over the last 1000 timesteps (executed on 7900 XTX GPU).
+    *   `target_var`: Target variance for firing rates (e.g., `target_var = 0.05 Hz^2`, representing a stable but not overly rigid activity level).
+    *   **Calculation:** Computed on the MI100 GPU after receiving spike rate data from the 7900 XTX.
+    *   **Range:** Clamped to `[0, 1]`. A value near 1 indicates variance is close to the target; a value near 0 indicates significant deviation (either too high or too low variance).
+
+##### C.6.iii.
+*   **Rationale:** This formulation directly rewards the maintenance of network activity around a stable, biologically plausible operating point. It avoids penalizing necessary fluctuations during exploration (as variance naturally increases) because the reward is based on deviation from a *target* variance, not just variance reduction. It provides a clear, biologically grounded drive towards stable yet flexible computation.
+
+##### C.6.iv.
+*   **Interaction with Other Components:**
+    *   **Novelty/Exploration:** High novelty might temporarily increase variance, reducing `self_benefit`. However, this is acceptable as the `novelty` component itself provides a positive reward signal during exploration. The system learns to balance exploration (driven by `novelty`) with returning to stable operation (rewarded by `self_benefit`).
+    *   **TD Error:** Homeostatic stability supports reliable learning, as consistent network dynamics are necessary for the value function (`V(state)`) to converge properly.
+
+##### C.6.v.
+*   **Sensitivity Analysis:** Sensitivity to `target_var` is monitored (Sec 5.E.1). If performance degrades, `target_var` can be adjusted via Bayesian Optimization to find the optimal balance between stability and flexibility for the current task distribution (aiming for 95% stability).
+
+#### C.7 Influence on Learning (Modulation)
+
+##### C.7.i.
 *   The calculated `total_reward` modulates the base STDP learning rate (`eta = 0.01`).
+
+##### C.7.ii.
 *   **Mapping:** `total_reward` (potentially unbounded) is mapped to a modulation factor `mod_factor` in [-1, 1] using a sigmoid: `mod_factor = 2 * torch.sigmoid(total_reward) - 1`.
+
+##### C.7.iii.
 *   **Effective Learning Rate:** `eta_effective = eta * (1 + mod_factor)`. Positive rewards amplify learning, negative rewards suppress it.
+
+##### C.7.iv.
 *   **Application:** The final weight update uses this modulated rate and the reward itself: `Δw_ij(T) = eta_effective * total_reward * e_ij(T)` (applied on 7900 XTX). This quadratic scaling emphasizes significant outcomes.
 
-#### C.8. Goal & Alignment Concerns (Including Reliability, Gaming Prevention, and Formal Guarantees)
+#### C.8 Goal & Alignment Concerns (Including Reliability, Gaming Prevention, and Formal Guarantees)
+
+##### C.8.i.
 *   Drives the network's self-organization process (STDP, structural plasticity) to find internal configurations (synaptic weights `w_ij` and network structure) that maximize the cumulative `total_reward` signal over time, thereby improving performance on target tasks and promoting stable, efficient, and novel computation.
+
+##### C.8.ii.
 *   **Reliability and Goal Alignment:** The complex `total_reward` function aims to reliably guide the system towards accuracy, efficiency, and adaptability. Ensuring robustness against conflicting objectives and preventing suboptimal policies is critical.
     *   **Component Alignment:** External `r` drives accuracy, `TD` promotes long-term success, `novelty` ensures adaptability, `habituation` prevents overfitting, and `self_benefit` rewards efficient/stable computation.
     *   **Robustness to Conflicting Objectives:**
@@ -110,7 +163,7 @@
         *   *Reward Shaping with External Alignment:* Actively shape `total_reward` to align with external goals when available: `total_reward += alignment_bonus`, where `alignment_bonus = 0.5 * (r - total_reward)` if `r` is available, executed on the MI100 GPU, ensuring alignment (e.g., 5% alignment improvement expected). Increase ground truth frequency if gaming is suspected: if `gaming_score > 0.1`: `ground_truth_interval /= 2`, executed on the master node, reducing gaming opportunities (e.g., 90% reduction expected). This ensures `d(total_reward)/dt ≥ 0` with respect to `r` (master node, e.g., 95% alignment expected, Ng et al., 1999).
     *   **Ensuring Long-Term Alignment with External Reality:**
         *   *Periodic Ground Truth & Drift Monitoring:* Injecting labeled validation inputs periodically (e.g., every 100k steps, or more frequently if `drift_score > 0.1`) provides external reward `r` to anchor `total_reward` and recalibrate `V_states`.
-        *   *Metric Recalibration:* Resetting novelty history (`recent_inputs`) and regularizing SIE weights towards defaults prevents long-term drift.
+        *   *Metric Recalibration:* Resetting novelty history (`recent_inputs`) and regularizing SIE weights towards defaults prevents long-term drift due to skewed environmental statistics.
         *   *Stability Constraints:* Enforcing stable dynamics (variance `< 0.05 Hz`) inherently links internal optimization to effective external interaction.
         *   *External Validation:* Periodically testing against validation sets and resetting SIE weights if accuracy drops below a threshold (e.g., 80%) ensures continued alignment.
     *   **Robustness of SIE-Guided Consolidation (Phase 3):** The reliance on internal metrics (`novelty`, `habituation`, `self_benefit`, `TD_error`) during autonomous operation with sparse external feedback requires safeguards against the system optimizing for misleading internal states ("gaming") or drifting away from external reality.
@@ -124,6 +177,8 @@
             *   *Stability Constraints:* Enforcing stable dynamics (variance `< 0.05 Hz`) inherently links internal optimization to effective external interaction.
             *   *External Validation:* Periodically testing against validation sets and resetting SIE weights if accuracy drops below a threshold (e.g., 80%) ensures continued alignment.
         *   *Sensitivity to Weighting:* The consolidation process is sensitive to SIE component weights. Weight regularization and sensitivity monitoring (resetting weights if accuracy becomes too volatile) prevent drift and faulty memory management.
+
+##### C.8.iii.
 *   **Formal Guarantees for SIE Correctness:**
     *   **Theoretical Framework (Reinforcement Learning):** SIE’s `total_reward` aligns with reinforcement learning principles (Sutton & Barto, 2018). The TD error ensures long-term correctness if `r` reflects true task success. `novelty`, `habituation`, and `self_benefit` are bounded (`novelty_contrib ≤ 0.5`, `self_benefit ≤ 1`), ensuring `total_reward ∈ [-1, 1]`, executed on the MI100 GPU.
     *   **Correctness Metric:** Compute `reward_correctness = torch.mean(|total_reward - r|)` over 100,000 timesteps, targeting `reward_correctness < 0.1`, executed on the MI100 GPU. If `reward_correctness > 0.1`, reset SIE weights (`w_novelty=1`), executed on the master node, preventing misleading rewards (e.g., 95% alignment expected).
