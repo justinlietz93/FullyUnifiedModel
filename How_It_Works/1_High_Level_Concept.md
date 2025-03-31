@@ -10,6 +10,11 @@ Achieve autonomous, expert-level mastery across diverse domains (e.g., Mathemati
     *   **Emergent Generalization (Knowledge Graph):** The dynamic graph (Section 2.D) forms cross-domain links via STDP/SIE, generalizing beyond specific inputs. Learning "2+2=4" and "3+3=6" strengthens a "math" cluster, enabling inference on "5+5=?" by activating similar pathways.
     *   **SIE Reward Shaping & Anti-Overfitting:** The SIE reward (`total_reward`, Section 2.C) actively prevents overfitting. High `novelty` for unseen inputs amplifies learning (`eta_effective` increases), while `habituation` penalizes repeated inputs, discouraging memorization. `Sparsity` (95%) inherently limits memorization capacity, forcing generalization. `Structural Plasticity` (Section 4.C) adds resources (neurons/connections) if performance stagnates (low reward), preventing over-specialization on the small dataset. `Cross-domain validation` during training ensures learned associations are robust.
     *   **Rationale:** This combination, validated by the AMN predecessor (82% accuracy with 3 examples), allows FUM to extract robust patterns from minimal data, contrasting sharply with the data hunger of LLMs.
+    *   **Ensuring True Generalization (Beyond Memorization):** To rigorously ensure performance represents true generalization and not just memorization or interpolation of the minimal dataset, specific validation techniques are employed (detailed in Sec 5.E.8):
+        *   *Adversarial Generalization Testing:* Testing against inputs designed for maximal distributional shift rules out simple interpolation.
+        *   *Distributional Shift Analysis:* Quantifying the novelty of test inputs ensures generalization is tested against genuinely unseen problems.
+        *   *Memorization Detection:* Comparing performance on seen vs. unseen data identifies and penalizes overfitting.
+        *   *Brittleness Testing:* Testing with perturbed inputs ensures robustness beyond the exact training examples.
 *   **Defining "Expert-Level Mastery":** Mastery is defined by specific, measurable benchmarks achieved after training on the minimal dataset:
     *   **Phase 1 (80 Inputs - Foundational Mastery):** Target >50% accuracy on 20 unseen validation inputs across 8 domains (simple arithmetic, logic evaluation, code snippets, basic Q&A).
     *   **Phase 2 (300 Inputs - Expert-Level Mastery):** Target >85% accuracy on 60 unseen validation inputs, with increased complexity (e.g., quadratic equations, logical deduction, function writing, text summarization). Accuracy uses exact match or BLEU score (>0.8) as appropriate.
@@ -72,4 +77,3 @@ FUM's design choices distinguish it not only from LLMs but also from various oth
 *   **vs. Evolutionary Algorithms (Genetic Algorithms, Neuroevolution):**
     *   **Learning Timescale:** Learns within the "lifetime" of the model via STDP/SIE. Evolutionary approaches typically operate over generations, selecting or modifying entire networks based on fitness, which can be slower for online adaptation.
     *   **Mechanism:** Relies on synaptic plasticity (STDP, structural plasticity) and reinforcement (SIE), not population-based selection and genetic operators (mutation, crossover), although FUM's self-modification has conceptual parallels to structural evolution.
-

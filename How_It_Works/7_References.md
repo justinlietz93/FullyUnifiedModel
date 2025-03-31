@@ -1,4 +1,3 @@
-
 # References
 
 This list provides potential citations for the concepts, algorithms, and frameworks mentioned in the FUM document. Selections can be integrated into footnotes or a dedicated reference section.
@@ -71,3 +70,27 @@ This list provides potential citations for the concepts, algorithms, and framewo
 * AMD. (n.d.). *ROCm Documentation*. Retrieved March 30, 2025, from https://rocm.docs.amd.com/
 * Paszke, A., Gross, S., Massa, F., Lerer, A., Bradbury, J., Chanan, G., Killeen, T., Lin, Z., Gimelshein, N., Antiga, L., Desmaison, A., Kopf, A., Yang, E., DeVito, Z., Raison, M., Tejani, A., Chilamkurthy, S., Steiner, B., Fang, L., Bai, J., & Chintala, S. (2019). PyTorch: An Imperative Style, High-Performance Deep Learning Library. In *Advances in Neural Information Processing Systems 32* (pp. 8026-8037). Curran Associates, Inc.
 * Snoek, J., Larochelle, H., & Adams, R. P. (2012). Practical Bayesian optimization of machine learning algorithms. In *Advances in Neural Information Processing Systems 25* (pp. 2951-2959). Curran Associates, Inc.
+
+## Additional References (from Gap Answers Integration)
+
+* Amodei, D., Olah, C., Steinhardt, J., Christiano, P., Schulman, J., & Mané, D. (2016). Concrete problems in AI safety. *arXiv preprint arXiv:1606.06565*.
+* Åström, K. J., & Murray, R. M. (2008). *Feedback systems: An introduction for scientists and engineers*. Princeton University Press.
+* Bishop, C. M. (2006). *Pattern recognition and machine learning*. Springer.
+* Boyd, S., & Vandenberghe, L. (2004). *Convex optimization*. Cambridge University Press.
+* Cochran, W. G. (1977). *Sampling techniques* (3rd ed.). Wiley.
+* Cormen, T. H., Leiserson, C. E., Rivest, R. L., & Stein, C. (2009). *Introduction to algorithms* (3rd ed.). MIT Press.
+* Goodfellow, I., Pouget-Abadie, J., Mirza, M., Xu, B., Warde-Farley, D., Ozair, S., Courville, A., & Bengio, Y. (2014). Generative adversarial nets. In *Advances in Neural Information Processing Systems 27*.
+* Goodfellow, I. J., Shlens, J., & Szegedy, C. (2015). Explaining and harnessing adversarial examples. In *International Conference on Learning Representations (ICLR)*.
+* Hendrycks, D., & Dietterich, T. (2019). Benchmarking neural network robustness to common corruptions and perturbations. In *International Conference on Learning Representations (ICLR)*.
+* Jolliffe, I. T. (2002). *Principal component analysis*. Springer.
+* Khalil, H. K. (2002). *Nonlinear systems* (3rd ed.). Prentice Hall.
+* Kullback, S., & Leibler, R. A. (1951). On information and sufficiency. *The Annals of Mathematical Statistics*, *22*(1), 79-86.
+* Murphy, K. P. (2002). *Dynamic Bayesian networks: representation, inference and learning*. University of California, Berkeley.
+* Ng, A. Y., Harada, D., & Russell, S. (1999). Policy invariance under reward transformations: Theory and application to reward shaping. In *Proceedings of the Sixteenth International Conference on Machine Learning (ICML)* (pp. 278-287).
+* Pearl, J. (2009). *Causality*. Cambridge University Press.
+* Rausand, M., & Høyland, A. (2004). *System reliability theory: models, statistical methods, and applications*. John Wiley & Sons.
+* Saltelli, A., Ratto, M., Andres, T., Campolongo, F., Cariboni, J., Gatelli, D., Saisana, M., & Tarantola, S. (2008). *Global sensitivity analysis: The primer*. John Wiley & Sons.
+* Shannon, C. E. (1948). A mathematical theory of communication. *The Bell System Technical Journal*, *27*(3), 379-423.
+* Strogatz, S. H. (2015). *Nonlinear dynamics and chaos: With applications to physics, biology, chemistry, and engineering*. Westview Press.
+* Watts, D. J. (2002). A simple model of global cascades on random networks. *Proceedings of the National Academy of Sciences*, *99*(9), 5766-5771.
+* Zhang, C., Bengio, S., Hardt, M., Recht, B., & Vinyals, O. (2017). Understanding deep learning requires rethinking generalization. In *International Conference on Learning Representations (ICLR)*.
