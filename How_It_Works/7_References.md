@@ -15,6 +15,7 @@ This list provides citations for the concepts, algorithms, and frameworks mentio
 *   Bishop, C. M. (2006). *Pattern recognition and machine learning*. Springer.
 *   Boyd, S., & Vandenberghe, L. (2004). *Convex optimization*. Cambridge University Press.
 *   Brette, R. (2015). Philosophy of the spike: rate-based vs. spike-based theories of computation. *Frontiers in Systems Neuroscience*, *9*, 151. https://doi.org/10.3389/fnsys.2015.00151
+*   Buluç, A., Fineman, J. T., Frigo, M., Gilbert, J. R., & Leiserson, C. E. (2009). Parallel sparse matrix-vector and matrix-transpose-vector multiplication using compressed sparse blocks. In *Proceedings of the twenty-first annual symposium on Parallelism in algorithms and architectures* (pp. 233-244).
 *   Burkitt, A. N. (2006). A review of the leaky integrate-and-fire neuron model. *Biological Cybernetics*, *95*(1), 1-19.
 *   Camacho, E. F., & Bordons, C. (2007). *Model predictive control*. Springer Science & Business Media.
 *   Chandola, V., Banerjee, A., & Kumar, V. (2009). Anomaly detection: A survey. *ACM Computing Surveys (CSUR)*, *41*(3), 1-58.
@@ -34,6 +35,7 @@ This list provides citations for the concepts, algorithms, and frameworks mentio
 *   Fidge, C. J. (1988). Timestamps in message-passing systems that preserve the partial ordering. In *Proceedings of the 11th Australian Computer Science Conference* (Vol. 10, No. 1, pp. 56-66).
 *   Florian, R. V. (2007). Reinforcement learning through modulation of spike-timing-dependent synaptic plasticity. *Neural Computation*, *19*(6), 1468-1502.
 *   Frémaux, N., & Gerstner, W. (2016). Neuromodulated spike-timing-dependent plasticity, and theory of three-factor learning rules. *Frontiers in Neural Circuits*, *9*, 85. https://doi.org/10.3389/fncir.2015.00085
+*   Gerstner, W., & Kistler, W. M. (2002). *Spiking neuron models: Single neurons, populations, plasticity*. Cambridge University Press.
 *   Gerstner, W., Kistler, W. M., Naud, R., & Paninski, L. (2014). *Neuronal dynamics: From single neurons to networks and models of cognition*. Cambridge University Press.
 *   Gilbert, S., & Lynch, N. (2002). Brewer's conjecture and the feasibility of consistent, available, partition-tolerant web services. *ACM SIGACT News*, *33*(2), 51-59.
 *   Goebel, R., Sanfelice, R. G., & Teel, A. R. (2012). *Hybrid dynamical systems: modeling, stability, and robustness*. Princeton University Press.
@@ -91,6 +93,7 @@ This list provides citations for the concepts, algorithms, and frameworks mentio
 *   Puterman, M. L. (1994). *Markov decision processes: Discrete stochastic dynamic programming*. John Wiley & Sons.
 *   Rausand, M., & Høyland, A. (2004). *System reliability theory: models, statistical methods, and applications*. John Wiley & Sons.
 *   Reynolds, D. A. (2009). Gaussian Mixture Models. In *Encyclopedia of Biometrics*. Springer US.
+*   Rice, J. A. (2007). *Mathematical Statistics and Data Analysis*. Duxbury Press.
 *   Rousseeuw, P. J. (1987). Silhouettes: a graphical aid to the interpretation and validation of cluster analysis. *Journal of Computational and Applied Mathematics*, *20*, 53-65.
 *   Rubino, G., & Tuffin, B. (Eds.). (2009). *Rare event simulation using Monte Carlo methods*. John Wiley & Sons.
 *   Saltelli, A., Ratto, M., Andres, T., Campolongo, F., Cariboni, J., Gatelli, D., Saisana, M., & Tarantola, S. (2008). *Global sensitivity analysis: The primer*. John Wiley & Sons.
@@ -108,6 +111,7 @@ This list provides citations for the concepts, algorithms, and frameworks mentio
 *   Thorpe, S., Delorme, A., & Van Rullen, R. (2001). Spike-based strategies for rapid processing. *Neural Networks*, *14*(6-7), 715-725.
 *   Torrey, L., & Shavlik, J. (2010). Transfer learning. In *Handbook of research on machine learning applications and trends: algorithms, methods, and techniques* (pp. 242-264). IGI global.
 *   Triesch, J. (2007). Synergies between intrinsic and synaptic plasticity mechanisms. *Neural Computation*, *19*(4), 885-909.
+*   Turrigiano, G. G., & Nelson, S. B. (2004). Homeostatic plasticity in the developing nervous system. *Nature Reviews Neuroscience*, *5*(2), 97-107.
 *   Turrigiano, G. G., Leslie, K. R., Desai, N. S., Rutherford, L. C., & Nelson, S. B. (1998). Activity-dependent scaling of quantal amplitude in neocortical neurons. *Nature*, *391*(6670), 892-896.
 *   Vapnik, V. (1998). *Statistical learning theory*. Wiley.
 *   Vogels, T. P., Sprekeler, H., Zenke, F., Clopath, C., & Gerstner, W. (2011). Inhibitory plasticity balances excitation and inhibition in sensory pathways and memory networks. *Science*, *334*(6062), 1569-1573. https://doi.org/10.1126/science.1211095
