@@ -18,6 +18,23 @@
 
 ### C. Self-Modification (Structural Plasticity - Detailed Algorithms, Including Interference Prevention & Stability)
 
+*(Note: Detailed algorithms for Growth, Pruning, and Rewiring are described in Section 5. Add cross-references)*
+
+#### C.1. Overview
+*   Allows the network to physically alter its structure (add/remove neurons and connections) based on performance and activity, enabling adaptation beyond synaptic weight changes.
+
+#### C.2. Triggers & Goals
+*   **Growth:** Triggered by low cluster reward (`avg_reward[c] < 0.5`) or high novelty (`novelty > 0.8`), allocating more resources to underperforming or novel domains.
+*   **Pruning:** Triggered by neuron inactivity (`rate_i < 0.01 Hz` over 10k steps) or consistently negative reward contribution (`neuron_rewards[i] < -1` over 10k steps), removing inefficient components.
+*   **Rewiring:** Triggered by low connection efficacy (low `abs(w_ij * e_ij)`), exploring alternative connection patterns.
+
+#### C.3. Stability During Plasticity (Preventing Destabilization)
+*   Ongoing structural changes could potentially destabilize functional primitives. Mechanisms to prevent this include:
+    *   **Controlled Structural Changes:** Growth, pruning, and rewiring events are capped (e.g., affecting max 1% of a cluster's neurons/synapses per event) to limit disruption.
+    *   **Reversion Mechanism:** After a structural change event, monitor local stability (e.g., `output_variance[c]` for the affected cluster). If variance significantly increases (e.g., `variance_after > variance_before * 1.1` and `variance_after > 0.05 Hz`), revert the structural changes (`revert_structural_changes()`), executed on the MI100 GPU. This prevents plasticity from degrading performance.
+    *   **Persistent Pathway Protection:** Functionally critical pathways identified by persistent synapses (`w[i,j] > 0.8`, `avg_reward[c] > 0.9`) are often exempted from pruning and rewiring to preserve core functionality (See Section 2.D.4 and 5.E.4).
+
+### D. Adaptive Domain Clustering (k-means)
 
 #### D.1. Purpose & Mechanism
 *   Dynamically identify functional specializations (domains) emerging within the network by grouping neurons with similar activity profiles.
