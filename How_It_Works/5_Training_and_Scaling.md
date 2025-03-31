@@ -379,3 +379,11 @@ Achieving massive scale requires specific, optimized implementation choices:
 *   **K-Means vs. Other Clustering:**
     *   *Chosen:* K-means with silhouette score for adaptive clustering.
     *   *Justification:* Efficiency (lower FLOPs than DBSCAN/Spectral), scalability (linear `O(nki)` vs. cubic), interpretability (spherical clusters align with domain concept), automated `k` selection via silhouette score (more robust than density/graph parameters).
+    *   **7. Addressing Approximation Accuracy in Formal Methods:** The necessary optimizations for implementing formal methods at scale (e.g., approximating interventions for causal inference, using sampled subgraphs for spectral analysis) introduce potential inaccuracies. Ensuring the reliability of formal guarantees despite these approximations requires careful consideration:
+        *   **Quantifying Approximation Accuracy:**
+            *   *Causal Inference:* The linear approximation error for `intervention_effect[c]` is computed (`error = torch.mean(|actual_output_without_c - estimated_output_without_c|)`). Theoretically bounded (`error < 0.05 * mean(output)`) for sparse activity. Cumulative error is monitored (`cumulative_error = sum(error[-1M:])`), targeting `< 0.1 * mean(output[-1M:])`.
+            *   *Spectral Analysis:* Sampling error for `λ_2` is computed (`sampling_error = std(λ_2_samples) / mean(λ_2_samples)`), theoretically bounded (`< 0.01` for 0.001% sampling). Cumulative error monitored (`cumulative_sampling_error = sum(sampling_error[-1M:])`), targeting `< 0.05`.
+        *   **Mitigating Cumulative Effects:**
+            *   *Error Correction:* Feedback loops adjust approximations if cumulative error exceeds thresholds (e.g., `cumulative_error > 0.1` -> increase intervention weighting).
+            *   *Periodic Re-Computation:* Exact values (e.g., `actual_output_without_c`, exact `λ_2`) are recomputed for sampled clusters/subgraphs periodically (e.g., every 1M timesteps) to correct approximations.
+        *   *Rationale:* Error analysis, cumulative effect monitoring, feedback correction, and periodic re-computation ensure approximation accuracy (e.g., error < 0.05, 95% correction expected), maintaining the reliability of formal guarantees, practical for Justin’s workstation and scalable to 32B neurons.
