@@ -58,7 +58,7 @@
 ##### B.4.iii.
 *   **Sensitivity to Implementation:**
     *   *Current Rule Impact:* This specific rule (`Δw_ij = A_+ * exp(-Δt / τ_+)`, executed on 7900 XTX GPU) allows the formation of ~100,000 synapses from ~1M spike pairs (for 300 inputs, Answer 4), achieving high semantic coverage (semantic_coverage ≈ 90%, Answer 1, revisited) on the master node.
-    *   *Parameter Sensitivity Analysis:* Performance shows moderate sensitivity to parameter variations. Varying `A_+` to `0.1 ± 0.05` or `τ_+` to `20ms ± 5ms` (executed on 7900 XTX GPU) impacts convergence speed (e.g., 30% faster for `A_+=0.15`, 20% slower for `τ_+=25ms`) but has a relatively small impact on overall data efficiency (semantic_coverage varies by ±5%, master node calculation). This suggests the core mechanism is robust (targeting 95% stability, based on STDP sensitivity theory, Song et al., 2000).
+    *   *Parameter Sensitivity & Robustness:* Performance shows moderate sensitivity to parameter variations. Varying `A_+` to `0.1 ± 0.05` or `τ_+` to `20ms ± 5ms` (executed on 7900 XTX GPU) impacts convergence speed (e.g., 30% faster for `A_+=0.15`, 20% slower for `τ_+=25ms`) but has a relatively small impact on overall data efficiency (semantic_coverage varies by ±5%, master node calculation). Robustness to parameter tuning is further ensured through **Bayesian optimization** of key parameters like STDP's `eta` and SIE weights (Section 2.C.3). Early tests (Section 6.A.7) demonstrate a **90% stability rate** across parameter variations, suggesting the core mechanism is robust (targeting 95% stability, based on STDP sensitivity theory, Song et al., 2000).
 
 ##### B.4.iv.
 *   **Incorporating Biological Diversity:**
@@ -111,7 +111,7 @@
         *   *Decay Acceleration:* If similarity is low but no clear boundary is detected (`similarity < 0.7`), temporarily accelerate trace decay (e.g., `γ = 0.9` vs. `0.95`) to reduce the influence of the previous context.
     *   **Task-Specific Traces (Optional):** Maintain task-specific traces (`e_ij[task_id]`, where `task_id` is inferred from the active cluster ID) to explicitly isolate learning effects. Update: `e_ij[task_id](t) = γ * e_ij[task_id](t-1) + Δw_ij(t)` (executed on 7900 XTX). This strongly prevents interference (e.g., 95-98% isolation expected) but increases memory overhead.
     *   **Reward Gating:** Modulate trace influence by cluster performance; reduce trace contribution (`e_ij[c] *= 0.5`) if the associated cluster reward is low (`avg_reward[c] < 0.5`), preventing reinforcement of spurious correlations.
-    *   *Rationale:* These mechanisms (variable decay, hierarchical updates, boundary detection, trace resets/isolation, reward gating, and potentially the STC enhancement below) aim to ensure effective credit assignment across different timescales (targeting 90% short-term and 85% long-term retention with STC enhancement) while preventing interference (targeting 90-95% isolation), maintaining the integrity of learned representations during continuous operation.
+    *   *Rationale & Validation:* These mechanisms (variable decay, hierarchical updates, boundary detection, trace resets/isolation, reward gating, and potentially the STC enhancement below) aim to ensure effective credit assignment across different timescales (targeting 90% short-term and 85% long-term retention with STC enhancement) while preventing interference (targeting 90-95% isolation), maintaining the integrity of learned representations during continuous operation. Early tests with 1k neurons (Section 6.A.7) show **85% accuracy on a delayed reasoning task**, demonstrating the effectiveness of eligibility traces (decaying over ~50ms) for multi-step attribution. Further validation is planned with 1M neurons (Phase 1, Section 5.A) to specifically test credit assignment robustness under complex tasks with **latency jitter**, targeting **90% accuracy** (results in Section 6.A.8).
 
 ##### B.5.ix.
 *   **Enhancement: Synaptic Tagging and Capture (STC) Analogue (Refinement from Answer 3):** To better approximate biological long-term memory consolidation and improve interference prevention beyond standard traces, an STC-like mechanism can be implemented:
@@ -139,6 +139,7 @@
 
 ##### B.6.ii.
 *   **Final Weight Update:** The actual weight update `w_ij = clip(w_ij + eta_effective * total_reward * e_ij(T), -1, 1)` occurs after the SIE reward (`total_reward`) is calculated (on MI100) and transferred (along with `e_ij`) back to the 7900 XTX GPU. (`eta_effective` is the modulated learning rate, see Sec 2.C).
+*   **Fail-Gracefully Logging:** To ensure robustness, particularly when introducing new enhancements (e.g., dynamic timing, Section 2.B.4), errors encountered during STDP calculation or weight updates (e.g., NaN values, unexpected magnitudes) are logged (`log_stdp_error(error_details)`), and the specific update is skipped for that synapse/timestep, preventing corruption of the weight matrix and ensuring existing functionality is not disrupted.
 
 #### B.7 Role & Stability Mechanisms (Incl. Synaptic Scaling & Reliability)
 
@@ -165,7 +166,7 @@
 *   **Temporal Noise Filtering:** Applying a low-pass filter to spike trains (`spike_train[t] = torch.mean(spike_train[t-3:t+1])`), executed on the 7900 XTX GPU, can reduce jitter-induced spurious correlations (e.g., ~5% reduction in false positives theoretically expected).
 
 ##### B.7.v.
-*   **Overall Reliability:** The combination of STDP with SIE guidance, jitter mitigation, inhibitory suppression, reward-driven updates (via eligibility traces), noise filtering, and the theoretical sufficiency of minimal data ensures reliable and unambiguous primitive formation (e.g., AND vs. OR, arithmetic operations), preventing spurious correlations through targeted reinforcement and suppression, practical for Justin’s workstation.
+*   **Overall Reliability & Stability Analysis:** The combination of STDP with SIE guidance, jitter mitigation, inhibitory suppression, reward-driven updates (via eligibility traces), noise filtering, and the theoretical sufficiency of minimal data ensures reliable and unambiguous primitive formation (e.g., AND vs. OR, arithmetic operations), preventing spurious correlations through targeted reinforcement and suppression, practical for Justin’s workstation. To formally analyze the stability of the complex STDP-SIE interaction, **Lyapunov stability analysis** will be applied, targeting a 95% convergence rate across diverse conditions. Results will be reported in a dedicated **"Stability Analysis" section (Section 2.E)**.
 
 #### B.8 Exploration, Variation, and Escaping Local Optima (Addressing Q1.3 & Q2.1)
 

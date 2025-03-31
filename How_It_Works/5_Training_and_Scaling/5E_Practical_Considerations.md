@@ -45,7 +45,10 @@
     *   *Instability (High Variance/Negative Reward):* Visualize graph, check E/I balance, review SIE component trends. Adjust global inhibition, SIE weights, or decay rates.
 
 ##### E.2.v.
-*   **Implementation:** A `Debugger` class (`utils.py`) can automate checks and logging alerts.
+*   **Implementation:** A `Debugger` class (`utils.py`) can automate checks and logging alerts. Enhanced debugging tools are planned to address challenges in pinpointing distributed faults in emergent systems:
+    *   **Spike Pathway Tracing:** A mechanism to track the propagation of spikes through the Knowledge Graph (Section 4.B) over time, using timestamped logs (1ms granularity) to identify faulty interactions (e.g., a misapplied plasticity rule leading to incorrect STDP weights in a cluster). This allows pinpointing distributed faults within potentially trillions of connections.
+    *   **Reasoning Audit Tool:** A tool to analyze the Knowledge Graph's reasoning pathways (sequences of activated clusters/synapses) for specific inputs, detecting logical inconsistencies or invalid steps (e.g., identifying a faulty composition of primitives leading to an incorrect mathematical proof). Target: 95% detection rate for subtle reasoning errors.
+    *   *(Results for these enhanced tools will be reported in Section 6.A.8 after implementation and validation in Phase 1/2).*
 
 ##### E.2.vi.
 *   **Interpretability of Emergent Solutions:**
