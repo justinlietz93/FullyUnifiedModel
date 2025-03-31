@@ -115,14 +115,22 @@ Achieve autonomous, expert-level mastery across diverse domains (e.g., Mathemati
 *   **Defining "Expert-Level Mastery":** Mastery is defined by specific, measurable benchmarks achieved after training on the minimal dataset:
     *   **Phase 1 (80 Inputs - Foundational Mastery):** Target >50% accuracy on 20 unseen validation inputs across 8 domains (simple arithmetic, logic evaluation, code snippets, basic Q&A).
     *   **Phase 2 (300 Inputs - Expert-Level Mastery):** Target >85% accuracy on 60 unseen validation inputs, with increased complexity (e.g., quadratic equations, logical deduction, function writing, text summarization). Accuracy uses exact match or BLEU score (>0.8) as appropriate.
-    *   **Comparison to SOTA:** While SOTA LLMs (e.g., GPT-4) achieve high scores (e.g., ~88% MMLU) on broad benchmarks using massive data (~20B sentences) and energy (~1.3M kWh), FUM targets comparable accuracy (>85%) on its defined (though initially narrower) tasks with vastly less data (300 inputs) and energy (~0.00056 kWh at 1k scale, ~11x savings vs. LLM inference; projected ~193.5x savings at 32B scale). FUM prioritizes data/energy efficiency and reasoning depth over encyclopedic knowledge breadth initially.
+    *   **Comparison to SOTA & Specific Benchmarks:**
+        *   *Target Benchmarks:* FUM's mastery will be rigorously validated against specific subsets of standard benchmarks:
+            *   **Math:** MATH dataset (Levels 1-5 Algebra subset, target >85%).
+            *   **Logic:** GPQA dataset (Levels 1-3 subset, target >85%).
+            *   **Coding:** HumanEval subset (target >80% pass@1).
+            *   **Language:** CNN/DailyMail summarization subset (target BLEU > 0.8).
+            *   **Physics:** Custom simulation problems (target >80%).
+        *   *SOTA Models for Comparison (as of Q1 2025):* Performance compared against GPT-4 (~700B params), LLaMA-2-70B, and Grok (~100B params).
+        *   *Validation Goal:* Demonstrate comparable or superior accuracy on these targeted complex reasoning tasks with 67M-fold fewer inputs (300 vs. ~20B) and significant energy savings (~11x-194x projected) compared to LLM inference costs. FUM prioritizes data/energy efficiency and reasoning depth over encyclopedic knowledge breadth initially.
 
 *   **Hardware Context (Development & Validation):** The specific hardware configurations mentioned throughout this document (Linux workstation with AMD Threadripper PRO 5955WX, MI100 32GB VRAM, 7900 XTX 24GB VRAM, 512GB RAM, 6TB SSD) represent the author's (Justin Lietz) test environment. These are **not rigid requirements** for FUM deployment but serve as the platform where the model's theoretical foundations are validated. Notably, the predecessor model, AMN (Adaptive Modular Network), has already been successfully validated up to a 10-unit model size on this hardware, demonstrating the feasibility of the core concepts.
 *   **Why Minimal Data?** Unlike LLMs requiring terabytes of data and vast pre-training, FUM aims for human-like learning efficiency, inferring complex patterns from sparse examples. This reduces reliance on massive datasets and computational resources, making advanced AI potentially achievable within the constraints of the development hardware. The design philosophy balances a minimal seeded structure during initialization with knowledge purely learned from these minimal examples (see Section 6.B for details).
 
 ### B. Core Philosophy
 
-Mimic the efficiency (human brain ~20W) and adaptability of biological brains by employing a **hybrid architecture**. This contrasts with monolithic architectures like Transformers used in most LLMs.
+Mimic the efficiency (human brain ~20W) and adaptability of biological brains by employing a **hybrid architecture**. This contrasts with monolithic architectures like Transformers used in most LLMs. The design prioritizes **functional equivalence** over strict biological analogy, using biologically inspired mechanisms simplified for computational tractability. The claimed efficiency and learning capability rely on these functional algorithms (e.g., LIF dynamics, STDP temporal correlation, SIE reward modulation) rather than precise replication of biological details (like ion channels or dopamine pathways). While omitting certain biological details (e.g., synaptic tagging) might slightly reduce long-term retention (~10-15%), the core efficiency (>1M-fold theoretical energy savings from sparse, event-driven SNNs) and minimal-data learning capabilities (validated by AMN) are expected to hold, as they stem from the computational properties of the chosen abstractions.
 
 1.  **Sparse Spiking Neural Networks (SNNs):**
     *   Chosen for inherent **temporal processing** (information encoded in spike timing, not just rate), potential for massive **energy efficiency** (neurons only compute when they spike, targeting >1M-fold savings vs. LLMs theoretically, though practical overhead reduces this - see Sec 5.E.3), and **biological plausibility**. High sparsity (target: 95%) drastically reduces the number of active connections, further saving computation and memory compared to dense ANNs/Transformers. Includes both excitatory and inhibitory neurons (typically 80:20 ratio) for stability and balanced dynamics.
@@ -295,6 +303,15 @@ FUM's design choices distinguish it not only from LLMs but also from various oth
     *   **Component Alignment:** External `r` drives accuracy, `TD` promotes long-term success, `novelty` ensures adaptability, `habituation` prevents overfitting, and `self_benefit` rewards efficient/stable computation.
     *   **Safeguards:** Normalization (`sigmoid` mapping to `mod_factor`), exploration adjustments (scaling `impact` by `1 - novelty`), and reward smoothing (averaging over recent inputs) prevent misleading internal metrics or undesirable loops.
     *   **Sensitivity & Tuning:** The relative weighting of components is sensitive (e.g., doubling novelty weight reduces accuracy ~15%). Bayesian optimization (Sec 5.E.1) is used to tune weights, maximizing average cluster rewards and ensuring balanced goal alignment.
+    *   **Preventing "Gaming" Internal Metrics (Phase 3):** In autonomous operation with sparse external rewards, specific mechanisms prevent the system from optimizing internal SIE metrics at the expense of useful outputs:
+        *   *Novelty Gaming:* Capping novelty's contribution (`min(novelty, 0.5)`) and using habituation prevent loops of random, meaningless outputs.
+        *   *Complexity/Impact Gaming:* Normalizing complexity/impact metrics (`clamp(metric / baseline, 0, 1)`) and enforcing firing rate limits via intrinsic plasticity (`rate <= 0.5 Hz`) prevent artificial inflation of these values.
+        *   *TD_Error Gaming:* Regularizing `V_states` updates (`TD - λ * V_states`) prevents manipulation of predicted values.
+    *   **Ensuring Long-Term Alignment with External Reality:**
+        *   *Periodic Ground Truth:* Injecting labeled validation inputs periodically (e.g., every 100k steps) provides external reward `r` to anchor `total_reward` and recalibrate `V_states`.
+        *   *Metric Recalibration:* Resetting novelty history (`recent_inputs`) and regularizing SIE weights towards defaults prevents long-term drift.
+        *   *Stability Constraints:* Enforcing stable dynamics (variance `< 0.05 Hz`) inherently links internal optimization to effective external interaction.
+        *   *External Validation:* Periodically testing against validation sets and resetting SIE weights if accuracy drops below a threshold (e.g., 80%) ensures continued alignment.
 
 ### D. Unified Knowledge Graph (Emergent)
 
@@ -312,6 +329,13 @@ FUM's design choices distinguish it not only from LLMs but also from various oth
 *   There is no central module directing information flow. Instead, processing and reasoning occur via the propagation of spiking activity across the strongest pathways (edges with large `abs(w_ij)`) in the emergent graph.
 *   **Reliable Routing:** For specific computations (e.g., "2+2=?"), input spike patterns activate corresponding input neurons. These spikes propagate through pathways strengthened by previous STDP/SIE reinforcement for similar tasks (e.g., `w[i,j]` increased for neurons co-firing during "2 + 2 = 4" training). Inhibitory connections and sparse connectivity help filter out irrelevant associations (weak or non-existent pathways, `w[i,j] < 0.1`), ensuring spikes reliably reach functionally relevant clusters (e.g., "math cluster" identified via adaptive clustering) and ultimately the correct output neurons (e.g., neuron representing '4').
 *   **Functional Circuits:** Specific circuits (e.g., for arithmetic) emerge through the interplay of STDP (forming connections between co-active neurons), SIE reward shaping (reinforcing correct outputs for specific tasks, e.g., `r=1` for "4"), adaptive clustering (identifying functional groups like "math"), and structural plasticity (allocating resources, pruning irrelevant connections).
+*   **Task Representation & Context Switching:**
+    *   *Abstract Goal Representation:* Task goals (e.g., "solve math problem") are represented by the sustained activity patterns within specific emergent clusters (e.g., "math" cluster). Temporal encoding of inputs (Sec 3.A.2) activates these clusters, and SIE rewards reinforce goal-directed activity until task completion.
+    *   *Handling Multi-Domain Inputs:* For inputs spanning domains (e.g., a math word problem), the system relies on:
+        *   **Temporal Encoding:** Separates components (e.g., language parsing vs. math calculation) into different time windows during input encoding.
+        *   **Cluster Activation:** Temporally distinct spike patterns activate the relevant clusters sequentially (e.g., "language" cluster then "math" cluster).
+        *   **Inhibitory Suppression:** Active clusters trigger inhibitory neurons that suppress activity in irrelevant clusters, preventing interference. Sparsity also limits cross-talk.
+    *   *Dynamic Context:* Context is maintained implicitly by the sustained activity within the currently relevant cluster(s), guided by the emergent graph structure and inhibitory dynamics, without needing an explicit context-setting module.
 *   **Controllability of Emergence:** Ensuring the emergent graph consistently forms correct representations and avoids counter-productive structures relies on several mechanisms:
     *   **SIE Guidance:** Rewarding task success (`r=1`) and stability (`impact`) strengthens correct pathways and prunes incorrect ones.
     *   **Adaptive Clustering:** Identifies functional domains, guiding reward attribution and growth. Incorrect representations trigger corrective growth (`avg_reward < 0.5`).
@@ -488,6 +512,17 @@ Establish a broad, foundational associative structure across multiple domains us
     *   Initialize sparse weight matrix `w` (`torch.sparse_csr_tensor`, ~95% sparsity) on 7900 XTX.
         *   **Connectivity (Structural Bias):** Use distance-dependent bias (`exp(-d/σ)`, `σ=5`) for connection probability, where `d` is Euclidean distance in a virtual 2D grid. Sample using `torch.multinomial`. Encourages local clustering.
         *   **Initial Weights (Distribution):** Uniform `U(0, 0.3)` (`torch.rand * 0.3`) for excitatory outputs, `U(-0.3, 0)` for inhibitory outputs. Clamped to `[-1, 1]`. Small range avoids saturation, allows STDP shaping.
+    *   **Initial Data Curation (80-300 Inputs):**
+        *   *Methodology:* The initial minimal dataset is crucial. Inputs are curated for:
+            *   **Domain Coverage:** Equal distribution across 8 domains (e.g., 10 inputs/domain for Phase 1).
+            *   **Task Diversity:** Varied task types within domains (e.g., arithmetic, algebra in Math).
+            *   **Quality:** Sourced from standard datasets (MATH, HumanEval, etc.), ensuring clarity and correctness.
+        *   *Bias Mitigation:* Ensure representativeness and prevent skew:
+            *   **Balanced Representation:** Avoid domain dominance (target skew < 0.15).
+            *   **Diverse Sources:** Use multiple datasets to reduce cultural/stylistic bias.
+            *   **Random Shuffling:** Prevent sequence bias during training.
+        *   *Validation:* Use coverage metrics (e.g., embedding diversity > 0.7) and bias checks (domain skew, feature bias). Reserve 20% for validation set to test generalization. Resample if bias detected.
+        *   *Rationale:* A curated, balanced, diverse initial dataset ensures robust initial graph/cluster formation, enabling generalization despite minimal data quantity.
     *   **Initialize Dynamic States (t=0):**
         *   **Eligibility Traces (`e_ij`):** Initialized to zero. Sparse `float16` tensor mirroring `w`'s structure on MI100 (`torch.sparse_csr_tensor(w._indices(), torch.zeros_like(w._values()))`). Ensures first updates based only on initial STDP events.
         *   **TD Value Function (`V_states`):** Initialized to zero. `float16` tensor on MI100, size `k_min=8` initially (`torch.zeros(k_min)`). Assumes neutral starting point before rewards observed. Resized after first clustering.
@@ -561,6 +596,18 @@ Knowledge graph significantly refined, strong intra-domain pathways (`w[i,j] ≈
 
 #### C.1. Objective
 Achieve expert-level performance, adapt autonomously to novel, unlabeled information, maintain long-term stability, and scale towards target size (e.g., 7M -> 32B+ units) through continuous operation.
+4. **TD Learning:** `TD_error = r + 0.9 * V(next_state) - V(current_state)`; `V(state) += 0.1 * TD_error`.
+5. **Cluster Coherence Metric (Silhouette Score):** Used to determine `k` for k-means.
+
+#### B.4. Expected Outcome
+Knowledge graph significantly refined, strong intra-domain pathways (`w[i,j] ≈ 0.8`), emerging inter-domain connections. Baseline competence (>85% accuracy) achieved. Minor structural growth may have occurred.
+
+---
+
+### C. Phase 3: Continuous Self-Learning (Autonomy and Mastery)
+
+#### C.1. Objective
+Achieve expert-level performance, adapt autonomously to novel, unlabeled information, maintain long-term stability, and scale towards target size (e.g., 7M -> 32B+ units) through continuous operation.
 
 #### C.2. Cellular Components & Mechanisms
 *   **Data Source:** Continuous streams of real-world, potentially unlabeled data.
@@ -605,6 +652,20 @@ Achieving massive scale requires specific, optimized implementation choices:
 *   **Tolerable Skew:** Cap time skew at 10 timesteps (10ms) to ensure STDP validity (±20ms window). `max_skew = max(local_time) - min(local_time)`.
 *   **Global Sync Trigger:** Trigger global synchronization (`torch.distributed.barrier()`) every 1000 timesteps or if `max_skew > 10`. Coordinated by a master process on the CPU.
 *   **Consistency:** Global operations (SIE reward broadcast `torch.distributed.broadcast`, structural changes) occur *after* a global sync. Structural changes use a distributed lock (barrier + master update) to prevent race conditions.
+*   **Handling Resource Contention & Outlier Events:**
+    *   *Challenge:* Certain operations (e.g., complex SIE calculations, clustering after major structural changes) might occasionally exceed the standard 50ms cycle time, risking desynchronization and disruption of temporal dependencies.
+    *   *Mechanisms:*
+        *   **Asynchronous Buffering:** If a non-SNN task (e.g., clustering on MI100) exceeds the cycle time, the SNN simulation (on 7900 XTX) continues processing subsequent inputs, buffering generated spikes (`spike_buffer`). Once the long task completes, buffered spikes are processed for STDP/SIE updates.
+        *   **Priority Scheduling:** Use CUDA streams to assign higher priority to the real-time SNN simulation kernel over potentially long-running background tasks like clustering or complex SIE calculations.
+        *   **Temporal Dependency Preservation:** During desynchronization periods, cap the STDP time difference (`Δt = min(Δt, 20ms)`) to maintain approximate validity. Apply the last valid SIE reward until the system resynchronizes.
+    *   *Rationale:* These mechanisms ensure the real-time flow of SNN processing and the integrity of STDP learning are maintained even during occasional computational outliers.
+*   **Handling Resource Contention & Outlier Events:**
+    *   *Challenge:* Certain operations (e.g., complex SIE calculations, clustering after major structural changes) might occasionally exceed the standard 50ms cycle time, risking desynchronization and disruption of temporal dependencies.
+    *   *Mechanisms:*
+        *   **Asynchronous Buffering:** If a non-SNN task (e.g., clustering on MI100) exceeds the cycle time, the SNN simulation (on 7900 XTX) continues processing subsequent inputs, buffering generated spikes (`spike_buffer`). Once the long task completes, buffered spikes are processed for STDP/SIE updates.
+        *   **Priority Scheduling:** Use CUDA streams to assign higher priority to the real-time SNN simulation kernel over potentially long-running background tasks like clustering or complex SIE calculations.
+        *   **Temporal Dependency Preservation:** During desynchronization periods, cap the STDP time difference (`Δt = min(Δt, 20ms)`) to maintain approximate validity. Apply the last valid SIE reward until the system resynchronizes.
+    *   *Rationale:* These mechanisms ensure the real-time flow of SNN processing and the integrity of STDP learning are maintained even during occasional computational outliers.
 
 #### D.3. Memory Management (Incl. Parameter Server & Caching)
 *   **Concept:** Efficiently store/access massive state, especially sparse `w`.
@@ -660,6 +721,30 @@ Achieving massive scale requires specific, optimized implementation choices:
     *   *Convergence Failure (Low Reward):* Check firing rates, variance, connectivity of the affected cluster via logs/plots. Trigger growth, adjust inhibition, or tune `eta` accordingly.
     *   *Instability (High Variance/Negative Reward):* Visualize graph, check E/I balance, review SIE component trends. Adjust global inhibition, SIE weights, or decay rates.
 *   **Implementation:** A `Debugger` class (`utils.py`) can automate checks and logging alerts.
+*   **Interpretability of Emergent Solutions:**
+    *   *Challenge:* Emergent systems risk becoming "black boxes". FUM aims for interpretability even for complex, non-obvious solutions (e.g., novel proof steps).
+    *   *Methods:*
+        *   **Spike Pathway Tracing:** Log `spike_history` and reconstruct the causal chain of spikes for a given input/output pair. Identify critical neurons and pathways involved in the computation (e.g., using a `PathTracer` class).
+        *   **Synaptic Contribution Analysis:** Compute the contribution of each synapse (`w[i,j] * sum(spike_history[i] * spike_history[j])`) to identify critical connections driving the solution. Visualize as heatmaps or graph overlays.
+        *   **Cluster-Level Reasoning:** Map spike pathways and high-contribution synapses to functional clusters (Sec 4.D) to understand the high-level reasoning flow (e.g., "math cluster -> logic cluster -> output").
+    *   *Extraction & Interpretation:* These methods allow extracting a directed graph representing the reasoning steps. While potentially complex at large scale, cluster-level analysis provides a tractable interpretation.
+    *   *Implementation:* Integrate tracing and analysis tools (e.g., in `utils.py`), logging results to SSD, with visualization scripts for analysis.
+*   **Scalability of Debugging/Tuning:**
+    *   *Challenge:* Standard methods (full graph visualization, dense logging, global Bayesian optimization) become infeasible at 32B+ neuron scale across thousands of nodes due to computational/storage costs (e.g., petabytes of logs, prohibitive tuning times).
+    *   *Scalable Techniques:*
+        *   **Hierarchical Visualization:** Visualize the graph at the cluster level (e.g., 1000 clusters for 32B neurons) or via dynamic sampling of neuron subgraphs.
+        *   **Distributed/Sparse Logging:** Log only essential data (e.g., non-zero spikes, top weight changes, cluster metrics) or focus on anomaly-driven logging, distributing storage across nodes.
+        *   **Scalable Diagnostics:** Compute cluster health metrics (variance, rates, reward) locally and aggregate globally. Sample spike pathways for critical inputs/outputs.
+        *   **Hierarchical Tuning:** Perform Bayesian optimization per-cluster (or on representative subsets) and aggregate results, adapting tuning frequency based on scale.
+    *   *Rationale:* These hierarchical and sampling-based approaches aim to provide sufficient diagnostic insight and parameter adaptation without requiring exhaustive analysis, making debugging and tuning tractable at large scale.
+*   **Interpretability of Emergent Solutions:**
+    *   *Challenge:* Emergent systems risk becoming "black boxes". FUM aims for interpretability even for complex, non-obvious solutions (e.g., novel proof steps).
+    *   *Methods:*
+        *   **Spike Pathway Tracing:** Log `spike_history` and reconstruct the causal chain of spikes for a given input/output pair. Identify critical neurons and pathways involved in the computation (e.g., using a `PathTracer` class).
+        *   **Synaptic Contribution Analysis:** Compute the contribution of each synapse (`w[i,j] * sum(spike_history[i] * spike_history[j])`) to identify critical connections driving the solution. Visualize as heatmaps or graph overlays.
+        *   **Cluster-Level Reasoning:** Map spike pathways and high-contribution synapses to functional clusters (Sec 4.D) to understand the high-level reasoning flow (e.g., "math cluster -> logic cluster -> output").
+    *   *Extraction & Interpretation:* These methods allow extracting a directed graph representing the reasoning steps. While potentially complex at large scale, cluster-level analysis provides a tractable interpretation.
+    *   *Implementation:* Integrate tracing and analysis tools (e.g., in `utils.py`), logging results to SSD, with visualization scripts for analysis.
 
 #### E.3. Computational Cost of Overhead Components & Net Efficiency
 *   **Estimation (1k Neurons, Development Hardware):**
@@ -699,8 +784,19 @@ Achieving massive scale requires specific, optimized implementation choices:
     *   **Persistence:** Exempt persistent synapses from decay.
     *   **Implementation:** Use a sparse boolean tensor `persistent` checked during decay (on 7900 XTX).
     *   **Rationale:** Protects essential learned functions while allowing adaptation in non-core pathways, ensuring long-term functional integrity.
+*   **Continual Learning vs. Catastrophic Forgetting (Phase 3):**
+    *   *Challenge:* Integrating large volumes of novel information without overwriting previously mastered skills.
+    *   *Mechanisms:*
+        *   **Synaptic Decay:** Slowly weakens unused connections (`w *= 0.99` every 10k steps), making space for new learning while preserving strong pathways.
+        *   **STDP/SIE on New Data:** Novelty in SIE (`novelty > 0.5`) can temporarily increase plasticity (`eta *= 1.2`) to facilitate learning new information, while habituation reduces updates for old, mastered information.
+        *   **Persistence Tags:** Exempt core, high-reward synapses (`w > 0.8`, `avg_reward > 0.9`) from decay, robustly protecting core competencies.
+        *   **Dynamic Balance:** Plasticity (`eta` increase, growth) is balanced against stability mechanisms (`eta` decrease for high variance, inhibition, persistence threshold adjustments) to gracefully integrate new knowledge without catastrophic forgetting. Accuracy on validation sets is monitored to ensure core skills are retained.
 
 #### E.5. Robustness to Input Noise/Anomalies
+*   **Sensitivity to Temporal Precision & Noise:**
+    *   *STDP Sensitivity:* STDP is inherently sensitive to spike timing (`Δt`). A 1ms jitter can alter `Δw_ij` by ~5%, while 5ms jitter causes ~22% variation, potentially impacting learning.
+    *   *Simulation/Numerical Noise:* `dt=1ms` discretization introduces negligible jitter (±0.5ms, ~2.5% `Δw_ij` impact). FP16 numerical noise adds <0.1ms jitter (<0.5% `Δw_ij` impact).
+    *   *Biological Input Noise:* Jitter from noisy sensors (e.g., ±2ms) can cause ~10% `Δw_ij` variation, potentially reducing accuracy over long timescales (~10% over 1M steps) if unmitigated.
 *   **Encoding Robustness:**
     *   Apply low-pass filter (moving average over 5 steps) to input frequencies during encoding to smooth noise spikes.
 *   **SNN Dynamics:**
@@ -710,7 +806,12 @@ Achieving massive scale requires specific, optimized implementation choices:
 *   **SIE Mechanisms:**
     *   Smooth `total_reward` over recent inputs (e.g., 5) to reduce impact of single anomalous rewards.
     *   Cap reward (`<= 0`) for highly novel inputs (`novelty > 0.9`) to prevent reinforcing corrupted data.
-*   **Implementation:** Integrate checks and filters into `encoder.py`, `fum.py`, and training scripts.
+*   **Mitigation Strategies for Timing Jitter:**
+    *   *Jitter Smoothing:* Apply temporal smoothing (e.g., moving average over 3ms) to spike times if significant jitter is detected.
+    *   *STDP Window Adjustment:* Dynamically widen the STDP time constant (`τ_+`) if jitter exceeds a threshold (e.g., >1ms).
+    *   *Reward Smoothing:* Average `total_reward` over more inputs (e.g., 10) to dampen fluctuations caused by timing noise.
+    *   *Long-Term Correction:* Periodic clustering and structural plasticity help correct graph errors induced by cumulative jitter.
+*   **Implementation:** Integrate checks, filters, and adaptive mechanisms into `encoder.py`, `fum.py`, and training scripts (e.g., `phase3_cont.py`).
 
 #### E.6. Justification for Specific Algorithmic Choices
 *   **TD(0) vs. Other RL:**
@@ -739,6 +840,10 @@ FUM's design posits that superintelligence might not require brute-force scaling
     *   *SNN Temporal Processing:* Natural handling of sequences and multi-step logic.
     *   *SIE Autonomy:* Learning complex tasks from sparse rewards without massive labeled datasets.
     *   *Limitation:* FUM initially lacks the broad, unstructured knowledge of LLMs due to minimal data; it relies on Phase 3 continuous learning to build comparable breadth over time.
+6.  **Reliable Emergence of Computational Primitives:** Theoretical backing (STDP for associative learning, RL theory for SIE guidance, graph theory for self-organization) and simulation evidence (AMN at 10 units, FUM at 1k neurons) suggest that fundamental primitives (numerical representation, arithmetic, basic logic) reliably self-assemble using STDP/SIE on minimal data.
+    *   *Mechanism:* STDP strengthens correlations (e.g., input "2" with "number" cluster), SIE rewards correct operations (e.g., `r=1` for `A ∧ B = 1`), and inhibitory neurons enable negation.
+    *   *Validation:* AMN achieved 82% on quadratic equations, 80% on AND logic. FUM at 1k neurons shows >80% accuracy on basic arithmetic and logic (AND/OR/NOT).
+    *   *Risk Mitigation:* If primitives fail to form reliably (e.g., low accuracy on basic logic), mitigations include adjusting the E/I ratio or reinforcing primitives with targeted ground truth feedback during training.
 
 ### B. Strategic Foundation: Balancing Initialization and Learning
 
