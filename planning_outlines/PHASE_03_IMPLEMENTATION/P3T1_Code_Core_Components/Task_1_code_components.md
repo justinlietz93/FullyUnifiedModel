@@ -1,0 +1,242 @@
+
+### Task 1: Code Core Components & Learning Mechanisms
+- [ ] **Success Statement**: I will know I achieved success on this task when LIF, enhanced STDP (diversity, STC, exploration, scaling), enhanced SIE (cluster rewards, gaming prevention, ethical alignment), Adaptive Clustering, Knowledge Graph mechanisms (hints, persistence, pathology detection), and Structural Plasticity enable stable, adaptive, efficient, and biologically plausible learning, validated through unit and integration tests.
+- **Current Status**: *Incomplete*—Basic LIF, STDP, SIE, KG Hints implemented. Advanced features, clustering, structural plasticity, stability mechanisms, and scaling pending.
+
+- [ ] **Step 1: Implement LIF Neuron Logic**
+  - [ ] **Validation Check**: LIF neurons fire correctly, incorporating heterogeneity and intrinsic plasticity according to design (Ref: 2A.5, 2A.6).
+  - [ ] **Success Statement**: I will know I achieved success on this step when 7M neurons process spikes in <3s with stable firing rates maintained by intrinsic plasticity.
+  - [ ] **Actionable Substeps**:
+    - [x] Code LIF dynamics equation: `V_i(t) = V_i(t-1) + I_i(t) - (V_i(t-1) / tau_i) * dt` in `unified_neuron.py` (Ref: 2A.3.i).
+    - [x] Code LIF firing condition: `spike = 1` if `V > v_th` in `unified_neuron.py` (Ref: 2A.4.i).
+    - [x] Code LIF reset mechanism: `V = v_reset` after spike in `unified_neuron.py` (Ref: 2A.4.ii).
+    - [ ] Define simulation timestep `dt = 1ms` (Ref: 2A.3.ii).
+    - [ ] Implement neuron parameter heterogeneity at initialization (Ref: 2A.5.i):
+        - [ ] Initialize `tau_i` from `N(20ms, 2ms^2)` using `torch.normal(mean=20.0, std=2.0)`.
+        - [ ] Initialize `v_th_i` from `N(-55mV, 2mV^2)` using `torch.normal(mean=-55.0, std=2.0)`.
+        - [ ] Set `v_reset = -70mV` (fixed).
+    - [ ] Implement intrinsic plasticity rules (Ref: 2A.6.i):
+        - [ ] Define target firing rate range `target_rate_range = [0.1, 0.5]` Hz.
+        - [ ] Calculate neuron firing rate `rate_i` over a 50-timestep window.
+        - [ ] Apply adjustment logic every 50 timesteps:
+            - [ ] If `rate_i > target_rate_range[1]`: `v_th += 0.1`, `tau -= 0.1`.
+            - [ ] If `rate_i < target_rate_range[0]`: `v_th -= 0.1`, `tau += 0.1`.
+        - [ ] Clamp parameters to bounds: `v_th` to `[-60mV, -50mV]`, `tau` to `[15ms, 25ms]`.
+    - [ ] Integrate `neuron_kernel.hip` (LIF kernel) for LIF update acceleration (Ref: 2A.7, 2E).
+        - [ ] Ensure kernel uses `float16` tensors for computation (Ref: 2A.7.i).
+        - [ ] Ensure kernel records `spike_history` as `uint8` (Ref: 2A.7.ii).
+        - [ ] Verify kernel does *not* compute STDP/traces (Ref: 2A.7.ii).
+    - [x] Test: Unit test basic LIF dynamics (equation, firing, reset) (`test_neuron.py` or similar).
+    - [ ] Test: Unit test heterogeneity initialization (verify parameter distributions).
+    - [ ] Test: Unit test intrinsic plasticity rules (verify rate calculation, adjustments, bounds).
+    - [ ] Test: Unit test HIP kernel integration path (data marshalling, functional equivalence vs. Python).
+    - [ ] Scale to 7M—verify <3s inference time and stable firing rates (within target range) via logs.
+  - [ ] **Test: Unit test Step 1 functionalities.**
+
+- [ ] **Step 2: Implement Enhanced STDP Learning**
+  - [ ] **Validation Check**: Weights update dynamically, incorporating diversity, STC, exploration, and scaling mechanisms stably and effectively (Ref: 2B).
+  - [ ] **Success Statement**: I will know I achieved success on this step when STDP adjusts 7M neuron weights in <1s, demonstrating stable, flexible, biologically plausible learning with effective credit assignment and exploration.
+  - [ ] **Actionable Substeps**:
+    - [x] Code basic STDP tensor logic & integrate (`resonance_enhanced_stdp.py`, `unified_neuron.py`) (Ref: 2B.2, B.3, B.5).
+        - [ ] Implement excitatory rule calculation: `Δw = A_+ * exp(-Δt / τ_+)` if `Δt > 0`, `-A_- * exp(Δt / τ_-)` if `Δt < 0` (Ref: 2B.2.i).
+        - [ ] Implement inhibitory rule calculation: `Δw = -A_+ * exp(-Δt / τ_+)` if `Δt > 0`, `A_- * exp(Δt / τ_-)` if `Δt < 0` (Ref: 2B.3.ii).
+        - [ ] Implement check for pre-synaptic neuron type (`is_inhibitory[i]`) to apply the correct rule calculation (Ref: 2B.3.iii).
+        - [ ] Define base parameters: `A_+=0.1`, `A_-=0.12`, `τ_+=20ms`, `τ_-=20ms` (Ref: 2B.4.i).
+        - [ ] Implement weight clamping operation `w_ij.clamp_(-1, 1)` after updates (Ref: 2B.4.ii).
+    - [ ] Implement constrained biological diversity for STDP parameters (Ref: 2B.4.iv):
+        - [ ] Initialize base variability per synapse/cluster: `A_+_base = 0.1 + 0.05 * rand()`, `τ_+ = 20ms + 5ms * rand()`.
+        - [ ] Enforce biological range constraints: Clamp `A_+_base` to `[0.05, 0.15]`, `τ_+` to `[15ms, 25ms]`.
+        - [ ] Implement SIE modulation calculation: `A_+ = A_+_base * (cluster_reward[c] / max_reward)`.
+        - [ ] Implement rate dependency calculation: `A_+ *= spike_rate[i] / target_rate`.
+        - [ ] *Optional:* Implement synapse-specific variability based on location: `A_+[i,j] = ... * (1 + 0.5 * synapse_location[i,j])`.
+        - [ ] *Optional:* Implement neuron-type dependency: `τ_+[i] = 20ms` if E else `15ms`.
+    - [ ] Implement Synaptic Tagging and Capture (STC) analogue for eligibility traces (Ref: 2B.5.ix):
+        - [ ] Implement tagging logic: Set `tag_ij(t) = 1` if `Δw_ij(t) > 0.05`. Store `tag_history_ij`.
+        - [ ] Implement long-term consolidation logic: Check `sum(tag_history_ij[-100k:]) == 100k`, if true `w_ij += 0.1`.
+        - [ ] Modify trace update calculation to incorporate tag: `e_ij(t) = ... + Δw_ij(t) * tag_ij(t)`.
+        - [ ] Integrate STC logic with inhibitory feedback mechanisms for interference prevention.
+    - [ ] Implement standard eligibility traces (Ref: 2B.5):
+        - [ ] Implement update rule calculation: `e_ij(t) = γ * e_ij(t-1) + Δw_ij(t)` (Ref: 2B.5.ii).
+        - [ ] Define base decay factor `γ = 0.95` (Ref: 2B.5.iii).
+        - [ ] *Optional:* Implement variable decay factor calculation based on activity: `γ = 0.95 + 0.04 * (1 - mean(rates) / 0.5)` (Ref: 2B.5.iii).
+        - [ ] Store traces as sparse FP16 tensors on MI100 GPU (Ref: 2B.5.v).
+        - [ ] Implement trace interference prevention mechanisms (Ref: 2B.5.viii):
+            - [ ] Implement task boundary detection logic (check cluster transitions or `similarity < 0.5`).
+            - [ ] Implement trace reset (`e_ij = 0`) on hard boundary detection.
+            - [ ] Implement decay acceleration (`γ = 0.9`) on low similarity detection.
+            - [ ] *Optional:* Implement task-specific trace storage and update logic (`e_ij[task_id]`).
+            - [ ] Implement reward gating logic: Scale trace contribution `e_ij[c] *= 0.5` if `avg_reward[c] < 0.5`.
+    - [ ] Implement basic exploration mechanisms (Ref: 2B.8.iii):
+        - [ ] Implement Stochastic STDP: Add noise `0.01 * randn()` to `Δw_ij` calculation.
+        - [ ] Implement Neutral Drift: Add noise `0.005 * randn()` to `Δw_ij` calculation if `reward > 0.9` and `variance < 0.05 Hz`.
+    - [ ] Implement Synaptic Scaling with interaction logic (Ref: 2B.7.ii):
+        - [ ] Implement scaling calculation (every 1000 steps): Calculate `total_exc = sum(w)`, `scale_factor = 1 / total_exc` if `total_exc > 1`. Apply `w *= scale_factor`.
+        - [ ] Ensure timing: Apply scaling *after* STDP/SIE updates within the 1000-step cycle.
+        - [ ] Implement gating/protection logic: Check reward stability, synapse update recency, weight strength (`w < 0.8`), cluster reward before applying scaling calculation.
+    - [ ] Implement jitter mitigation / temporal noise filtering:
+        - [ ] Implement adaptive STDP window calculation based on max latency: `τ_+ = 20 + max_latency` (Ref: 5D.2.vii, 2B.2.iii).
+        - [ ] Implement temporal noise filter: Apply low-pass filter `mean(spike_train[t-3:t+1])` to spike trains before STDP calculation (Ref: 2B.2.vi, 2B.7.iv).
+        - [ ] Implement latency-aware STDP scaling calculation: Scale `Δw_ij *= (1 - latency_error / max_latency)` (Ref: 5D.2.vii).
+        - [ ] Implement Kalman filter for spike timing refinement: Calculate `t_refined = Kalman(t_adjusted, latency_error)` (Ref: 5D.2.vii).
+        - [ ] Implement temporal integration in STDP calculation: Average spike timings over ~5ms window before calculating `Δt` (Ref: 5D.2.vii).
+    - [ ] Implement fail-graceful STDP updates: Add error handling (try-except) around STDP calculations, log errors, skip faulty `Δw_ij` updates (Ref: 2B.6.ii).
+    - [ ] Integrate `neural_sheath.cpp` kernel for STDP calculation/update acceleration (Ref: 2B.6, 2E).
+    - [x] Test: Unit test basic STDP tensor logic (Excitatory & Inhibitory rule calculations, params, clamping).
+    - [ ] Test: Unit test STDP diversity mechanisms (variability init, constraints enforcement, SIE modulation calc, rate dep calc, optional synapse/type logic).
+    - [ ] Test: Unit test STC analogue implementation (tagging logic, consolidation calc, trace mod logic, inhibition interaction).
+    - [ ] Test: Unit test eligibility trace logic (standard update calc, base decay, optional variable decay calc, storage format, interference prevention logic).
+    - [ ] Test: Unit test exploration mechanisms (stochastic STDP noise addition, neutral drift logic).
+    - [ ] Test: Unit test Synaptic Scaling implementation (calculation logic, timing execution, gating/protection logic).
+    - [ ] Test: Unit test jitter mitigation techniques (adaptive window calc, filter application, latency scaling calc, Kalman filter impl, temporal integration logic).
+    - [ ] Test: Unit test fail-graceful update logic (error logging, skipping mechanism).
+    - [ ] Test: Unit test C++ kernel integration path.
+    - [ ] Test: Validate STDP stability across parameter variations (target 95% stability) (Ref: 2B.4.iii).
+    - [ ] Scale to 7M—verify <1s update time via logs.
+  - [ ] **Test: Unit test Step 2 functionalities.**
+
+- [ ] **Step 3: Implement Adaptive Clustering**
+  - [ ] **Validation Check**: Clustering dynamically identifies functional domains, adapts k appropriately, handles edge cases, and provides stable state representations (Ref: 2F).
+  - [ ] **Success Statement**: I will know I achieved success on this step when clustering runs efficiently and provides stable state representations for SIE.
+  - [ ] **Actionable Substeps**:
+    - [ ] Implement `AdaptiveClustering` class (`clustering.py`?) using k-means (`torch.kmeans`) on firing rates (Ref: 2F.1.ii).
+    - [ ] Implement dynamic k selection using Silhouette Score (Ref: 2F.2.i):
+        - [ ] Define range `k_range = range(k_min, max_k + 1)` where `k_min=8`, `max_k=min(N//50, k_min*2)`.
+        - [ ] Loop through `k_range`: run k-means, compute silhouette score for each k.
+        - [ ] Select `best_k = argmax(scores)`.
+        - [ ] Set final `k = max(best_k, k_min)`.
+    - [ ] Implement handling for edge cases (Ref: 2F.4):
+        - [ ] If dynamic selection yields `k < k_min`, set `k = k_min` (rerun k-means if needed) (Ref: 2F.4.i).
+        - [ ] If `num_inputs[c] == 0` after 1000 steps, set `avg_reward[c] = 0` and log the event (Ref: 2F.4.ii).
+    - [ ] Implement mechanisms for handling novel domains/inputs (Ref: 2F.5.ii):
+        - [ ] Implement novelty-driven bifurcation logic: Check if `novelty > 0.9` and `max_similarity < 0.5`, if true increment `k` and trigger re-clustering.
+        - [ ] *Optional:* Implement temporary holding cluster assignment logic for novel inputs.
+        - [ ] Implement misattribution handling logic: If novel input classified to cluster `c` yields `total_reward < 0`, trigger reassignment or bifurcation.
+    - [ ] Implement mechanisms for mitigating clustering instability for TD learning (Ref: 2F.5.iii):
+        - [ ] Implement soft clustering probability calculation: `cluster_probs = softmax(-distances)`.
+        - [ ] Use probabilities to weight `V_states` updates: `V_states[idx] += α * TD * cluster_probs[idx]`.
+        - [ ] Implement stable dynamic k adjustment logic: Adjust `k` incrementally (e.g., `k += 10` if `functional_coherence[c] < 0.8`).
+        - [ ] Implement `V_states` initialization for new clusters based on average of split clusters: `V_states[new_idx] = mean(V_states[old_indices])`.
+    - [ ] *Optional:* Implement hierarchical clustering enhancement (e.g., using `AgglomerativeClustering`) (Ref: 2F.1.iii).
+    - [ ] *Optional:* Implement state augmentation enhancement (include `mean_rate`, `var_rate` in TD state) (Ref: 2F.1.iii).
+    - [ ] Integrate clustering execution into the main training loop (run every 1000 steps) (Ref: 2F.1.ii).
+    - [ ] Implement buffering (`rate_buffer`) for aggregating firing rates for infrequent clustering execution (Ref: 2E.3.iv).
+    - [ ] Test: Unit test k-means implementation and dynamic k selection logic (range definition, score calculation, selection, override).
+    - [ ] Test: Unit test edge case handling (small k override logic, empty cluster avg reward setting).
+    - [ ] Test: Unit test novel domain handling (bifurcation trigger logic, misattribution handling logic).
+    - [ ] Test: Unit test TD state stability mechanisms (soft clustering probability calculation, weighted update logic, stable k adjustment logic, V_state initialization logic).
+    - [ ] Test: Unit test optional enhancements (hierarchical clustering, state augmentation) if implemented.
+  - [ ] **Test: Unit test Step 3 functionalities.**
+
+- [ ] **Step 4: Implement Enhanced SIE Autonomy**
+  - [ ] **Validation Check**: SIE guides learning effectively using cluster-based states, cluster-specific rewards, prevents gaming, resolves conflicts, and incorporates ethical adjustments (Ref: 2C).
+  - [ ] **Success Statement**: I will know I achieved success on this step when SIE ranks goals for 7M neurons in <1ms and demonstrates robust, aligned reward calculation.
+  - [ ] **Actionable Substeps**:
+    - [x] Code core SIE logic (`sie.py`) & integrate (`unified_neuron.py`) (Ref: 2C).
+    - [ ] Implement core reward formula calculation: `total_reward = TD_error + novelty - habituation + self_benefit` (Ref: 2C.2.ii).
+    - [ ] Implement TD Learning specifics (Ref: 2C.3):
+        - [ ] Calculate TD(0) error: `TD_error = r + γ * V(next_state) - V(current_state)`.
+        - [ ] Set discount factor `γ = 0.9`.
+        - [ ] Set learning rate `α = 0.1`.
+        - [ ] Update value function `V_states` using soft cluster probs: `V_states[idx] += α * TD_error * cluster_probs[idx]` (Ref: 2F.5.iii, 2C.3.ii).
+        - [ ] Initialize `V_states` tensor to zeros, size `k_min` (Ref: 5A.2.ii).
+    - [ ] Implement Novelty calculation: Store `recent_inputs` buffer, compute `cosine_similarity`, calculate `novelty = 1 - max(similarity)` (Ref: 2C.4).
+    - [ ] Implement Habituation calculation: Store `habituation_counter`, increment counter if `similarity > 0.9`, decay counter periodically (`*= 0.95`), set `habituation = counter[match]` (Ref: 2C.5).
+    - [ ] Implement refined Self-Benefit calculation (homeostasis-based) (Ref: 2C.6):
+        - [ ] Calculate formula: `self_benefit = 1 - abs(var(rates[-1k:]) - target_var) / target_var`.
+        - [ ] Define `target_var = 0.05 Hz^2`. Clamp result to `[0, 1]`.
+    - [ ] Implement SIE modulation of STDP (Ref: 2C.7):
+        - [ ] Calculate sigmoid mapping: `mod_factor = 2 * torch.sigmoid(total_reward) - 1`.
+        - [ ] Calculate effective learning rate: `eta_effective = eta * (1 + mod_factor)`.
+        - [ ] Apply final weight update using modulated rate: `Δw_ij(T) = eta_effective * total_reward * e_ij(T)`.
+    - [ ] Implement cluster-specific reward allocation: Calculate `cluster_contrib`, calculate `cluster_reward[c] = mean(total_reward[members]) + ...` (Ref: 2C.2.iv).
+    - [ ] Implement multi-level selection conflict mitigation: Implement hierarchical selection logic (override local STDP if `cluster_reward < 0.5`), implement global alignment pressure calculation (`cluster_reward += 0.1 * (global_reward - cluster_reward)`) (Ref: 2C.2.iv).
+    - [ ] *Optional:* Implement localized SIE signals (calculate `dopamine_reward`, `acetylcholine_reward`, combine weighted by `receptor_density`) (Ref: 2C.2.iv).
+    - [ ] Implement credit/blame attribution logic: Adjust `cluster_rewards` based on `cluster_contrib` if `total_reward < 0`; check `cross_contrib`, adjust `cross_connectivity` if routing failure detected (Ref: 2C.2.vi).
+    - [ ] Implement evolutionary analogues for richness/adaptability: Environmental adaptation logic (`input_diversity -> novelty`), competition logic (`dopamine_reward -= 0.1 * competition_score`), arms race logic (`counter_adapt`), replication logic (`replicate_pathway`) (Ref: 2C.2.vii).
+    - [ ] Implement SIE gaming prevention mechanisms (Ref: 2C.8.ii):
+        - [ ] Implement robust reward formulation logic (weight external `r` higher, add `alignment_penalty`).
+        - [ ] Implement co-evolutionary reward adjustment calculation (`co_evolve_reward[c] = ...`).
+        - [ ] Implement enhanced safeguards: Isolation Forest detector logic, `hacking_score` validation logic, dynamic capping implementation, V-state regularization calculation (`TD - λ * V`), drift monitoring (`drift_score`) logic, stability constraint checks (variance check -> reduce `eta`), diversity monitoring (`output_diversity`) logic, energy penalty calculation, adversarial gaming test execution, reward shaping logic (`alignment_bonus`).
+        - [ ] Implement reward component normalization calculation (`*_norm = (* - min) / (max - min)`).
+        - [ ] Implement conflict management logic (`impact_adjusted = impact * (1 - novelty)`).
+        - [ ] Implement oscillation prevention logic (damping factor `α = 1 - tanh(...)`, ε-greedy selection).
+        - [ ] Implement dynamic SIE weight adjustment logic based on performance.
+    - [ ] Implement Dynamic Ethics Adjuster mechanism (Ref: 2C.9, 9.D):
+        - [ ] Implement violation detection logic based on encoded constraints.
+        - [ ] Calculate dynamic penalty: `ethical_penalty = - severity * context_factor`.
+        - [ ] Add calculated penalty to `total_reward`.
+    - [ ] Integrate `neuron_kernel.hip` for goal ranking (if applicable).
+    - [x] Test: Unit test core SIE calculation & integration (`test_autonomy.py`).
+    - [ ] Test: Unit test TD learning implementation (error calc, V_states update logic, init).
+    - [ ] Test: Unit test Novelty calculation logic (buffer, similarity, metric).
+    - [ ] Test: Unit test Habituation calculation logic (counter, update, decay, metric).
+    - [ ] Test: Unit test Self-Benefit calculation logic (formula, target var, clamping).
+    - [ ] Test: Unit test SIE modulation of STDP (mapping calc, effective rate calc, application).
+    - [ ] Test: Unit test cluster reward allocation and conflict handling logic.
+    - [ ] Test: Unit test optional localized SIE signals if implemented.
+    - [ ] Test: Unit test credit/blame attribution logic.
+    - [ ] Test: Unit test evolutionary analogues if implemented.
+    - [ ] Test: Unit test gaming prevention mechanisms (robust reward formula logic, detector logic, individual safeguard implementations).
+    - [ ] Test: Unit test Dynamic Ethics Adjuster logic (detection, penalty calc, integration).
+    - [ ] Test: Validate SIE correctness metric (`reward_correctness < 0.1`) (Ref: 2C.8.iii).
+    - [ ] Test: Validate refined causal inference for credit assignment (accuracy target 95%) (Ref: 2C.8.iii).
+    - [ ] Scale to 7M—verify <1ms SIE calculation time via logs.
+  - [ ] **Test: Unit test Step 4 functionalities.**
+
+- [ ] **Step 5: Implement Knowledge Graph & Structural Plasticity**
+  - [ ] **Validation Check**: Implicit graph emerges, persists critical pathways, avoids pathological structures, and adapts structure based on performance stably and efficiently (Ref: 2D, 4C).
+  - [ ] **Success Statement**: I will know I achieved success on this step when 7M neuron connections reflect domain relationships stably, efficiently, and adaptively, guided by plasticity rules.
+  - [ ] **Actionable Substeps**:
+    - [x] Code graph logic in STDP (`resonance_enhanced_stdp.py`) for hints (Ref: 2D).
+    - [ ] Implement core Structural Plasticity algorithms (Growth, Pruning, Rewiring) triggered by SIE/activity metrics (`structural_plasticity.py`?) (Ref: 4C).
+    - [ ] Implement enhanced plasticity triggers (Ref: 4.C.2.iv):
+        - [ ] Calculate burst score: `burst_score = sum(rates[-5:] > 5*target)`. Trigger growth (`growth_rate *= 1.1`) if `burst_score > 0`.
+        - [ ] Calculate BDNF proxy: `bdnf_proxy = rate/target`. Trigger growth (`growth_rate *= 1.1`) if `bdnf_proxy > 1.5`.
+        - [ ] Implement critical period logic: `if timestep < 1M: growth_rate *= 2, rewire_rate *= 2`.
+    - [ ] Implement pathway persistence/protection mechanism (Ref: 2D.3.iii, 4.C.3.i, 5.E.4):
+        - [ ] Implement multi-criteria tagging logic (check standard, sparse, infrequent criteria). Store tags (e.g., sparse bool tensor `persistent`).
+        - [ ] Implement dynamic persistence threshold adjustment logic: Decrease `w_threshold`, `reward_threshold` if `environmental_drift > 0.1`.
+        - [ ] Implement enhanced de-tagging logic: Remove tag if low reward OR negative reward OR low diversity (`output_diversity[c] < 0.5`).
+        - [ ] Modify decay and rewiring logic to exempt tagged synapses.
+    - [ ] Implement pathology detection/pruning (Ref: 2D.5):
+        - [ ] Calculate pathology score: `score = mean(rates[path] * (1 - diversity[path]))`.
+        - [ ] Calculate graph entropy: `entropy = -sum(p*log(p))` from degree distribution `p`.
+        - [ ] Implement proactive pruning trigger logic: Prune path if `score > 0.1` OR `entropy < 1`.
+        - [ ] Implement delayed pruning option: Require trigger condition to persist (e.g., 100k/200k steps) before pruning.
+    - [ ] Implement stability checks during/after plasticity events (Ref: 4.C.3):
+        - [ ] Implement enhanced dynamic capping calculation: `max_change = 0.01 * (1 - mean(rates)/0.5)`. Limit structural changes based on `max_change`.
+        - [ ] Implement proactive reversion logic: Calculate `interference_score`. Revert proposed changes if score is high.
+        - [ ] Implement post-change reversion logic: Monitor `output_variance`. Revert changes if `variance_after > variance_before * 1.1` and `> 0.05 Hz`.
+        - [ ] Implement structural integrity checks: Global neuron cap, criticality-driven rate adjustment, cluster connectivity monitoring, access preservation logic (Ref: 5E.4.iv).
+        - [ ] Implement conflict resolution logic for persistent pathways (detect conflict, gradual STDP depression, SIE response, de-tagging, structural adjustment) (Ref: 5E.4.iv).
+    - [ ] Implement KG specialization via inhibition: Ensure inhibitory feedback suppresses irrelevant clusters (Ref: 2D.3.ii).
+    - [ ] Implement KG cluster reinforcement via SIE: Implement logic to strengthen intra-cluster connections if `cluster_reward[c] > 0.9` (Ref: 2D.3.ii).
+    - [ ] Implement KG hierarchical organization validation: Implement analysis of graph structure for hierarchical properties (Ref: 2D.3.iii).
+    - [ ] Implement KG interference prevention mechanisms: Localize STDP, inhibitory suppression, routing protection (exempt persistent), routing specificity check (`cross_connectivity < 0.1` -> add connections), spike-timing homeostasis (Ref: 2D.4.vi).
+    - [ ] Implement KG compositionality mechanisms: Cross-cluster STDP logic, SIE/TD sequencing reinforcement, temporal sequencing validation, cross-cluster validation/correction (`weaken_pathway`), inhibitory isolation, pathway protection (Ref: 2D.4.vii).
+    - [ ] Implement KG efficiency optimization: Monitor `efficiency_score`, increase global inhibition if `< 0.3` (Ref: 2D.5.i).
+    - [ ] Implement exploration mechanisms (Ref: 2B.8.iii):
+        - [ ] Implement pathway recombination logic (select high-reward clusters, combine weight matrices).
+        - [ ] Implement exaptation logic (`coopt_pathway(c, new_domain)`).
+    - [ ] Integrate structural plasticity calls into the main simulation loop/`UnifiedNeuronModel`.
+    - [ ] Implement sparse weight representation (e.g., CSR) and adapt plasticity/STDP logic (Ref: 5.A.2, 5.D.1).
+    - [ ] Implement distributed lock mechanism for structural modifications (Ref: 5D.2.vi).
+    - [ ] Implement structural plasticity cost management (async execution, buffering, prioritization, clustering optimization via sampling) (Ref: 5D.6.iii).
+    - [ ] Implement KG ethical tracking/constraints (track pathways, constrain plasticity) (Ref: 9.D).
+    - [x] Test: Unit test hint mechanism (`test_knowledge_graph.py`).
+    - [ ] Test: Unit test core Growth, Pruning, Rewiring algorithms.
+    - [ ] Test: Unit test enhanced plasticity triggers (burst calc, BDNF calc, critical period logic).
+    - [ ] Test: Unit test persistence mechanisms (multi-criteria tagging logic, dynamic threshold logic, de-tagging logic, exemption logic).
+    - [ ] Test: Unit test pathology detection/pruning (score calc, entropy calc, trigger logic, delayed pruning).
+    - [ ] Test: Unit test stability checks for plasticity (dynamic capping calc, proactive reversion logic, post-change reversion logic, integrity checks).
+    - [ ] Test: Unit test KG mechanisms (specialization inhibition, reinforcement logic, hierarchy validation, interference prevention logic, compositionality logic, efficiency optimization logic).
+    - [ ] Test: Unit test exploration mechanisms (recombination logic, exaptation logic).
+    - [ ] Test: Unit test sparse weight implementation.
+    - [ ] Test: Unit test distributed lock for plasticity.
+    - [ ] Test: Unit test plasticity cost management (async, buffering, priority, sampling).
+    - [ ] Test: Unit test ethical constraints on plasticity.
+    - [ ] Scale to 7M—verify memory usage and stability during plasticity.
+  - [ ] **Test: Unit test Step 5 functionalities.**
+
+- [ ] **Test: Integration test Task 1 components (LIF, STDP, SIE, Clustering, KG/Plasticity).**
+- [ ] **Test: Unit tests for Task 1.**

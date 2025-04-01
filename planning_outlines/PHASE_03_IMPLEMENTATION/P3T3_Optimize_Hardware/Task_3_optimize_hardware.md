@@ -1,0 +1,77 @@
+
+### Task 3: Optimize for Workstation & Prepare for Scaling
+- [ ] **Success Statement**: I will know I achieved success on this task when FUM fits 56GB VRAM with constant learning at <5% GPU usage, leveraging kernels, efficient memory management, and robust distributed logic, validated through testing.
+- **Current Status**: *Incomplete*—Kernels, sharding, advanced memory/distributed logic not coded.
+
+- [ ] **Step 1: Code & Integrate Compute Kernels**
+  - [ ] **Validation Check**: Kernels run LIF, STDP correctly and meet performance targets (<5s inference) (Ref: 2E, 5.D.5).
+  - [ ] **Success Statement**: I will know I achieved success on this step when kernels process 7M neurons efficiently and correctly.
+  - [ ] **Actionable Substeps**:
+    - [ ] Review kernel code (`neuron_kernel.hip`, `neural_sheath.cpp`) (Ref: 2A.7, 2B.6, 2E).
+    - [ ] Implement Python wrappers/bindings using `ctypes` or `torch.utils.cpp_extension` (Ref: 5.D.5, 5D.5.ii).
+    - [ ] Integrate wrappers into `UnifiedNeuronModel` / STDP handler with backend switching logic (Ref: 5.D.5).
+    - [ ] Ensure kernel integration respects hardware roles (LIF kernel on 7900XTX) (Ref: 2E.2).
+    - [ ] Ensure kernel uses correct data types (`float16` compute, `uint8` history) (Ref: 2A.7).
+    - [ ] Verify kernel responsibilities (LIF kernel excludes STDP/traces) (Ref: 2A.7.ii).
+    - [ ] Compile kernels using `hipcc` (Requires HIP SDK setup or CUDA equivalent path).
+    - [ ] Use profiling tools (`rocprof`) to identify kernel bottlenecks (Ref: 5D.5.ii).
+    - [ ] Test: Unit test kernel wrappers and data marshalling logic.
+    - [ ] Test: Integration test comparing kernel output vs. PyTorch output for functional equivalence.
+    - [ ] Test: Benchmark kernel performance at 1000 neurons (target <5s inference, <5% GPU usage).
+    - [ ] Scale to 7M—verify performance and VRAM usage.
+  - [ ] **Test: Unit test Step 1 functionalities.**
+
+- [ ] **Step 2: Implement Distributed Computation & Memory Management**
+  - [ ] **Validation Check**: Sharding fits 7M neurons in 56GB VRAM, async updates are stable, caching is effective, fault tolerance works (Ref: 5.D).
+  - [ ] **Success Statement**: I will know I achieved success on this step when FUM shards dynamically without overflow, communicates efficiently, and manages memory effectively.
+  - [ ] **Actionable Substeps**:
+    - [ ] Implement sparse weight representation using CSR format (`torch.sparse_csr_tensor`) (Ref: 5.A.2, 5.D.1).
+        - [ ] Implement compression ratio validation logic (~9:1 target) and mitigation logic (switch to block CSR, adjust sparsity) (Ref: 5A.2.i).
+    - [ ] Implement graph partitioning using METIS wrapper (Ref: 5.D.1).
+        - [ ] Implement partitioning effectiveness validation logic (>95% target) and test on heterogeneous hardware (Ref: 5D.1.iii).
+    - [ ] Implement inter-GPU/node communication layer using `torch.distributed` non-blocking ops, MPI/RCCL, or RDMA for spike transmission (Ref: 5.D.1, 5D.2.x).
+    - [ ] Implement asynchronous update logic (Ref: 5.D.2):
+        - [ ] Set skew tolerance parameter to 1ms (Ref: 5D.2.iii).
+        - [ ] Implement high-precision synchronization using PTP library calls (Ref: 5D.2.iii).
+        - [ ] Implement jitter mitigation via temporal integration (average timings over ~5ms window) (Ref: 5D.2.iii, 5D.2.vii).
+        - [ ] Implement logic to prioritize local clocks for STDP calculations (Ref: 5D.2.iii).
+        - [ ] Implement state divergence correction logic (broadcast global state after sync) (Ref: 5D.2.iv).
+        - [ ] Implement vector clock logic for conflict-free weight and trace updates (Ref: 5D.2.v).
+        - [ ] Implement latency mitigation suite (timestamp correction calc, adaptive STDP window calc, latency-aware scaling calc, Kalman filter impl, cross-shard validation logic) (Ref: 5D.2.vii).
+        - [ ] Implement resource contention handling suite (robust buffering impl with context preservation, priority scheduling impl, debt monitoring/mitigation logic, stability check logic) (Ref: 5D.2.viii).
+        - [ ] Implement stochastic modeling (Markov chains) and adaptive threshold logic for overruns (Ref: 5E.5.viii).
+    - [ ] Implement parameter server logic / caching strategy (`memory_manager.py`?) (Ref: 5.D.4):
+        - [ ] Implement LRU + Priority Queuing calculation (`priority = abs(w) * co_act`).
+        - [ ] Implement pre-fetching logic (predict neurons based on `mean(history) > 0.1 Hz`).
+        - [ ] Set target cache size parameter (~10% VRAM).
+        - [ ] Implement `CacheManager` / `PriorityLRUCache` classes.
+    - [ ] Implement fault tolerance mechanisms (Ref: 5.D.3, 5.D.4):
+        - [ ] Utilize ECC memory where available (Ref: 5D.4.ii).
+        - [ ] Implement redundancy/checkpointing/restoration logic for non-ECC hardware/errors (Ref: 5D.4.ii).
+        - [ ] Implement Raft-based node failure handling (task reassignment logic) (Ref: 5D.3.i).
+        - [ ] Implement network partition handling (isolated mode operation logic, state reconciliation logic) (Ref: 5D.3.ii).
+        - [ ] Implement bottleneck handling (load monitoring logic, task offloading logic) (Ref: 5D.3.iii).
+    - [ ] Implement distributed lock mechanism for structural modifications (Ref: 5D.2.vi).
+    - [ ] Implement hardware agnosticism strategies (FLOPS normalization calc, adaptive allocation logic, network mitigation logic) (Ref: 5D.5.iv).
+    - [ ] Implement resource efficiency optimizations (use sparse data structures, optimize algorithms, implement dynamic allocation logic) (Ref: 6.C.2.i).
+    - [ ] Implement practical engineering strategies (Docker containerization scripts, distributed tracing setup, automated maintenance scripts) (Ref: 5D.7).
+    - [ ] Implement complexity management strategies (unified framework class, incremental deployment plan, interaction simulation setup, decentralization logic, fault tolerance integration, graceful degradation logic, anomaly detection impl) (Ref: 5D.8).
+    - [ ] Test: Unit test sparse matrix operations and compression validation logic.
+    - [ ] Test: Unit test partitioning logic and effectiveness validation logic.
+    - [ ] Test: Unit test communication layer implementation (incl. RDMA if used).
+    - [ ] Test: Unit test async update synchronization (PTP calls, skew check), vector clocks, latency mitigation suite logic.
+    - [ ] Test: Unit test resource contention handling suite (buffering logic, scheduling calls, debt logic).
+    - [ ] Test: Unit test caching effectiveness (hit rate calc, priority calc, pre-fetch logic).
+    - [ ] Test: Unit test fault tolerance mechanisms (Raft integration, partition logic, bottleneck logic, memory recovery logic).
+    - [ ] Test: Unit test distributed lock mechanism implementation.
+    - [ ] Test: Unit test hardware agnosticism adaptations (scaling factor calc, load reduction logic).
+    - [ ] Test: Unit test engineering strategies (deployment scripts, tracing logs, maintenance automation).
+    - [ ] Test: Validate skew impact remains bounded (<0.01 target) (Ref: 5D.2.ix).
+    - [ ] Test: Validate communication/sync overhead remains low (<0.005s target) (Ref: 5D.2.x).
+    - [ ] Test: Validate thermal monitoring and mitigation logic (Ref: 6.A.1.ii).
+    - [ ] Test: Validate sync overhead remains low (<7.5% cycle target) (Ref: 6.A.1.iii).
+    - [ ] Scale to 7M—verify VRAM usage, partitioning effectiveness, communication overhead, stability.
+  - [ ] **Test: Unit test Step 2 functionalities.**
+
+- [ ] **Test: Integration test Task 3 components (Kernels, Sharding, Memory, Communication, Fault Tolerance).**
+- [ ] **Test: Unit tests for Task 3.**

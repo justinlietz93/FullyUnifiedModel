@@ -1,0 +1,179 @@
+### Task 4: Train, Validate, and Debug
+- [ ] **Success Statement**: I will know I achieved success on this task when FUM autonomously achieves superintelligence (>95% accuracy on complex benchmarks) with 300 inputs, demonstrates stable continuous learning, and debugging tools are effective, validated through comprehensive testing.
+- **Current Status**: *Incomplete*.
+
+- [ ] **Step 1: Implement Training Orchestration & Seed Training (Phase 1)**
+  - [ ] **Validation Check**: Training loop runs correctly, integrating all components. 80 curated inputs bootstrap basic learning and primitive formation (Ref: 5A).
+  - [ ] **Success Statement**: I will know I achieved success on this step when FUM processes 80 inputs with >50% accuracy in ~2-3 hours, showing evidence of primitive formation guided by initial priors.
+  - [ ] **Actionable Substeps**:
+    - [ ] Implement initial data curation/validation logic for seed corpus (80 inputs) (Ref: 5.A.2):
+        - [ ] Implement semantic coverage check using embeddings, target >0.9 (Ref: 5A.2.i).
+        - [ ] Select inputs ensuring inclusion of 2-5 edge cases per domain (Ref: 5A.2.i).
+        - [ ] Implement concept diversity check using embeddings, target >0.7 (Ref: 5A.2.i).
+        - [ ] Implement input complexity check using domain scores, target >3 (Ref: 5A.2.i).
+        - [ ] Implement bias assessment (cultural, stylistic, demographic) using dictionaries/Fairness Indicators, target <0.5 (Ref: 5A.2.i).
+        - [ ] Implement bias mitigation via resampling or constrained selection (Ref: 5A.2.i).
+        - [ ] Implement primitive coverage analysis using embeddings, target >0.9 (Ref: 5A.2.i).
+        - [ ] Implement validation that selected inputs trigger STDP/SIE correctly (Ref: 5A.2.i).
+        - [ ] Implement concept gap detection (`1 - primitive_coverage > 0.1`) and input set augmentation logic (Ref: 5A.2.i).
+        - [ ] Construct validation set (16 inputs) using stratified sampling based on domain concepts (Ref: 5A.2.i).
+    - [ ] Implement initial network setup including connectivity priors (distance bias `exp(-d/σ)`, `σ=10`, use `torch.multinomial`) (Ref: 4.E.3, 5.A.2).
+        - [ ] Initialize weights using specified distributions (`U(0, 0.3)` E, `U(-0.3, 0)` I) (Ref: 5A.2.i).
+        - [ ] Initialize eligibility traces (`e_ij`) and value function (`V_states`) to zero tensors (Ref: 5A.2.ii).
+    - [ ] Implement Phase 1 training script (`run_phase1.py`) integrating Task 1, 2, & 3 components (Ref: 5A.2).
+        - [ ] Implement loop iterating through shuffled corpus for 5-10 epochs (Ref: 5A.2.iv).
+        - [ ] Implement minimal SIE guidance logic (focus on novelty/habituation components) (Ref: 5A.2.iv).
+    - [ ] Implement basic validation logic within training script or `benchmark.py` (Ref: 5.A.2, 6.A.6).
+        - [ ] Implement accuracy calculation on validation set (target >50%).
+        - [ ] Implement checks for primitive formation reliability (e.g., consistent output for basic logic).
+        - [ ] Implement check for basic goal generation rate.
+    - [ ] Run training with 80 curated seed inputs.
+    - [ ] Validate Phase 1 outcomes against targets: accuracy (>50%), primitive formation checks, goal generation/hour, variance (< 0.1 Hz²), sparsity (>95%), avg weight (|w| ≈ 0.01-0.05) (Ref: 5A.4.i).
+    - [ ] Validate Phase 1 metrics against targets: criticality index < 0.1, variance < 0.05 Hz, 90% retention over 1M steps (Ref: 6.A.7.i).
+  - [ ] **Test: Unit test Step 1 functionalities (data curation logic, script execution, validation calculations, outcome metric checks).**
+
+- [ ] **Step 2: Scale Training & Validate Generalization (Phase 2)**
+  - [ ] **Validation Check**: 300 inputs deepen learning, performance improves significantly, and model demonstrates true generalization on diverse tests (Ref: 5B, 1.A.3, 5.E.8, 6.A.7).
+  - [ ] **Success Statement**: I will know I achieved success on this step when FUM hits >85-95% accuracy on target benchmarks and generalization tests.
+  - [ ] **Actionable Substeps**:
+    - [ ] Implement Phase 2 training script (`run_phase2.py`) using data curriculum (up to 300 total inputs) (Ref: 5B).
+    - [ ] Implement data loading logic for scaling batches.
+    - [ ] Implement Phase 2 loop enhancements (activate targeted SIE, KG monitoring, cluster perf tracking, initiate structural plasticity growth trigger) (Ref: 5B.2.ii).
+    - [ ] Implement enhanced generalization validation framework (Ref: 1.A.3, 5.E.8, 6.A.7):
+        - [ ] Implement emergent synthetic data generation using KG (`generate_emergent_inputs`).
+        - [ ] Implement curated real-world sample testing logic (~1000 examples/domain, target >80% accuracy) (Ref: 01_Introduction.md).
+        - [ ] Implement SNN-specific adversarial input generation (`generate_snn_adversarial`) and testing logic (target >80% accuracy) (Ref: 1.A.3.i).
+        - [ ] Implement OOD analysis: Calculate KL divergence `shift_score`, target >0.5 (Ref: 1.A.3.i).
+        - [ ] Implement memorization detection: Calculate accuracy difference `memorization_score`, target < 0.1 (Ref: 1.A.3.i).
+        - [ ] Implement brittleness testing: Generate SIE-guided perturbations (`perturb_inputs`), target `perturbed_accuracy > 0.8` (Ref: 1.A.3.i).
+        - [ ] Implement rare regime testing: Generate rare inputs (`generate_rare_inputs`), target `rare_accuracy > 0.8` (Ref: 1.A.4.i).
+        - [ ] Implement emergent failure mode detection: Train GAN on activity history (`EmergentFailureDetector`), test synthesized modes, target `failure_score < 0.1` (Ref: 1.A.4.i).
+        - [ ] Implement state space sampling (stratified) and dynamic validation update logic based on samples (Ref: 1.A.4.i).
+        - [ ] Implement junk data injection testing logic (target >84% accuracy) (Ref: 6.A.7.i).
+        - [ ] Implement primitive generalization test logic (Ref: 5E.8.ii).
+        - [ ] Implement emergent graph generalization test logic (target >0.9 routing accuracy) (Ref: 5E.8.ii).
+        - [ ] Implement comparative benchmarking logic against transformer baseline (Ref: 1.B.3.ii).
+    - [ ] Run training with up to 300 inputs.
+    - [ ] Validate Phase 2 outcomes against targets: accuracy (>85-95% on specific benchmark subsets: MATH Alg 1-5, GPQA 1-3, HE subset, CNN/DM subset, Custom Physics) (Ref: 1.A.7.i), inference time (<5s), generalization metrics, refined graph (`w ≈ 0.8`), inter-domain links (Ref: 5B.4.i).
+    - [ ] Validate Phase 2 metrics against targets: 95% retention, 90% cross-domain consistency (Ref: 6.A.7.i).
+  - [ ] **Test: Unit test Step 2 functionalities (script logic, data loading, validation framework components and metrics).**
+
+- [ ] **Step 3: Implement & Validate Continuous Operation & Stability (Phase 3)**
+  - [ ] **Validation Check**: FUM runs stably 24/7 with live/streaming data, demonstrating autonomy, robust SOC, effective debugging, and long-term alignment (Ref: 5C, 5.E.4, 5.E.11).
+  - [ ] **Success Statement**: I will know I achieved success on this step when FUM processes real-world inputs autonomously, maintains stability, and issues can be effectively diagnosed.
+  - [ ] **Actionable Substeps**:
+    - [ ] Implement Phase 3 continuous learning script (`run_phase3.py`) (Ref: 5C).
+        - [ ] Implement handling for continuous streams of potentially unlabeled data (Ref: 5C.2.i).
+        - [ ] Implement logic for SIE evaluation relying primarily on internal metrics when external `r` is absent (Ref: 5C.2.ii).
+        - [ ] Implement periodic saving/loading of full network state (V, w, e_ij, V_states, etc.) to SSD using efficient serialization (Ref: 5C.2.ii).
+        - [ ] Activate full structural plasticity mechanisms (Growth, Pruning, Rewiring) based on monitored metrics (Ref: 5C.2.ii).
+    - [ ] Implement SOC management mechanisms (Ref: 5C.3, 4.A.3):
+        - [ ] Calculate dynamic thresholds based on recent variance.
+        - [ ] Implement adaptive tuning of global inhibition based on sustained variance.
+        - [ ] Implement avalanche detection logic (monitor spike sums).
+        - [ ] Implement inhibitory response logic (increase global inhibition).
+        - [ ] Implement variance regulation logic (reduce `eta` if variance high).
+        - [ ] Implement structural adjustment logic (prune high-rate neurons during avalanches).
+        - [ ] Implement enhanced early warning system (calculate `early_warning` metric, trigger preemptive inhibition).
+        - [ ] Implement criticality monitoring (calculate `criticality_index`).
+        - [ ] Implement dynamic intervention logic (adjust inhibition/plasticity based on index).
+        - [ ] Implement predictive criticality controller (`CriticalityController` using NN).
+        - [ ] Implement adaptive criticality tuning logic (adjust plasticity based on index).
+        - [ ] Implement connection density control logic.
+        - [ ] Implement E/I ratio stability checks.
+        - [ ] Implement interaction analysis (correlation matrix) and damping logic.
+        - [ ] Implement decentralized control logic assignment.
+    - [ ] Implement enhanced debugging/interpretability tools (`UnifiedDebugger` framework) (Ref: 5.E.2, 5.E.11):
+        - [ ] Implement Spike Pathway Tracing component (log timestamps, reconstruct paths) (Ref: 5E.2.v, 5E.11.ii).
+        - [ ] Implement Reasoning Audit Tool (analyze pathways for inconsistencies) (Ref: 5E.2.v).
+        - [ ] Implement Causal Inference Engine component (use Bayesian nets) (Ref: 5E.11.ii).
+        - [ ] Implement Predictive Debugging Model component (use RL) (Ref: 5E.11.ii).
+        - [ ] Implement scalable interpretability methods (sampled tracing via BFS, hierarchical cluster analysis, causal pathway analysis via interventions, generative model interpretation, synaptic contribution analysis) (Ref: 5E.2.vi).
+        - [ ] Implement scalable control/debug/tuning methods (hierarchical sampling, distributed logging via Cassandra, hierarchical tuning, spike correlation debugging, graph analysis insights, sampled model checking via NuSMV, offloading) (Ref: 5E.2.vii).
+    - [ ] Implement long-term stability/drift monitoring and correction (Ref: 5.E.4):
+        - [ ] Implement synaptic decay with selective modulation (slower for low activity, faster for low reward/conflict) (Ref: 5E.4.iv).
+        - [ ] Implement enhanced de-tagging criteria (check low output diversity) (Ref: 5E.4.iii).
+        - [ ] Implement dynamic persistence threshold adjustment based on drift (Ref: 5E.4.iii).
+        - [ ] Implement protection for infrequent knowledge (extended window, activity-independent tagging, lower thresholds) (Ref: 5E.4.iii).
+        - [ ] Implement model calibration/drift monitoring (calculate `calibration_error`, `drift_score`, target <0.1) and correction (reset SIE weights, increase ground truth freq) (Ref: 5E.4.iii).
+        - [ ] Implement continual learning balance checks (monitor validation accuracy, target >95% retention) (Ref: 5E.4.iv).
+        - [ ] Implement structural integrity checks (neuron cap, criticality adjustment, cluster connectivity, access preservation) (Ref: 5E.4.iv).
+        - [ ] Implement conflict resolution logic for persistent pathways (detect conflict, gradual depression, SIE response, de-tagging, structural adjustment) (Ref: 5E.4.iv).
+        - [ ] Implement non-functional complexification monitoring (complexity vs performance) and mitigation (reduce plasticity rates) (Ref: 4.C.3.iii).
+        - [ ] Implement long-term adaptiveness monitoring (calculate `adaptiveness_score`) and reversion logic (Ref: 2B.9.ii).
+    - [ ] Implement Phase 3 pathway redundancy logic (duplicate critical pathways) (Ref: 4.C.3.i).
+    - [ ] Implement mechanisms for open-endedness (Ref: 4.F.2.ii):
+        - [ ] Implement contingent adaptation logic (random rewire if `avg_reward[c] < 0.5` persists).
+        - [ ] Implement diversity pressure logic (calculate `diversity_pressure`, modulate `novelty`).
+    - [ ] Implement robustness to input noise/anomalies (Ref: 5.E.5):
+        - [ ] Implement SNN dynamics robustness checks (monitor excessive rates `>1 Hz avg`).
+        - [ ] Implement SIE robustness measures (smooth reward over inputs, cap reward if `novelty > 0.9`).
+    - [ ] Implement emergence uncertainty management (Ref: 5E.7.xii):
+        - [ ] Implement emergent behavior modeling (GANs on spike history).
+        - [ ] Implement runtime anomaly detection (Isolation Forest on metrics).
+        - [ ] Implement behavioral alignment monitoring (`task_alignment > 0.9`).
+        - [ ] Implement reward shaping (add `gaming_penalty` based on diversity).
+    - [ ] Deploy `run_phase3.py` with sample streaming data.
+    - [ ] Test autonomy (measure goal generation rate, novelty metrics).
+    - [ ] Test stability (measure variance, SOC metrics, response to perturbations, long-term drift score).
+    - [ ] Test debugging framework effectiveness on injected faults (target 99% identification accuracy) (Ref: 5E.11.iii).
+    - [ ] Verify resource usage (target <5% GPU idle) and persistence mechanism (save/load).
+    - [ ] Validate Phase 3 metrics against targets: 95% retention/consistency, <1% control overhead (Ref: 6.A.7.i).
+    - [ ] Validate primitive failure detection/mitigation logic (inject failures, check response) (Ref: 6.A.6.i).
+    - [ ] Validate continuous validation monitoring and re-validation trigger logic (Ref: 6.A.9.i).
+    - [ ] Validate control system correctness/stability (modular interactions, runtime tests, anomaly detection, fallback logic) (Ref: 5E.7.x, 5E.7.xi).
+    - [ ] *Optional:* Implement investigation of consciousness markers (measure IIT, recurrent activity) (Ref: 9.A.1, 9.E).
+  - [ ] **Test: Unit test Step 3 functionalities (script logic, persistence, SOC mechanisms, debugging tools, stability mechanisms).**
+
+- [ ] **Step 4: Implement Supporting Models & Analysis**
+  - [ ] **Validation Check**: Supporting models accurately predict scaling dynamics and phase transitions, formal methods are reliable, and risk analysis is complete.
+  - [ ] **Success Statement**: I will know I achieved success on this step when supporting models are validated and integrated, providing reliable guidance for scaling and stability.
+  - [ ] **Actionable Substeps**:
+    - [ ] Implement Scaling Dynamics Model (Ref: 2G.2):
+        - [ ] Define coupled differential equations based on STDP/SIE/Plasticity/Homeostasis interactions.
+        - [ ] Implement simulation code for the model.
+        - [ ] Validate model predictive accuracy (>90% target) against intermediate scaling results (1M/10M/1B neurons) (Ref: 2G.3).
+    - [ ] Implement Phase Transition Predictor (Ref: 2H.2):
+        - [ ] Apply bifurcation analysis techniques to the Scaling Dynamics Model equations.
+        - [ ] Identify critical parameter thresholds (connectivity, E/I balance, rates) for potential phase transitions.
+        - [ ] Implement code to monitor proximity to identified bifurcation points.
+        - [ ] Validate predictor accuracy (>95% target) against observed shifts during scaling (Ref: 2H.3).
+    - [ ] Implement Lyapunov stability analysis for STDP-SIE interaction (Ref: 2B.7.v):
+        - [ ] Define Lyapunov function for the system.
+        - [ ] Implement analysis code to check stability conditions.
+        - [ ] Validate convergence rate >95% via simulation/analysis.
+    - [ ] Implement formal methods reliability management suite (Ref: 5E.6.iii):
+        - [ ] Implement calculation of brain-inspired validation metrics (Spike Lyapunov `V_spike`, SIE Alignment Score `alignment_score`).
+        - [ ] Implement approximation-free methods (e.g., `torch.distributed.reduce`) where feasible.
+        - [ ] Implement approximation error management:
+            - [ ] Characterize error bounds for approximations (target <0.01 Hz rates, <0.05 interventions).
+            - [ ] Track cumulative approximation errors (target <0.1).
+            - [ ] Perform sensitivity analysis of safety metrics to errors (target Sobol S_i < 0.1).
+            - [ ] Implement fallback logic to conservative guarantees if sensitivity is high.
+        - [ ] Implement false security prevention mechanisms:
+            - [ ] Implement spike error detection logic (check `variance > 0.05 Hz`).
+            - [ ] Implement dynamic alignment monitoring logic (check `alignment_score > 0.1`, increase ground truth freq).
+            - [ ] Implement assumption monitoring logic (check `assumption_error > 0.05`, recalibrate/fallback).
+            - [ ] Implement stable state fallback logic (`revert_to_stable_state()`).
+    - [ ] Implement risk analysis models:
+        - [ ] Implement Probabilistic Failure Model using Monte Carlo simulation code (Ref: 6.E.2).
+        - [ ] Implement Failure Impact Model using Fault Tree Analysis (FTA) logic (Ref: 6.F.2).
+    - [ ] Execute interaction validation strategy (Ref: 2G.2):
+        - [ ] Perform isolated enhancement testing, validate convergence rate >95%.
+        - [ ] Perform combined enhancement testing with control theory analysis, validate interaction stability rate >90%.
+        - [ ] Implement continuous interaction monitoring using correlation metrics.
+    - [ ] Implement scaling theory analysis (Ref: 5D.10):
+        - [ ] Implement tracking for scaling metrics (integrated info, graph complexity).
+        - [ ] Develop scaling models (e.g., power laws) based on tracked metrics.
+        - [ ] Validate scaling models against empirical results at 10M/1B neuron scales.
+    - [ ] Test: Unit test Scaling Dynamics Model implementation and validation logic.
+    - [ ] Test: Unit test Phase Transition Predictor implementation and validation logic.
+    - [ ] Test: Unit test Lyapunov analysis implementation.
+    - [ ] Test: Unit test formal methods reliability management components (metrics calculation, error handling, prevention logic).
+    - [ ] Test: Unit test risk analysis model implementations (Monte Carlo simulation, FTA logic).
+    - [ ] Test: Unit test interaction validation monitoring logic.
+    - [ ] Test: Unit test scaling theory analysis implementation (metrics tracking, model fitting).
+  - [ ] **Test: Unit test Step 4 functionalities.**
+
+- [ ] **Test: Integration test Task 4 components (Training Loop, Validation, Continuous Op, Debugging, Supporting Models).**
+- [ ] **Test: Unit tests for Task 4.**
