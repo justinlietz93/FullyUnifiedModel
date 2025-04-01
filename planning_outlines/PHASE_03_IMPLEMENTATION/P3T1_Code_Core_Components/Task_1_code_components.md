@@ -188,28 +188,31 @@
   - [ ] **Success Statement**: I will know I achieved success on this step when 7M neuron connections reflect domain relationships stably, efficiently, and adaptively, guided by plasticity rules.
   - [ ] **Actionable Substeps**:
     - [x] Code graph logic in STDP (`resonance_enhanced_stdp.py`) for hints (Ref: 2D).
-    - [ ] Implement core Structural Plasticity algorithms (Growth, Pruning, Rewiring) triggered by SIE/activity metrics (`structural_plasticity.py`?) (Ref: 4C).
+    - [ ] Implement core Structural Plasticity algorithms (Growth, Pruning, Rewiring) triggered by SIE/activity metrics (`structural_plasticity.py`?) (Ref: 4C, *Note: Specific algorithms likely detailed in Sec 5*).
+        - [ ] Implement Growth trigger: Check `avg_reward[c] < 0.5` or `novelty > 0.8` (Ref: 4.C.2.ii).
+        - [ ] Implement Pruning trigger: Check `rate_i < 0.01 Hz` or `neuron_rewards[i] < -1` (Ref: 4.C.2.ii).
+        - [ ] Implement Rewiring trigger: Check `abs(w_ij * e_ij)` is low (Ref: 4.C.2.ii).
     - [ ] Implement enhanced plasticity triggers (Ref: 4.C.2.iv):
         - [ ] Calculate burst score: `burst_score = sum(rates[-5:] > 5*target)`. Trigger growth (`growth_rate *= 1.1`) if `burst_score > 0`.
         - [ ] Calculate BDNF proxy: `bdnf_proxy = rate/target`. Trigger growth (`growth_rate *= 1.1`) if `bdnf_proxy > 1.5`.
         - [ ] Implement critical period logic: `if timestep < 1M: growth_rate *= 2, rewire_rate *= 2`.
     - [ ] Implement pathway persistence/protection mechanism (Ref: 2D.3.iii, 4.C.3.i, 5.E.4):
-        - [ ] Implement multi-criteria tagging logic (check standard, sparse, infrequent criteria). Store tags (e.g., sparse bool tensor `persistent`).
+        - [ ] Implement multi-criteria tagging logic (check standard: `w > 0.8`, `reward > 0.9`, stable reward, sustained activity; sparse: `rate < 0.1`, `reward > 0.9`; infrequent: high reward once in 1M steps). Store tags (e.g., sparse bool tensor `persistent`).
         - [ ] Implement dynamic persistence threshold adjustment logic: Decrease `w_threshold`, `reward_threshold` if `environmental_drift > 0.1`.
         - [ ] Implement enhanced de-tagging logic: Remove tag if low reward OR negative reward OR low diversity (`output_diversity[c] < 0.5`).
         - [ ] Modify decay and rewiring logic to exempt tagged synapses.
     - [ ] Implement pathology detection/pruning (Ref: 2D.5):
-        - [ ] Calculate pathology score: `score = mean(rates[path] * (1 - diversity[path]))`.
-        - [ ] Calculate graph entropy: `entropy = -sum(p*log(p))` from degree distribution `p`.
+        - [ ] Calculate pathology score: `score = mean(rates[path] * (1 - diversity[path]))`. Target `< 0.1`.
+        - [ ] Calculate graph entropy: `entropy = -sum(p*log(p))` from degree distribution `p`. Target `> 1`.
         - [ ] Implement proactive pruning trigger logic: Prune path if `score > 0.1` OR `entropy < 1`.
         - [ ] Implement delayed pruning option: Require trigger condition to persist (e.g., 100k/200k steps) before pruning.
     - [ ] Implement stability checks during/after plasticity events (Ref: 4.C.3):
         - [ ] Implement enhanced dynamic capping calculation: `max_change = 0.01 * (1 - mean(rates)/0.5)`. Limit structural changes based on `max_change`.
-        - [ ] Implement proactive reversion logic: Calculate `interference_score`. Revert proposed changes if score is high.
+        - [ ] Implement proactive reversion logic: Calculate `interference_score`. Revert proposed changes if score is high (target `< 0.1`).
         - [ ] Implement post-change reversion logic: Monitor `output_variance`. Revert changes if `variance_after > variance_before * 1.1` and `> 0.05 Hz`.
         - [ ] Implement structural integrity checks: Global neuron cap, criticality-driven rate adjustment, cluster connectivity monitoring, access preservation logic (Ref: 5E.4.iv).
         - [ ] Implement conflict resolution logic for persistent pathways (detect conflict, gradual STDP depression, SIE response, de-tagging, structural adjustment) (Ref: 5E.4.iv).
-    - [ ] Implement KG specialization via inhibition: Ensure inhibitory feedback suppresses irrelevant clusters (Ref: 2D.3.ii).
+    - [ ] Implement KG specialization via inhibition: Ensure inhibitory feedback suppresses irrelevant clusters (target `rate[irrelevant] < 0.1 Hz`) (Ref: 2D.3.ii).
     - [ ] Implement KG cluster reinforcement via SIE: Implement logic to strengthen intra-cluster connections if `cluster_reward[c] > 0.9` (Ref: 2D.3.ii).
     - [ ] Implement KG hierarchical organization validation: Implement analysis of graph structure for hierarchical properties (Ref: 2D.3.iii).
     - [ ] Implement KG interference prevention mechanisms: Localize STDP, inhibitory suppression, routing protection (exempt persistent), routing specificity check (`cross_connectivity < 0.1` -> add connections), spike-timing homeostasis (Ref: 2D.4.vi).
@@ -224,7 +227,7 @@
     - [ ] Implement structural plasticity cost management (async execution, buffering, prioritization, clustering optimization via sampling) (Ref: 5D.6.iii).
     - [ ] Implement KG ethical tracking/constraints (track pathways, constrain plasticity) (Ref: 9.D).
     - [x] Test: Unit test hint mechanism (`test_knowledge_graph.py`).
-    - [ ] Test: Unit test core Growth, Pruning, Rewiring algorithms.
+    - [ ] Test: Unit test core Growth, Pruning, Rewiring algorithms (based on Sec 5 details when available).
     - [ ] Test: Unit test enhanced plasticity triggers (burst calc, BDNF calc, critical period logic).
     - [ ] Test: Unit test persistence mechanisms (multi-criteria tagging logic, dynamic threshold logic, de-tagging logic, exemption logic).
     - [ ] Test: Unit test pathology detection/pruning (score calc, entropy calc, trigger logic, delayed pruning).
