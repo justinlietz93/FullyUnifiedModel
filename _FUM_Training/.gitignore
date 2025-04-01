@@ -1,0 +1,43 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE specific files
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# Logs and databases
+*.log
+logs/*
+!logs/training_log_sample.log
+*.sql
+*.sqlite
+
+# ML specific
+*.h5
+*.pkl
+*.model
+*.bin
+.ipynb_checkpoints/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Project specific
+data/scaling_batches/
+data/real_world/
+# Keep sample data files for reference

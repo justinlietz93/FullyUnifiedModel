@@ -1,0 +1,8 @@
+torch
+norse
+tqdm
+pyyaml
+pynvml
+opencv-python
+numpy
+librosa

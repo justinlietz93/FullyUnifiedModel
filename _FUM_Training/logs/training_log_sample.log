@@ -1,0 +1,3 @@
+# Sample log file
+Total spikes: 1000.0 (expected ~910.0)
+Latency: 0.002001047134399414s

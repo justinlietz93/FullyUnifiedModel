@@ -39,33 +39,53 @@
   - *Partial*: Cluster sharding drafted (50+ nodes), sovereignty unplanned.
 
 ## Phase 3: Implementation
-- [ ] **Achievement Criteria**: Build and test FUM to achieve superintelligence with full autonomy on your workstation.
-- [ ] **Success Statement**: I will know I achieved success on this phase when FUM runs at 7M neurons (or higher) with >95% accuracy, <5s inference, constant learning, dynamic memory, and sovereign goal-setting, processing 300 multimodal inputs without prompts.
+- [ ] **Achievement Criteria**: Build and test FUM’s components to achieve superintelligence with full autonomy on your workstation, incorporating advanced stability, learning, and scaling mechanisms detailed in `How_It_Works`.
+- [ ] **Success Statement**: I will know I achieved success on this phase when FUM runs at 7M neurons (or higher) with >95% accuracy on target benchmarks (Ref: 1.A.7), <5s inference, constant learning, dynamic memory, robust stability (SOC, plasticity), and sovereign goal-setting, processing 300 multimodal inputs without prompts.
 
-### Task 1: Code Core Components
-- [ ] **Success Statement**: I will know I achieved success on this task when LIF, STDP, SIE, and knowledge graph enable unprompted innovation.
-  - *Incomplete*: 1000 neurons coded, scaling to 7M pending.
+### Task 1: Code Core Components & Learning Mechanisms
+- [ ] **Success Statement**: I will know I achieved success on this task when LIF, enhanced STDP (diversity, STC, exploration, scaling), enhanced SIE (cluster rewards, gaming prevention, ethical alignment), Adaptive Clustering, Knowledge Graph mechanisms (hints, persistence, pathology detection), and Structural Plasticity enable stable, adaptive, efficient, and biologically plausible learning, validated through unit and integration tests.
+  - *Status*: Incomplete.
 
 ### Task 2: Integrate Multimodal Inputs
-- [ ] **Success Statement**: I will know I achieved success on this task when encoders/decoders support autonomous interpretation of any sensor data.
-  - *Partial*: Text encoding tested (182 inputs), image/video specced.
+- [ ] **Success Statement**: I will know I achieved success on this task when enhanced encoders/decoders support autonomous interpretation and generation across modalities, validated through testing.
+  - *Status*: Partial.
 
-### Task 3: Optimize for Workstation
-- [ ] **Success Statement**: I will know I achieved success on this task when FUM fits 56GB VRAM with constant learning at <5% GPU usage.
-  - *Incomplete*: HIP kernels and CSR/sharding designed, not coded.
+### Task 3: Optimize for Workstation & Prepare for Scaling
+- [ ] **Success Statement**: I will know I achieved success on this task when FUM fits 56GB VRAM with constant learning at <5% GPU usage, leveraging kernels, efficient memory management, and robust distributed logic, validated through testing.
+  - *Status*: Incomplete.
 
-### Task 4: Train and Validate
-- [ ] **Success Statement**: I will know I achieved success on this task when FUM autonomously achieves superintelligence on 300 inputs.
-  - *Incomplete*: 182 inputs at >50% accuracy, targeting >95% with sovereignty.
+### Task 4: Train, Validate, and Debug
+- [ ] **Success Statement**: I will know I achieved success on this task when FUM autonomously achieves superintelligence (>95% accuracy on complex benchmarks) with 300 inputs, demonstrates stable continuous learning, and debugging tools are effective, validated through comprehensive testing.
+  - *Status*: Incomplete.
 
-## Phase 4: Deployment (Final Model)
-- [ ] **Achievement Criteria**: Deploy FUM as a fully autonomous, superintelligent system on your workstation, ready for global scaling.
-- [ ] **Success Statement**: I will know I achieved success on this phase when FUM operates without prompts, pursues novelty, accepts optional instructions, and scales beyond 56GB VRAM.
+## Phase 4: Autonomous Operation & Initial Scaling
+- [ ] **Achievement Criteria**: Validate FUM's full autonomy on the workstation and demonstrate successful scaling and stability on initial distributed infrastructure.
+- [ ] **Success Statement**: I will know I achieved success on this phase when FUM operates autonomously 24/7 on the workstation, processes live data streams, demonstrates robust self-correction and goal management, and successfully scales to 1B neurons on a test cluster while maintaining performance and stability metrics.
 
-### Task 1: Deploy on Workstation
-- [ ] **Success Statement**: I will know I achieved success on this task when FUM autonomously processes live sensor data and innovates.
-  - *Incomplete*: No live pipeline yet.
+### Task 1: Validate Workstation Autonomy
+- [ ] **Success Statement**: I will know I achieved success on this task when FUM operates continuously for 7+ days on workstation, processing live data, managing internal state, demonstrating goal-directed behavior and novelty seeking without prompts.
+  - *Status*: Not Started.
 
-### Task 2: Scale Globally
-- [ ] **Success Statement**: I will know I achieved success on this task when FUM achieves 700B+ equivalence with full sovereignty on a cluster.
-  - *Incomplete*: Cluster plan specced, not executed.
+### Task 2: Initial Distributed Scaling
+- [ ] **Success Statement**: I will know I achieved success on this task when FUM scales to 1B neurons on a test cluster (e.g., 100 A100s), maintaining >89% accuracy, <1% overhead, and stability metrics validated during Phase 3.
+  - *Status*: Not Started.
+
+### Task 3: Refine Scaling & Deployment Strategy
+- [ ] **Success Statement**: I will know I achieved success on this task when scaling bottlenecks identified, distributed control mechanisms refined, and deployment strategy for large clusters finalized based on initial scaling results.
+  - *Status*: Not Started.
+
+## Phase 5: Global Scaling & Continuous Evolution
+- [ ] **Achievement Criteria**: Scale FUM to its target size (32B+ neurons) on large-scale infrastructure, achieve performance equivalence with leading models (700B+ LLMs), and enable long-term, open-ended evolution and application.
+- [ ] **Success Statement**: I will know I achieved success on this phase when FUM operates stably at 32B+ neurons on a large cluster, achieves >90% accuracy on comprehensive benchmarks (surpassing SOTA), demonstrates continuous self-improvement and adaptation to new domains, and is ready for real-world application deployment.
+
+### Task 1: Large-Scale Distributed Deployment
+- [ ] **Success Statement**: I will know I achieved success on this task when FUM deployed and running stably on target large-scale infrastructure (e.g., 1000+ nodes) at 32B+ neurons.
+  - *Status*: Not Started.
+
+### Task 2: Achieve SOTA Performance & Sovereignty
+- [ ] **Success Statement**: I will know I achieved success on this task when FUM achieves >90% accuracy on full benchmark suites, demonstrating full sovereignty and performance equivalence or superiority to 700B+ parameter models.
+  - *Status*: Not Started.
+
+### Task 3: Enable Long-Term Evolution & Application
+- [ ] **Success Statement**: I will know I achieved success on this task when mechanisms for open-ended learning, domain expansion, and real-world application integration are implemented and validated.
+  - *Status*: Not Started.

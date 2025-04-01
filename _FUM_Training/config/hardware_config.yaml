@@ -1,0 +1,12 @@
+# Hardware configuration for FUM Training
+
+# Specifies the primary compute backend to use.
+# Options:
+#   'nvidia_cuda': Use NVIDIA GPU via CUDA (requires PyTorch with CUDA support, appropriate drivers).
+#   'amd_hip': Use AMD GPU via ROCm/HIP (requires PyTorch with ROCm support, ROCm installation).
+#   'cpu': Fallback to CPU (primarily for testing small components, not full-scale training).
+compute_backend: nvidia_cuda
+
+# Optional: Specify device IDs if multiple GPUs are present.
+# cuda_device_id: 0
+# hip_device_id: 0
