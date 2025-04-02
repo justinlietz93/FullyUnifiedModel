@@ -2,6 +2,9 @@
 
 The Fully Unified Model (FUM) is a brain-inspired artificial intelligence architecture that combines spiking neural networks with reinforcement learning to achieve efficient learning from minimal data.
 
+## View the Fully Unified Model NotebookLM
+https://notebooklm.google.com/notebook/3b718c75-c204-40ad-96ea-6bcb7a510f18 
+
 ## Key Features
 
 - **Brain-inspired architecture**: Uses spiking neurons with spike-timing dependent plasticity (STDP) and structural plasticity

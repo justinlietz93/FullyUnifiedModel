@@ -153,6 +153,38 @@ Achieve autonomous, expert-level mastery across diverse domains (e.g., Mathemati
 ##### B.5.i.
 *   Leverages frameworks like PyTorch for efficient batch processing of certain operations (e.g., graph analysis, SIE calculations, clustering) and seamless integration with GPU acceleration (ROCm), complementing the SNN's event-driven nature via a carefully managed hybrid interface.
 
+#### B.6 Quantifying Emergence Dominance
+
+##### B.6.i.
+*   **Philosophy of Guided Emergence:** FUM operates on the principle of "guided emergence." Intelligence arises primarily from the self-organizing dynamics of local rules (LIF, STDP, structural plasticity). Control mechanisms (like SIE reward shaping, stability constraints) act as minimal "scaffolding" or "guides," ensuring functional stability and steering emergence towards desired outcomes without dictating the specific solutions.
+*   **Quantitative Dominance:** This philosophy is quantitatively validated by ensuring the computational impact of control mechanisms remains negligible compared to the core emergent dynamics. The target `control_impact` (or `complexity_ratio`, see Sec B.2.iv) is kept below `1e-5`, confirming that over 99.999% of the system's behavior is driven by local, emergent processes. Simulation results consistently show the dominance of local STDP/LIF dynamics in shaping network structure and function.
+*   **Rationale:** This balance ensures FUM retains the flexibility and adaptability of emergent systems while benefiting from the stability and goal-directedness provided by minimal, essential guidance.
+
+#### B.7 System Cohesion and Integration
+
+##### B.7.i.
+*   **Unifying Principles:** Despite its modular components, FUM's overall cohesion stems from a set of core, unifying principles:
+    *   *Spike-Based Computation:* All core processing, from input encoding to internal dynamics and output generation, relies on sparse, temporal spike patterns (Sec B.3, Sec 2.A).
+    *   *Local + Global Learning:* Learning occurs through the interplay of local synaptic rules (STDP, Sec 2.B) and global reinforcement signals (SIE, Sec 2.C).
+    *   *Homeostasis and Stability:* Multiple mechanisms operate across levels (intrinsic plasticity, synaptic scaling, inhibitory balance, SOC management) to maintain stable yet adaptive network dynamics (Sec 2.A.6, 2.B.7, 4.A.3).
+    *   *Continuous Adaptation:* The system continuously adapts its weights (STDP/SIE) and structure (structural plasticity, Sec 4.C) based on experience.
+*   **Key Integration Points:** These principles are realized through specific integration points that link different system components:
+    *   *SIE Modulation of STDP:* The global SIE reward signal (`total_reward`) modulates local STDP learning via eligibility traces (`e_ij`), aligning synaptic changes with overall system goals (Sec 2.C.7, 2.B.5).
+    *   *Plasticity Driven by Activity/Performance:* Structural plasticity decisions (growth, pruning) are triggered by neuron spike rates and cluster-level performance metrics derived from SIE (Sec 4.C.2).
+    *   *Shared Spike Communication:* Input encoding (Sec 3.A), internal SNN processing (Sec 2.A), and output decoding (Sec 3.B) all utilize a common language of spike patterns, facilitating seamless information flow.
+    *   *Clustering Links Dynamics to RL:* Adaptive clustering (Sec 2.F) bridges low-level spike dynamics with the higher-level state representation used by the SIE's TD learning component (Sec 2.C.3).
+*   **Diagrammatic Representation:** (A high-level system diagram illustrating these core components and their primary interactions could be inserted here if desired).
+
+#### B.8 Rationale for Complexity
+
+##### B.8.i.
+*   **Balancing Principle:** The complexity of FUM's components (e.g., the multi-faceted SIE reward, diverse plasticity rules, detailed stability mechanisms) is not arbitrary but arises from a consistent rationale: balancing **functional necessity** for achieving the system's goals (e.g., minimal-data mastery, autonomous adaptation) against **biological fidelity** and **computational tractability**.
+*   **Functional Necessity:** Mechanisms are included only if they are deemed necessary to address specific challenges inherent in the goals (e.g., complex credit assignment suite for long delays and sparse rewards, Sec 2.B.5.x; active SOC management for optimal performance, Sec 5.C.3.iv).
+*   **Bio-Fidelity as Functional Inspiration:** Biological inspiration is used primarily where it offers a clear functional advantage or a proven solution to a computational problem (e.g., STDP for temporal learning, Sec 2.B; homeostasis for stability, Sec 2.A.6). Strict biological mimicry is avoided if it adds excessive computational cost without clear functional benefit.
+*   **Computational Tractability & Abstraction:** Abstractions and simplifications are made when biological detail lacks clear functional benefit for FUM's goals or introduces prohibitive computational cost (e.g., simplified LIF neuron model vs. detailed Hodgkin-Huxley, Sec 2.A; single global SIE reward as an initial abstraction of complex neuromodulation, Sec 2.C.2.iii).
+*   **Trade-offs:** This involves explicit trade-offs. For example, incorporating constrained biological diversity in STDP (Sec B.4.iv) adds complexity but enhances learning flexibility, deemed a worthwhile trade-off. Conversely, initially omitting detailed synaptic tagging (Sec B.5.ii) simplified computation at the potential cost of some long-term retention. The rationale for each component's complexity level is detailed within its respective section.
+
+
 ### C. Key Differentiators vs. Broader Machine Learning Landscape
 
 #### C.1 vs. Deep Learning (ANNs, CNNs, RNNs, Transformers)
@@ -209,36 +241,3 @@ Achieve autonomous, expert-level mastery across diverse domains (e.g., Mathemati
 
 ##### C.5.ii.
 *   **Mechanism:** Relies on synaptic plasticity (STDP, structural plasticity) and reinforcement (SIE), not population-based selection and genetic operators (mutation, crossover), although FUM's self-modification has conceptual parallels to structural evolution.
-
-#### B.6 Quantifying Emergence Dominance
-
-##### B.6.i.
-*   **Philosophy of Guided Emergence:** FUM operates on the principle of "guided emergence." Intelligence arises primarily from the self-organizing dynamics of local rules (LIF, STDP, structural plasticity). Control mechanisms (like SIE reward shaping, stability constraints) act as minimal "scaffolding" or "guides," ensuring functional stability and steering emergence towards desired outcomes without dictating the specific solutions.
-*   **Quantitative Dominance:** This philosophy is quantitatively validated by ensuring the computational impact of control mechanisms remains negligible compared to the core emergent dynamics. The target `control_impact` (or `complexity_ratio`, see Sec B.2.iv) is kept below `1e-5`, confirming that over 99.999% of the system's behavior is driven by local, emergent processes. Simulation results consistently show the dominance of local STDP/LIF dynamics in shaping network structure and function.
-*   **Rationale:** This balance ensures FUM retains the flexibility and adaptability of emergent systems while benefiting from the stability and goal-directedness provided by minimal, essential guidance.
-
-#### B.7 System Cohesion and Integration
-
-##### B.7.i.
-*   **Unifying Principles:** Despite its modular components, FUM's overall cohesion stems from a set of core, unifying principles:
-    *   *Spike-Based Computation:* All core processing, from input encoding to internal dynamics and output generation, relies on sparse, temporal spike patterns (Sec B.3, Sec 2.A).
-    *   *Local + Global Learning:* Learning occurs through the interplay of local synaptic rules (STDP, Sec 2.B) and global reinforcement signals (SIE, Sec 2.C).
-    *   *Homeostasis and Stability:* Multiple mechanisms operate across levels (intrinsic plasticity, synaptic scaling, inhibitory balance, SOC management) to maintain stable yet adaptive network dynamics (Sec 2.A.6, 2.B.7, 4.A.3).
-    *   *Continuous Adaptation:* The system continuously adapts its weights (STDP/SIE) and structure (structural plasticity, Sec 4.C) based on experience.
-*   **Key Integration Points:** These principles are realized through specific integration points that link different system components:
-    *   *SIE Modulation of STDP:* The global SIE reward signal (`total_reward`) modulates local STDP learning via eligibility traces (`e_ij`), aligning synaptic changes with overall system goals (Sec 2.C.7, 2.B.5).
-    *   *Plasticity Driven by Activity/Performance:* Structural plasticity decisions (growth, pruning) are triggered by neuron spike rates and cluster-level performance metrics derived from SIE (Sec 4.C.2).
-    *   *Shared Spike Communication:* Input encoding (Sec 3.A), internal SNN processing (Sec 2.A), and output decoding (Sec 3.B) all utilize a common language of spike patterns, facilitating seamless information flow.
-    *   *Clustering Links Dynamics to RL:* Adaptive clustering (Sec 2.F) bridges low-level spike dynamics with the higher-level state representation used by the SIE's TD learning component (Sec 2.C.3).
-*   **Diagrammatic Representation:** (A high-level system diagram illustrating these core components and their primary interactions could be inserted here if desired).
-
-#### B.8 Rationale for Complexity
-
-##### B.8.i.
-*   **Balancing Principle:** The complexity of FUM's components (e.g., the multi-faceted SIE reward, diverse plasticity rules, detailed stability mechanisms) is not arbitrary but arises from a consistent rationale: balancing **functional necessity** for achieving the system's goals (e.g., minimal-data mastery, autonomous adaptation) against **biological fidelity** and **computational tractability**.
-*   **Functional Necessity:** Mechanisms are included only if they are deemed necessary to address specific challenges inherent in the goals (e.g., complex credit assignment suite for long delays and sparse rewards, Sec 2.B.5.x; active SOC management for optimal performance, Sec 5.C.3.iv).
-*   **Bio-Fidelity as Functional Inspiration:** Biological inspiration is used primarily where it offers a clear functional advantage or a proven solution to a computational problem (e.g., STDP for temporal learning, Sec 2.B; homeostasis for stability, Sec 2.A.6). Strict biological mimicry is avoided if it adds excessive computational cost without clear functional benefit.
-*   **Computational Tractability & Abstraction:** Abstractions and simplifications are made when biological detail lacks clear functional benefit for FUM's goals or introduces prohibitive computational cost (e.g., simplified LIF neuron model vs. detailed Hodgkin-Huxley, Sec 2.A; single global SIE reward as an initial abstraction of complex neuromodulation, Sec 2.C.2.iii).
-*   **Trade-offs:** This involves explicit trade-offs. For example, incorporating constrained biological diversity in STDP (Sec B.4.iv) adds complexity but enhances learning flexibility, deemed a worthwhile trade-off. Conversely, initially omitting detailed synaptic tagging (Sec B.5.ii) simplified computation at the potential cost of some long-term retention. The rationale for each component's complexity level is detailed within its respective section.
-
-### C. Key Differentiators vs. Broader Machine Learning Landscape

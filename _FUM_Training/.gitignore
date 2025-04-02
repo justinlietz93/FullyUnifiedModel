@@ -3,41 +3,168 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Distribution / packaging
-dist/
-build/
-*.egg-info/
+# C extensions
+*.so
 
-# Virtual environments
-venv/
+# Distribution / packaging
+.Python
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
 env/
+venv/
 ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
 
 # IDE specific files
 .idea/
 .vscode/
 *.sublime-workspace
 *.sublime-project
+*.swp
+*.swo
 
-# Logs and databases
-*.log
-logs/*
-!logs/training_log_sample.log
-*.sql
-*.sqlite
+# OS specific
+.DS_Store
+Thumbs.db
+desktop.ini
+*.lnk
 
 # ML specific
 *.h5
 *.pkl
 *.model
 *.bin
-.ipynb_checkpoints/
-
-# OS specific
-.DS_Store
-Thumbs.db
+*.pt
+*.pth
+*.onnx
+*.tflite
+*.pb
+*.savedmodel
+checkpoints/
+wandb/
+mlruns/
+tensorboard/
+runs/
 
 # Project specific
 data/scaling_batches/
 data/real_world/
 # Keep sample data files for reference
+
+# Large media files
+*.mp4
+*.tiff
+*.avi
+*.flv
+*.mov
+*.wmv
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Logs
+logs/*
+!logs/training_log_sample.log
