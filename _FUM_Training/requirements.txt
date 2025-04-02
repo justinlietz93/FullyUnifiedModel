@@ -6,3 +6,4 @@ pynvml
 opencv-python
 numpy
 librosa
+ripser

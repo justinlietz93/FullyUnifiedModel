@@ -222,11 +222,13 @@ class UnifiedNeuronModel:
             return None
 
     def update_state(self, input_currents: torch.Tensor) -> torch.Tensor:
+        global COMPUTE_BACKEND # Declare potentially modified global at function start
         """
         Updates neuron states (LIF voltage) based on input currents for one timestep (self.dt).
         Includes spike generation and reset.
         Ref: Docs A.3.i, A.4
         """
+        # global COMPUTE_BACKEND # Correct placement: Declare potentially modified global at function start <-- REMOVED DUPLICATE
         if self.device != input_currents.device:
              input_currents = input_currents.to(self.device)
         if input_currents.shape[0] != self.num_neurons:
@@ -250,11 +252,75 @@ class UnifiedNeuronModel:
 
         elif COMPUTE_BACKEND == 'amd_hip':
             # --- AMD HIP Kernel Call ---
-            print("Placeholder: Call AMD HIP kernel for neuron state update (neuron_kernel.hip).")
-            # Example: spikes = hip_kernels.update_lif_state(self.voltage, input_currents, self.tau, self.v_th, ...)
-            # Kernel would need access to heterogeneous params (tau, v_th)
-            spikes = torch.zeros_like(self.voltage, dtype=torch.bool) # Placeholder output
-            # Need to handle spike_counts update if kernel doesn't return it
+            try:
+                # Assuming 'lib' is loaded globally or accessible here.
+                # Need to ensure kernel path is correct relative to execution.
+                # TODO: Refactor kernel loading to be more robust.
+                # For now, assume fum.py's loading works if run from project root.
+                import ctypes # Ensure ctypes is imported
+                # Attempt to load if not already loaded (basic check)
+                if 'lib' not in globals():
+                     # Adjust path relative to this file's location?
+                     # Assuming kernel is in _FUM_Training/src/gpu/
+                     kernel_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'gpu', 'lif_kernel.so'))
+                     if os.path.exists(kernel_path):
+                         lib = ctypes.CDLL(kernel_path)
+                         lib.launch_lif_kernel.argtypes = [
+                             ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, # V, spikes, I
+                             ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, # tau, v_th, v_reset (as tensors/pointers)
+                             ctypes.c_int, ctypes.c_float # num_neurons, dt
+                         ]
+                         lib.launch_lif_kernel.restype = None # Kernel likely modifies tensors in place
+                         globals()['lib'] = lib # Store globally for reuse
+                     else:
+                         raise FileNotFoundError(f"HIP Kernel not found at {kernel_path}")
+
+                # Prepare arguments for the kernel
+                # Kernel expects pointers to GPU data.
+                # Need v_reset as a tensor if kernel expects it.
+                v_reset_tensor = torch.full_like(self.voltage, self.v_reset)
+                # Ensure input_currents is on the correct device
+                input_currents_dev = input_currents.to(self.device)
+
+                # Allocate output spikes tensor (kernel modifies in place)
+                spikes_out_tensor = torch.zeros_like(self.voltage, dtype=torch.bool) # Use bool or match kernel type
+
+                # Call the kernel
+                lib.launch_lif_kernel(
+                    self.voltage.data_ptr(),
+                    spikes_out_tensor.data_ptr(), # Kernel writes spikes here
+                    input_currents_dev.data_ptr(),
+                    self.tau.data_ptr(),
+                    self.v_th.data_ptr(),
+                    v_reset_tensor.data_ptr(),
+                    self.num_neurons,
+                    self.dt
+                    # Original fum.py call had extra args (0.01, 1000) - unclear purpose, omitting based on argtypes
+                )
+                spikes = spikes_out_tensor # Use the output tensor
+
+                # Update spike counts based on kernel output
+                self.spike_counts[spikes] += 1
+                print("Executed AMD HIP kernel for neuron state update.")
+
+            except Exception as e:
+                print(f"ERROR executing AMD HIP kernel: {e}. Falling back to CPU.")
+                # Fallback to CPU logic if kernel fails
+                dV = (-(self.voltage - self.v_rest) + self.r_mem * input_currents) / self.tau * self.dt
+                self.voltage += dV
+                spikes = self.voltage >= self.v_th
+                self.voltage[spikes] = self.v_reset
+                self.spike_counts[spikes] += 1
+                # Update global state if fallback occurs
+                # global COMPUTE_BACKEND # Removed from here
+                COMPUTE_BACKEND = 'cpu' # Now modifies the global declared at function start
+                self.device = torch.device('cpu')
+                # Move tensors back to CPU if necessary
+                self.voltage = self.voltage.to(self.device)
+                self.tau = self.tau.to(self.device)
+                self.v_th = self.v_th.to(self.device)
+                self.spike_counts = self.spike_counts.to(self.device)
+
 
         # --- Intrinsic Plasticity Check ---
         self.steps_since_ip_update += 1
@@ -297,7 +363,7 @@ class UnifiedNeuronModel:
 
         elif COMPUTE_BACKEND == 'amd_hip':
             print("Placeholder: Apply intrinsic plasticity using HIP backend (potentially within neuron_kernel.hip or separate kernel).")
-            # Need to manage spike counts and parameter updates on GPU
+            # Need to manage spike counts and parameter updates on GPU if kernel handles IP
             pass
 
 
@@ -400,7 +466,7 @@ if __name__ == '__main__':
     print(f"Using Device: {DEVICE}")
 
     # --- Mock Configuration ---
-    mock_config = {
+    mock_cvonfig = {
         'neuron_params': {}, # Add if needed
         'stdp_params': { # Example STDP params
             'eta': 0.01, 'a_plus': 0.1, 'a_minus': 0.05, 'tau_plus': 20.0,
