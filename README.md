@@ -23,8 +23,8 @@ Explore the FUM architecture, concepts, and implementation details through the f
 ## Key Validation Highlights (FUM - Early Stage as of April 2025)
 
 * **Foundational Component Analysis:** Key mechanisms are undergoing rigorous analysis and preliminary validation. This includes:
-    * SIE stability analysis via detailed simulation, demonstrating stable dynamics under tested conditions primarily via homeostatic mechanisms. [See Stability Analysis in Mathematical Frameworks - *User adds link*]
-    * Development and testing of a Topological Data Analysis (TDA) framework on synthetic data, showing strong correlations between proposed metrics and graph properties like efficiency/pathology. [See TDA Framework in Mathematical Frameworks - *User adds link*]
+    * SIE stability analysis via detailed simulation, demonstrating stable dynamics under tested conditions primarily via homeostatic mechanisms. [See Stability Analysis in Mathematical Frameworks]
+    * Development and testing of a Topological Data Analysis (TDA) framework on synthetic data, showing strong correlations between proposed metrics and graph properties like efficiency/pathology. [See TDA Framework in Mathematical Frameworks]
 * *(Note: Large-scale integrated system testing and benchmarking are planned for upcoming phases as outlined in the roadmap. Results from the predecessor AMN prototype are detailed separately in the relevant documentation.)*
 
 
