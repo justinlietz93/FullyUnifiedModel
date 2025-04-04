@@ -4,7 +4,7 @@
 
 The Fully Unified Model (FUM) is an advanced, brain-inspired artificial intelligence architecture designed for efficient learning, autonomous operation, and emergent intelligence. It integrates spiking neural networks, spike-timing dependent plasticity (STDP), structural plasticity, and a self-improvement engine (SIE) to learn complex patterns and behaviors from minimal data inputs.
 
-This project is still under development and continues to go through significant testing. The documentation is very long, detailed, and often unorganized. I made this repo to share to the public what I am currently working on, and have not spent much effort in making it presentable.
+FUM involves significant technical depth. This repository contains comprehensive and detailed documentation reflecting the current stage of active research and development. Explore the key resources linked below to help navigate the material and understand the architecture, concepts, and progress.
 
 An option you have to learn more without navigating this repository is to send your email to jlietz93@gmail.com with FUM in the subject. You will gain access to the NotebookLM notebook and gain the ability to ask questions directly to much of the repository content.
 
