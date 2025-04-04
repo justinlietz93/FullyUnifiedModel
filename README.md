@@ -10,6 +10,9 @@ An option you have to learn more without navigating this repository is to send y
 
 ## Project Documentation
 
+**Note:** For the most comprehensive and potentially up-to-date understanding, including technical explanations integrated with mathematical details, please explore the documentation within the [`How_It_Works/`](./How_It_Works/) directory (start with the [Table of Contents](./How_It_Works/0_Table_of_Contents.md)). The [`Fully_Unified_Model.pdf`](./Fully_Unified_Model.pdf) provides a focused, consolidated reference specifically for the mathematical formalisms used.
+
+
 Explore the FUM architecture, concepts, and implementation details through the following resources:
 
 *   **FUM NotebookLM:** [View Interactive Notebook](https://notebooklm.google.com/notebook/3b718c75-c204-40ad-96ea-6bcb7a510f18)
