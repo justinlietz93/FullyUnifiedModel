@@ -33,10 +33,26 @@ Explore the FUM architecture, concepts, and implementation details through the f
 **For Technical Reviewers / HPC Access:**
 * Start with the overall concept and feasibility: [High-Level Concept](./How_It_Works/1_High_Level_Concept.md) & [Feasibility and Rationale Summary](./How_It_Works/6_Feasibility_and_Rationale_Summary.md)
 * Dive into the architecture via the Table of Contents: [How It Works - ToC](./How_It_Works/0_Table_of_Contents.md) (Especially [Core Architecture Components](./How_It_Works/2_Core_Architecture_Components/))
-* Understand scaling strategy and resource needs: [Scaling Strategy](./How_It_Works/5_Training_and_Scaling/5D_Scaling_Strategy.md) & [Practical Considerations](./How_It_Works/5_Training_and_Scaling/5E_Practical_Considerations.md#e3-computational-cost-of-overhead-components--net-efficiency)
+* Understand scaling strategy and resource needs: [Scaling Strategy](./How_It_Works/5_Training_and_Scaling/5D_Scaling_Strategy.md) & [Practical Considerations (Efficiency Section)](./How_It_Works/5_Training_and_Scaling/5E_Practical_Considerations.md#e3-computational-cost-of-overhead-components--net-efficiency)
 * Examine mathematical foundations and component analyses: [Mathematical Frameworks Overview](./mathematical_frameworks/) & [PDF Whitepaper (Math Focus)](./Fully_Unified_Model.pdf)
 * Review the detailed development/validation plans: [Planning Outlines](./planning_outlines/)
 
+**For Developers (Potential Contributors / Integrators):**
+* Review the core concepts and architecture first: [High-Level Concept](./How_It_Works/1_High_Level_Concept.md) & [How It Works - ToC](./How_It_Works/0_Table_of_Contents.md)
+* Explore the core codebase structure: [`src/`](./_FUM_Training/src/)
+* Understand key component implementations: See relevant sections in [Core Architecture Components](./How_It_Works/2_Core_Architecture_Components/)
+* Review testing setup: [`tests/`](./_FUM_Training/tests/)
+* Check configuration structure: [`config/`](./_FUM_Training/config/)
+
+**For AI Enthusiasts / Interested Learners:**
+* Start with the main README Overview & [Key Differentiating Features](#key-differentiating-features) above.
+* Grasp the core ideas: [High-Level Concept](./How_It_Works/1_High_Level_Concept.md)
+* Explore the visual overview: [Mind Map](./How_It_Works/FUM_Mind_Map.png)
+* Understand the project goals and feasibility: [Feasibility/Rationale Summary](./How_It_Works/6_Feasibility_and_Rationale_Summary.md)
+* See the validation approach and highlights: [Key Validation Highlights](#key-validation-highlights-fum---early-stage-as-of-april-2025) & [Section on Emergent Validation](./How_It_Works/...#...)
+* (Optional) Ask specific questions via the [NotebookLM Interface](#project-documentation) (requires email access request).
+
+  
 ## Key Validation Highlights (FUM - Early Stage as of April 2025)
 
 * **Foundational Component Analysis:** Key mechanisms are undergoing rigorous analysis and preliminary validation. This includes:
