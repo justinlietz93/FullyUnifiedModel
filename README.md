@@ -26,6 +26,13 @@ The following mind map provides a visual representation of the FUM's core concep
 
 ![FUM Mind Map](./How_It_Works/FUM_Mind_Map.png)
 
+## Key Validation Highlights (FUM - Early Stage as of April 2025)
+
+* **Foundational Component Analysis:** Key mechanisms are undergoing rigorous analysis and preliminary validation. This includes:
+    * SIE stability analysis via detailed simulation, demonstrating stable dynamics under tested conditions primarily via homeostatic mechanisms. [See Stability Analysis in Mathematical Frameworks - *User adds link*]
+    * Development and testing of a Topological Data Analysis (TDA) framework on synthetic data, showing strong correlations between proposed metrics and graph properties like efficiency/pathology. [See TDA Framework in Mathematical Frameworks - *User adds link*]
+* *(Note: Large-scale integrated system testing and benchmarking are planned for upcoming phases as outlined in the roadmap. Results from the predecessor AMN prototype are detailed separately in the relevant documentation.)*
+
 ## Key Differentiating Features
 
 FUM distinguishes itself through a unique synthesis of advanced concepts:
