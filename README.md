@@ -20,6 +20,20 @@ Explore the FUM architecture, concepts, and implementation details through the f
 *   **Technical Whitepaper:** [`Fully_Unified_Model.pdf`](./Fully_Unified_Model.pdf) - Detailed paper on the architecture and theoretical foundations.
 *   **Implementation Documentation:** [`How_It_Works/`](./How_It_Works/) - Comprehensive guide covering core components, I/O, emergent behaviors, training, scaling, and practical considerations.
 
+## Quick Start Guides for Different Audiences
+
+**For Investors / Potential Affiliates:**
+* Understand the core vision, potential impact, and key differentiators: [High-Level Concept](./How_It_Works/1_High_Level_Concept.md)
+* Review the project rationale, feasibility assessment, and high-level roadmap: [Feasibility and Rationale Summary](./How_It_Works/6_Feasibility_and_Rationale_Summary.md)
+* See key achieved milestones and current validation status: [Initial Landmarks](./How_It_Works/02_Initial_Landmarks.md) & [Key Validation Highlights](#key-validation-highlights-fum---early-stage-as-of-april-2025) (section above)
+
+**For Technical Reviewers / HPC Access:**
+* Start with the overall concept and feasibility: [High-Level Concept](./How_It_Works/1_High_Level_Concept.md) & [Feasibility and Rationale Summary](./How_It_Works/6_Feasibility_and_Rationale_Summary.md)
+* Dive into the architecture via the Table of Contents: [How It Works - ToC](./How_It_Works/0_Table_of_Contents.md) (Especially [Core Architecture Components](./How_It_Works/2_Core_Architecture_Components/))
+* Understand scaling strategy and resource needs: [Scaling Strategy](./How_It_Works/5_Training_and_Scaling/5D_Scaling_Strategy.md) & [Practical Considerations](./How_It_Works/5_Training_and_Scaling/5E_Practical_Considerations.md#e3-computational-cost-of-overhead-components--net-efficiency)
+* Examine mathematical foundations and component analyses: [Mathematical Frameworks Overview](./mathematical_frameworks/) & [PDF Whitepaper (Math Focus)](./Fully_Unified_Model.pdf)
+* Review the detailed development/validation plans: [Planning Outlines](./planning_outlines/)
+
 ## Key Validation Highlights (FUM - Early Stage as of April 2025)
 
 * **Foundational Component Analysis:** Key mechanisms are undergoing rigorous analysis and preliminary validation. This includes:
