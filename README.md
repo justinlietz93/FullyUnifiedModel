@@ -6,6 +6,8 @@ The Fully Unified Model (FUM) is an advanced, brain-inspired artificial intellig
 
 This project is still under development and continues to go through significant testing. The documentation is very long, detailed, and often unorganized. I made this repo to share to the public what I am currently working on, and have not spent much effort in making it presentable.
 
+An option you have to learn more without navigating this repository is to send your email to jlietz93@gmail.com with FUM in the subject. You will gain access to the NotebookLM notebook and gain the ability to ask questions directly to much of the repository content.
+
 ## Project Documentation
 
 Explore the FUM architecture, concepts, and implementation details through the following resources:
