@@ -17,7 +17,7 @@ Explore the FUM architecture, concepts, and implementation details through the f
 
 *   **FUM NotebookLM:** [View Interactive Notebook](https://notebooklm.google.com/notebook/3b718c75-c204-40ad-96ea-6bcb7a510f18)
 *   **NotebookLM Audio Explanation:** [Listen to Explanation](https://notebooklm.google.com/notebook/3b718c75-c204-40ad-96ea-6bcb7a510f18/audio)
-*   (Please send your email to jlietz93@gmail.com with FUM in the subject to gain access to the NotebookLM notebook. Currently there is no option to make this available publicly.
+*   (Please send your email to justin@neuroca.dev with FUM in the subject to gain access to the NotebookLM notebook. Currently there is no option to make this available publicly.
 
   
 *   **Technical Whitepaper:** [`Fully_Unified_Model.pdf`](./Fully_Unified_Model.pdf) - Detailed paper on the architecture and theoretical foundations.
