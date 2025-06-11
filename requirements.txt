@@ -1,0 +1,13 @@
+torch
+norse
+tqdm
+pyyaml
+pynvml
+opencv-python
+numpy
+librosa
+ripser
+scipy
+networkx
+matplotlib
+soundfile
